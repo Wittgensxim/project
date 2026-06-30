@@ -38,6 +38,20 @@ class BatchCertificateTests(unittest.TestCase):
             self.assertTrue(all(row["reproduced"] == "True" for row in rows))
             self.assertTrue(all(row["failure_kind_ab"] == "" for row in rows))
             self.assertTrue(all(row["failure_kind_ba"] == "" for row in rows))
+            self.assertTrue(all(row["env_id"] == "env-1" for row in rows))
+            self.assertTrue(all(row["llvm_version"] == "test-llvm" for row in rows))
+            self.assertTrue(all(row["normalizer_version"] for row in rows))
+            self.assertTrue(all(row["execution_model"] for row in rows))
+            self.assertTrue(all(row["nesting"] == "function" for row in rows))
+            self.assertTrue(all(row["region_id"] == "function_scalar_mvp" for row in rows))
+            self.assertTrue(all(row["input_state_hash"] for row in rows))
+            self.assertTrue(all(row["ecpor_git_commit"] for row in rows))
+            self.assertTrue(all(row["input_ir_path"] for row in rows))
+            self.assertTrue(all(row["pipeline_ab"] for row in rows))
+            self.assertTrue(all(row["pipeline_ba"] for row in rows))
+            self.assertTrue(all(row["features_ab"] for row in rows))
+            self.assertTrue(all(row["features_ba"] for row in rows))
+            self.assertTrue(all(row["feature_delta"] for row in rows))
             self.assertEqual(sorted((tmp_path / "certs").glob("*.json")).__len__(), 4)
 
             with summary_csv.open(newline="", encoding="utf-8") as handle:
@@ -64,7 +78,14 @@ def _write_fake_opt(tmp_path: Path) -> Path:
             import sys
 
             output = pathlib.Path(sys.argv[sys.argv.index("-o") + 1])
-            output.write_text("define void @f() {\\n  ret void\\n}\\n", encoding="utf-8")
+            pass_arg = next(arg for arg in sys.argv if arg.startswith("-passes="))
+            if "simplifycfg,instcombine" in pass_arg:
+                output.write_text(
+                    "define void @f() {\\nentry:\\n  %v = add i32 1, 2\\n  ret void\\n}\\n",
+                    encoding="utf-8",
+                )
+            else:
+                output.write_text("define void @f() {\\n  ret void\\n}\\n", encoding="utf-8")
             """
         ).strip(),
         encoding="utf-8",

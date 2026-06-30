@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Sequence
 
 from .environment import DEFAULT_EXECUTION_MODEL
+from .feature_scan import diff_features, features_to_json, scan_ir_file
 from .normalizer import NORMALIZER_VERSION
 from .pair_test import reproduce_certificate, test_adjacent_swap
 from .runner import OptPath
@@ -46,6 +47,20 @@ SUMMARY_FIELDS = [
     "elapsed_ba_ms",
     "cert_id",
     "reproduced",
+    "env_id",
+    "llvm_version",
+    "normalizer_version",
+    "execution_model",
+    "nesting",
+    "region_id",
+    "input_state_hash",
+    "ecpor_git_commit",
+    "input_ir_path",
+    "pipeline_ab",
+    "pipeline_ba",
+    "features_ab",
+    "features_ba",
+    "feature_delta",
 ]
 
 
@@ -97,6 +112,8 @@ def run_certificate_matrix(
                 output_dir=output_root / "repro",
                 timeout_sec=timeout_sec,
             )
+            features_ab = _scan_output_features(cert.output_ab)
+            features_ba = _scan_output_features(cert.output_ba)
             rows.append(
                 {
                     "program": program,
@@ -114,6 +131,24 @@ def run_certificate_matrix(
                     "elapsed_ba_ms": f"{cert.elapsed_ba_ms:.3f}",
                     "cert_id": cert.cert_id,
                     "reproduced": str(reproduction.reproduced),
+                    "env_id": cert.env_id,
+                    "llvm_version": cert.llvm_version,
+                    "normalizer_version": cert.normalizer_version,
+                    "execution_model": cert.execution_model,
+                    "nesting": cert.nesting,
+                    "region_id": cert.region_id,
+                    "input_state_hash": cert.input_state_hash,
+                    "ecpor_git_commit": cert.ecpor_git_commit,
+                    "input_ir_path": cert.input_ir_path,
+                    "pipeline_ab": cert.pipeline_ab,
+                    "pipeline_ba": cert.pipeline_ba,
+                    "features_ab": features_to_json(features_ab) if features_ab else "",
+                    "features_ba": features_to_json(features_ba) if features_ba else "",
+                    "feature_delta": (
+                        features_to_json(diff_features(features_ab, features_ba))
+                        if features_ab and features_ba
+                        else ""
+                    ),
                 }
             )
 
@@ -199,6 +234,13 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def _safe_name(value: str) -> str:
     return "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in value)
+
+
+def _scan_output_features(path: str | Path) -> dict[str, int | bool]:
+    output = Path(path)
+    if not output.exists():
+        return {}
+    return scan_ir_file(output)
 
 
 if __name__ == "__main__":
