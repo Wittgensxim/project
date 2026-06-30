@@ -16,11 +16,11 @@
 ## 最新状态
 
 - 当前分支：`feature/phase-ordering-footprint`
-- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3×3 最小证书表。
-- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `24 passed`。
+- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3×3 最小证书表、P2.5 summary report 与 feature scan。
+- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `27 passed`。
 - 最新真实实验：3 个 Stanford 输入 × 3 个 pass pair，`9/9` reproduction，`HardFalseIndependent = 0`。
 - 进度文档规则：`docs/progress/` 下的文件已改为按先后顺序编号命名。
-- 下一步建议：基于 `cert_summary.csv` 增加小型汇总报告读取器；稳定后再进入 `feature_scan.py`。
+- 下一步建议：用 feature delta 解释 not-certified pair；稳定后再进入静态过滤，不直接做搜索器。
 
 ## 进度文件索引
 
@@ -35,6 +35,7 @@
 | 2026-07-01 | P1.5 failure kind 与 P2 3×3 最小证书表 | [2026-07-01-07-failure-kind-and-3x3-matrix.md](progress/2026-07-01-07-failure-kind-and-3x3-matrix.md) |
 | 2026-07-01 | 拆分进度文件并建立索引规则 | [2026-07-01-08-progress-file-split.md](progress/2026-07-01-08-progress-file-split.md) |
 | 2026-07-01 | 按先后顺序命名进度文件 | [2026-07-01-09-progress-file-ordering.md](progress/2026-07-01-09-progress-file-ordering.md) |
+| 2026-07-01 | P2.5 summary report 与 feature scan soft evidence | [2026-07-01-10-summary-report-feature-scan.md](progress/2026-07-01-10-summary-report-feature-scan.md) |
 
 ## 旧文档拆分说明
 

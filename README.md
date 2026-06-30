@@ -9,6 +9,7 @@ The current workspace implements MVP-0/P0:
 - structured `opt` runner results
 - minimal scalar pipeline config
 - state-indexed adjacent-swap pair certificates
+- certificate summary reporting and text-level IR feature scanning
 - three C microbenchmarks for smoke testing
 
 ## Local LLVM
@@ -72,4 +73,18 @@ Generate the 3 Stanford programs by 3 pass-pair certificate matrix:
 ```powershell
 $env:PYTHONPATH = "src"
 D:\Miniconda\envs\dlm\python.exe -m ecpor.batch_certificates --preset stanford-3x3 --opt E:\llvm\build\bin\opt.exe --out data\outputs\pair_tests --cert-dir data\certs\pair_tests --summary data\outputs\cert_summary.csv --env-id 3c3dab32ea1756773748a56d639e6bb201042576bb0653fd466e109d1946298e --llvm-version 23.0.0git
+```
+
+Generate a text summary report from `cert_summary.csv`:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.summary_report data\outputs\cert_summary.csv --out data\outputs\cert_summary_report.txt
+```
+
+Scan soft IR features for one output:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.feature_scan data\outputs\pair_tests\e4ca9139c215300ca724c57abdd48765563ebac9de2297a8ff3d69bf1201e954\ab.ll
 ```
