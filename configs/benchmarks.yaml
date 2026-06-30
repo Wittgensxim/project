@@ -1,0 +1,20 @@
+root: "E:/llvm-test-suite"
+primary_source: "llvm-test-suite"
+notes:
+  - "The local benchmarks/micro files are smoke-test inputs only."
+  - "Formal MVP benchmark selection should come from E:/llvm-test-suite."
+
+initial_subset:
+  suite: "SingleSource/Benchmarks/Stanford"
+  compile_mode: "clang -O0 -Xclang -disable-O0-optnone -S -emit-llvm"
+  programs:
+    - id: "stanford_bubblesort"
+      source: "SingleSource/Benchmarks/Stanford/Bubblesort.c"
+      ir: "data/inputs/testsuite_stanford_bubblesort.ll"
+    - id: "stanford_intmm"
+      source: "SingleSource/Benchmarks/Stanford/IntMM.c"
+      ir: "data/inputs/testsuite_stanford_intmm.ll"
+    - id: "stanford_perm"
+      source: "SingleSource/Benchmarks/Stanford/Perm.c"
+      ir: "data/inputs/testsuite_stanford_perm.ll"
+

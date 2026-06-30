@@ -1,0 +1,12 @@
+name: "mvp_function_scalar"
+pipeline: "function(sroa,early-cse,instcombine,simplifycfg,reassociate,gvn,dce,adce)"
+passes:
+  - "sroa"
+  - "early-cse"
+  - "instcombine"
+  - "simplifycfg"
+  - "reassociate"
+  - "gvn"
+  - "dce"
+  - "adce"
+

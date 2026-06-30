@@ -1,0 +1,13 @@
+[project]
+name = "ecpor"
+version = "0.1.0"
+description = "Evidence-carrying phase-ordering reduction prototype for LLVM IR pipelines."
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.unittest]
+start-directory = "tests"
+

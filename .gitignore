@@ -1,0 +1,10 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+data/outputs/
+data/certs/
+*.o
+*.obj
+*.exe
+*.ll.tmp
+!data/inputs/*.ll
