@@ -120,6 +120,10 @@ def test_adjacent_swap(
         verifier_ba=result_ba.verifier_ok,
         exit_code_ab=result_ab.exit_code,
         exit_code_ba=result_ba.exit_code,
+        failure_kind_ab=result_ab.failure_kind,
+        failure_kind_ba=result_ba.failure_kind,
+        elapsed_ab_ms=result_ab.elapsed_ms,
+        elapsed_ba_ms=result_ba.elapsed_ms,
         nesting=nesting,
         pipeline_ab=pipeline_ab,
         pipeline_ba=pipeline_ba,
@@ -259,12 +263,18 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 def _classify(result_ab, result_ba, hard_equal: bool) -> tuple[str, str]:
-    if result_ab.exit_code != 0 or result_ba.exit_code != 0:
+    if result_ab.failure_kind or result_ba.failure_kind:
+        if _has_explicit_verifier_failure(result_ab.stderr + result_ba.stderr):
+            return "verifier_failed", "opt reported verifier failure"
         failed = []
-        if result_ab.exit_code != 0:
-            failed.append(f"AB failed with exit code {result_ab.exit_code}")
-        if result_ba.exit_code != 0:
-            failed.append(f"BA failed with exit code {result_ba.exit_code}")
+        if result_ab.failure_kind:
+            failed.append(
+                f"AB {result_ab.failure_kind} with exit code {result_ab.exit_code}"
+            )
+        if result_ba.failure_kind:
+            failed.append(
+                f"BA {result_ba.failure_kind} with exit code {result_ba.exit_code}"
+            )
         stderr = " ".join(
             text.strip() for text in [result_ab.stderr, result_ba.stderr] if text.strip()
         )
@@ -272,8 +282,6 @@ def _classify(result_ab, result_ba, hard_equal: bool) -> tuple[str, str]:
         if stderr:
             reason = f"{reason}: {stderr}"
         return "run_failed", reason
-    if not result_ab.verifier_ok or not result_ba.verifier_ok:
-        return "verifier_failed", "at least one direction failed verifier"
     if hard_equal:
         return "certified_independent", "hard hash equal"
     return "not_certified_independent", "hard hash differs"
@@ -288,6 +296,12 @@ def _pipeline(nesting: str, passes: Sequence[str]) -> str:
 
 def _safe_name(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]+", "_", value)
+
+
+def _has_explicit_verifier_failure(stderr: str) -> bool:
+    if "Broken module found" in stderr:
+        return True
+    return "LLVM ERROR" in stderr and "Verifier" in stderr
 
 
 def _write_run_artifacts(cert_dir: Path, stem: str, result: RunResult) -> None:

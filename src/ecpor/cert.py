@@ -33,6 +33,10 @@ class PairCertificate:
     verifier_ba: bool
     exit_code_ab: int
     exit_code_ba: int
+    failure_kind_ab: str | None
+    failure_kind_ba: str | None
+    elapsed_ab_ms: float
+    elapsed_ba_ms: float
     nesting: str
     pipeline_ab: str
     pipeline_ba: str
@@ -75,6 +79,10 @@ class PairCertificate:
         clean.setdefault("region_id", "function_scalar_mvp")
         clean.setdefault("ecpor_git_commit", "unknown")
         clean.setdefault("ecpor_git_dirty", None)
+        clean.setdefault("failure_kind_ab", None)
+        clean.setdefault("failure_kind_ba", None)
+        clean.setdefault("elapsed_ab_ms", 0.0)
+        clean.setdefault("elapsed_ba_ms", 0.0)
         return cls(**clean)
 
 

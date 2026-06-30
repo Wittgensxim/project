@@ -24,7 +24,11 @@ class RunResult:
     stdout: str
     stderr: str
     elapsed_ms: float
-    verifier_ok: bool
+    opt_success: bool
+    output_exists: bool
+    verify_each_enabled: bool
+    verifier_ok: bool | None
+    failure_kind: str | None
     timed_out: bool = False
     hard_hash: str | None = None
 
@@ -82,8 +86,11 @@ def run_opt(
             timeout=timeout_sec,
         )
         elapsed_ms = (time.perf_counter() - start) * 1000.0
-        result_hash = hard_hash(output_path) if completed.returncode == 0 and output_path.exists() else None
-        verifier_ok = completed.returncode == 0 and output_path.exists()
+        opt_success = completed.returncode == 0
+        output_exists = output_path.exists()
+        verify_each_enabled = "-verify-each" in command
+        success = opt_success and output_exists
+        result_hash = hard_hash(output_path) if success else None
         return RunResult(
             command=command,
             input_path=input_path,
@@ -93,11 +100,17 @@ def run_opt(
             stdout=completed.stdout,
             stderr=completed.stderr,
             elapsed_ms=elapsed_ms,
-            verifier_ok=verifier_ok,
+            opt_success=opt_success,
+            output_exists=output_exists,
+            verify_each_enabled=verify_each_enabled,
+            verifier_ok=success if verify_each_enabled else None,
+            failure_kind=_failure_kind(opt_success, output_exists),
             hard_hash=result_hash,
         )
     except subprocess.TimeoutExpired as exc:
         elapsed_ms = (time.perf_counter() - start) * 1000.0
+        output_exists = output_path.exists()
+        verify_each_enabled = "-verify-each" in command
         return RunResult(
             command=command,
             input_path=input_path,
@@ -107,11 +120,17 @@ def run_opt(
             stdout=exc.stdout or "",
             stderr=(exc.stderr or "") + f"\nTimed out after {timeout_sec} seconds.",
             elapsed_ms=elapsed_ms,
+            opt_success=False,
+            output_exists=output_exists,
+            verify_each_enabled=verify_each_enabled,
             verifier_ok=False,
+            failure_kind="timeout",
             timed_out=True,
         )
     except OSError as exc:
         elapsed_ms = (time.perf_counter() - start) * 1000.0
+        output_exists = output_path.exists()
+        verify_each_enabled = "-verify-each" in command
         return RunResult(
             command=command,
             input_path=input_path,
@@ -121,7 +140,11 @@ def run_opt(
             stdout="",
             stderr=str(exc),
             elapsed_ms=elapsed_ms,
+            opt_success=False,
+            output_exists=output_exists,
+            verify_each_enabled=verify_each_enabled,
             verifier_ok=False,
+            failure_kind="os_error",
         )
 
 
@@ -130,3 +153,12 @@ def _normalize_opt_path(opt_path: OptPath) -> list[str]:
         return [str(opt_path)]
     return [str(part) for part in opt_path]
 
+
+def _failure_kind(opt_success: bool, output_exists: bool) -> str | None:
+    if opt_success and output_exists:
+        return None
+    if opt_success and not output_exists:
+        return "output_missing"
+    if not opt_success and output_exists:
+        return "opt_failed_output_exists"
+    return "opt_failed"

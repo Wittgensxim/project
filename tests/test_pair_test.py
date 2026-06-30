@@ -79,6 +79,8 @@ class PairTesterTests(unittest.TestCase):
 
             self.assertEqual(cert.label, "run_failed")
             self.assertFalse(cert.hard_equal)
+            self.assertIsNone(cert.failure_kind_ab)
+            self.assertEqual(cert.failure_kind_ba, "opt_failed")
             self.assertIn("BA failed", cert.reason)
 
     def test_adjacent_swap_cert_id_changes_with_extra_flags(self):

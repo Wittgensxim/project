@@ -33,6 +33,10 @@ class CertificateTests(unittest.TestCase):
             verifier_ba=True,
             exit_code_ab=0,
             exit_code_ba=0,
+            failure_kind_ab=None,
+            failure_kind_ba=None,
+            elapsed_ab_ms=1.25,
+            elapsed_ba_ms=1.5,
             nesting="function",
             pipeline_ab="function(instcombine,dce)",
             pipeline_ba="function(dce,instcombine)",
@@ -53,6 +57,8 @@ class CertificateTests(unittest.TestCase):
         self.assertTrue(data["hard_equal"])
         self.assertEqual(data["scope"], "state-specific")
         self.assertEqual(data["pipeline_ab"], "function(instcombine,dce)")
+        self.assertIsNone(data["failure_kind_ab"])
+        self.assertEqual(data["elapsed_ab_ms"], 1.25)
         self.assertEqual(data["ecpor_git_commit"], "abc123")
 
     def test_make_cert_id_is_stable_and_state_sensitive(self):
