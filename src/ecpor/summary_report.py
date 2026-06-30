@@ -4,15 +4,24 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Sequence
 
 
 KNOWN_LABELS = [
     "certified_independent",
     "not_certified_independent",
     "run_failed",
+]
+
+KNOWN_FAILURE_KINDS = [
+    "opt_failed",
+    "timeout",
+    "output_missing",
+    "opt_failed_output_exists",
+    "os_error",
 ]
 
 
@@ -31,18 +40,36 @@ def build_summary_report(rows: Sequence[dict[str, str]]) -> str:
         if row.get("label") == "certified_independent"
         and not _is_true(row.get("hard_equal", ""))
     )
+    certified_feature_mismatch = sum(
+        1
+        for row in rows
+        if row.get("label") == "certified_independent"
+        and _has_nonzero_feature_delta(row.get("feature_delta", ""))
+    )
     label_counts = Counter(row.get("label", "") for row in rows)
-    failure_counts = Counter()
+    failure_counts = Counter[str]()
+    no_failure_directions = 0
+    certificates_with_any_failure = 0
     for row in rows:
+        row_has_failure = False
         for key in ("failure_kind_ab", "failure_kind_ba"):
-            value = row.get(key, "")
-            if value:
+            value = row.get(key, "").strip()
+            if value and value != "none":
                 failure_counts[value] += 1
+                row_has_failure = True
+            else:
+                no_failure_directions += 1
+        if row_has_failure:
+            certificates_with_any_failure += 1
+    total_directions = total * 2
 
     lines = [
         f"Total certificates: {total}",
         f"Reproduced: {reproduced} / {total} = {reproduction_rate:.2f}%",
         f"HardFalseIndependent: {hard_false}",
+        f"CertifiedFeatureMismatchCount: {certified_feature_mismatch}",
+        "Feature delta is soft evidence only.",
+        "Delta convention: feature_delta = features_ba - features_ab",
         "",
         "Label counts:",
     ]
@@ -54,12 +81,20 @@ def build_summary_report(rows: Sequence[dict[str, str]]) -> str:
     if not label_counts:
         lines.append("  none: 0")
 
-    lines.extend(["", "Failure kind counts:"])
-    if failure_counts:
-        for failure_kind in sorted(failure_counts):
+    lines.extend(
+        [
+            "",
+            f"Certificates with any failure: {certificates_with_any_failure} / {total}",
+            "Failure directions:",
+            f"  total_directions: {total_directions}",
+            f"  no_failure: {no_failure_directions} / {total_directions}",
+        ]
+    )
+    for failure_kind in KNOWN_FAILURE_KINDS:
+        lines.append(f"  {failure_kind}: {failure_counts[failure_kind]}")
+    for failure_kind in sorted(failure_counts):
+        if failure_kind not in KNOWN_FAILURE_KINDS:
             lines.append(f"  {failure_kind}: {failure_counts[failure_kind]}")
-    else:
-        lines.append("  none: 0")
 
     lines.extend(
         [
@@ -114,6 +149,28 @@ def _average(rows: Sequence[dict[str, str]], key: str) -> float:
     if not values:
         return 0.0
     return sum(values) / len(values)
+
+
+def _has_nonzero_feature_delta(raw_delta: str) -> bool:
+    if not raw_delta.strip():
+        return False
+    try:
+        delta = json.loads(raw_delta)
+    except json.JSONDecodeError:
+        return True
+    if not isinstance(delta, dict):
+        return bool(delta)
+    return any(_is_nonzero_delta(value) for value in delta.values())
+
+
+def _is_nonzero_delta(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        return value != ""
+    return value is not None
 
 
 def _group(

@@ -9,7 +9,7 @@ The current workspace implements MVP-0/P0:
 - structured `opt` runner results
 - minimal scalar pipeline config
 - state-indexed adjacent-swap pair certificates
-- certificate summary reporting and text-level IR feature scanning
+- certificate summary reporting, not-certified diff reports, and text-level IR feature scanning
 - three C microbenchmarks for smoke testing
 
 ## Local LLVM
@@ -68,11 +68,11 @@ Reproduce a saved certificate:
 D:\Miniconda\envs\dlm\python.exe -c "import sys; sys.path.insert(0, 'src'); from ecpor.pair_test import reproduce_certificate; r = reproduce_certificate('data/certs/testsuite_stanford_bubblesort__instcombine__dce.json', opt_path='E:/llvm/build/bin/opt.exe', output_dir='data/outputs/pair_tests/repro'); print(r.reproduced, r.original_label, r.reproduced_label, r.reason)"
 ```
 
-Generate the 3 Stanford programs by 3 pass-pair certificate matrix:
+Generate the 3 Stanford programs by 8 pass-pair certificate matrix:
 
 ```powershell
 $env:PYTHONPATH = "src"
-D:\Miniconda\envs\dlm\python.exe -m ecpor.batch_certificates --preset stanford-3x3 --opt E:\llvm\build\bin\opt.exe --out data\outputs\pair_tests --cert-dir data\certs\pair_tests --summary data\outputs\cert_summary.csv --env-id 3c3dab32ea1756773748a56d639e6bb201042576bb0653fd466e109d1946298e --llvm-version 23.0.0git
+D:\Miniconda\envs\dlm\python.exe -m ecpor.batch_certificates --preset stanford-3x8 --opt E:\llvm\build\bin\opt.exe --out data\outputs\pair_tests --cert-dir data\certs\pair_tests --summary data\outputs\cert_summary.csv --env-id 3c3dab32ea1756773748a56d639e6bb201042576bb0653fd466e109d1946298e --llvm-version 23.0.0git
 ```
 
 Generate a text summary report from `cert_summary.csv`:
@@ -80,6 +80,13 @@ Generate a text summary report from `cert_summary.csv`:
 ```powershell
 $env:PYTHONPATH = "src"
 D:\Miniconda\envs\dlm\python.exe -m ecpor.summary_report data\outputs\cert_summary.csv --out data\outputs\cert_summary_report.txt
+```
+
+Generate the not-certified feature-delta report:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.diff_report data\outputs\cert_summary.csv --out-md data\outputs\not_certified_diff_report.md --out-csv data\outputs\not_certified_diff_summary.csv
 ```
 
 Scan soft IR features for one output:

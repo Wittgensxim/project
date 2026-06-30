@@ -6,7 +6,7 @@
 
 1. 进度文档统一使用中文记录。
 2. 每次大改动、新阶段、批量实验、验证结果或风险变化，都在 `docs/progress/` 下新建一个进度文件。
-3. 文件命名使用 `YYYY-MM-DD-NN-简短主题.md`，其中 `NN` 是两位顺序号，例如 `2026-07-01-09-progress-file-ordering.md`；主题用英文小写和连字符，便于搜索和排序。
+3. 文件命名使用 `YYYY-MM-DD-NN-简短主题.md`，其中 `NN` 是两位顺序号，例如 `2026-07-01-11-diff-report-and-3x8-matrix.md`；主题用英文小写和连字符，便于搜索和排序。
 4. `docs/project_progress.md` 只维护索引、规则和最新状态摘要，不再承载完整长文。
 5. 每个独立进度文件必须包含：当前目标、完成内容、验证结果、风险/备注、下一步。
 6. 每个独立进度文件都要附上与本次进度相关的代码快照；优先附完整源代码或完整配置，文件过大时可附关键完整片段并说明原因。
@@ -16,11 +16,11 @@
 ## 最新状态
 
 - 当前分支：`feature/phase-ordering-footprint`
-- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3×3 最小证书表、P2.5 summary report 与 feature scan。
-- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `27 passed`。
-- 最新真实实验：3 个 Stanford 输入 × 3 个 pass pair，`9/9` reproduction，`HardFalseIndependent = 0`。
-- 进度文档规则：`docs/progress/` 下的文件已改为按先后顺序编号命名。
-- 下一步建议：用 feature delta 解释 not-certified pair；稳定后再进入静态过滤，不直接做搜索器。
+- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3×3 最小证书表、P2.5 summary report 与 feature scan、P2.6 not-certified diff report 与 3×8 matrix。
+- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `31 passed`。
+- 最新真实实验：3 个 Stanford 输入 × 8 个 pass pair，`24/24` reproduction，`HardFalseIndependent = 0`，`CertifiedFeatureMismatchCount = 0`，`run_failed = 0`，`no_failure = 48 / 48`。
+- 进度文档规则：`docs/progress/` 下的文件按先后顺序编号命名。
+- 下一步建议：先做 high-recall `passspec.yaml` 与 `static_filter.py` 候选生成，不直接做搜索器。
 
 ## 进度文件索引
 
@@ -36,7 +36,8 @@
 | 2026-07-01 | 拆分进度文件并建立索引规则 | [2026-07-01-08-progress-file-split.md](progress/2026-07-01-08-progress-file-split.md) |
 | 2026-07-01 | 按先后顺序命名进度文件 | [2026-07-01-09-progress-file-ordering.md](progress/2026-07-01-09-progress-file-ordering.md) |
 | 2026-07-01 | P2.5 summary report 与 feature scan soft evidence | [2026-07-01-10-summary-report-feature-scan.md](progress/2026-07-01-10-summary-report-feature-scan.md) |
+| 2026-07-01 | P2.6 diff report 与 3×8 matrix | [2026-07-01-11-diff-report-and-3x8-matrix.md](progress/2026-07-01-11-diff-report-and-3x8-matrix.md) |
 
 ## 旧文档拆分说明
 
-原 `docs/project_progress.md` 中的历史进度和代码快照已经按事件拆分到 `docs/progress/`。本次拆分只调整文档组织方式，不改变运行代码。
+原 `docs/project_progress.md` 中的历史进度和代码快照已经按事件拆分到 `docs/progress/`。本索引只维护文档组织方式和当前阶段摘要。

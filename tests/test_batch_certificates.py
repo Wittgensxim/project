@@ -9,6 +9,23 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 
 class BatchCertificateTests(unittest.TestCase):
+    def test_default_pass_pairs_cover_stanford_3x8_matrix(self):
+        from ecpor.batch_certificates import DEFAULT_PASS_PAIRS
+
+        self.assertEqual(
+            DEFAULT_PASS_PAIRS,
+            [
+                ("instcombine", "dce"),
+                ("instcombine", "adce"),
+                ("dce", "adce"),
+                ("simplifycfg", "instcombine"),
+                ("simplifycfg", "dce"),
+                ("sroa", "early-cse"),
+                ("sroa", "instcombine"),
+                ("early-cse", "gvn"),
+            ],
+        )
+
     def test_run_certificate_matrix_writes_summary_and_reproduces(self):
         from ecpor.batch_certificates import SUMMARY_FIELDS, run_certificate_matrix
 

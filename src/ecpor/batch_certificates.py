@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 from collections import Counter
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Sequence
 
 from .environment import DEFAULT_EXECUTION_MODEL
 from .feature_scan import diff_features, features_to_json, scan_ir_file
@@ -25,10 +26,21 @@ DEFAULT_STANFORD_PROGRAMS: list[Program] = [
     ("testsuite_stanford_perm", "data/inputs/testsuite_stanford_perm.ll"),
 ]
 
-DEFAULT_PASS_PAIRS: list[PassPair] = [
+STANFORD_3X3_PASS_PAIRS: list[PassPair] = [
     ("instcombine", "dce"),
     ("simplifycfg", "instcombine"),
     ("sroa", "early-cse"),
+]
+
+DEFAULT_PASS_PAIRS: list[PassPair] = [
+    ("instcombine", "dce"),
+    ("instcombine", "adce"),
+    ("dce", "adce"),
+    ("simplifycfg", "instcombine"),
+    ("simplifycfg", "dce"),
+    ("sroa", "early-cse"),
+    ("sroa", "instcombine"),
+    ("early-cse", "gvn"),
 ]
 
 SUMMARY_FIELDS = [
@@ -173,10 +185,17 @@ def summarize_rows(rows: Sequence[dict[str, str]]) -> dict[str, int]:
         for row in rows
         if row["label"] == "certified_independent" and row["hard_equal"] != "True"
     )
+    certified_feature_mismatch = sum(
+        1
+        for row in rows
+        if row["label"] == "certified_independent"
+        and _has_nonzero_feature_delta(row.get("feature_delta", ""))
+    )
     summary = dict(label_counts)
     summary["total"] = len(rows)
     summary["reproduced"] = reproduced_count
     summary["hard_false_independent"] = hard_false_independent
+    summary["certified_feature_mismatch"] = certified_feature_mismatch
     return summary
 
 
@@ -184,8 +203,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Generate a certificate matrix.")
     parser.add_argument(
         "--preset",
-        choices=["stanford-3x3"],
-        default="stanford-3x3",
+        choices=["stanford-3x3", "stanford-3x8"],
+        default="stanford-3x8",
         help="Program/pass-pair preset to run.",
     )
     parser.add_argument("--opt", default="opt", help="opt executable or command prefix.")
@@ -209,9 +228,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         opt_path = args.opt
 
+    pass_pairs = (
+        STANFORD_3X3_PASS_PAIRS
+        if args.preset == "stanford-3x3"
+        else DEFAULT_PASS_PAIRS
+    )
     rows = run_certificate_matrix(
         programs=DEFAULT_STANFORD_PROGRAMS,
-        pass_pairs=DEFAULT_PASS_PAIRS,
+        pass_pairs=pass_pairs,
         opt_path=opt_path,
         output_dir=args.out,
         cert_dir=args.cert_dir,
@@ -222,12 +246,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     summary = summarize_rows(rows)
     print(
-        "total={total} reproduced={reproduced} hard_false_independent={hard_false_independent}".format(
+        "total={total} reproduced={reproduced} hard_false_independent={hard_false_independent} certified_feature_mismatch={certified_feature_mismatch}".format(
             **summary
         )
     )
     for label, count in sorted(summary.items()):
-        if label not in {"total", "reproduced", "hard_false_independent"}:
+        if label not in {
+            "total",
+            "reproduced",
+            "hard_false_independent",
+            "certified_feature_mismatch",
+        }:
             print(f"{label}={count}")
     return 0
 
@@ -241,6 +270,28 @@ def _scan_output_features(path: str | Path) -> dict[str, int | bool]:
     if not output.exists():
         return {}
     return scan_ir_file(output)
+
+
+def _has_nonzero_feature_delta(raw_delta: str) -> bool:
+    if not raw_delta.strip():
+        return False
+    try:
+        delta = json.loads(raw_delta)
+    except json.JSONDecodeError:
+        return True
+    if not isinstance(delta, dict):
+        return bool(delta)
+    return any(_is_nonzero_delta(value) for value in delta.values())
+
+
+def _is_nonzero_delta(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        return value != ""
+    return value is not None
 
 
 if __name__ == "__main__":
