@@ -9,14 +9,14 @@
 ### 已完成内容
 
 - [x] 新建 `docs/progress/` 目录。
-- [x] 将原 `docs/project_progress.md` 中的历史记录按事件拆成 7 个文件：
-  - `2026-07-01-mvp0-environment-runner.md`
-  - `2026-07-01-progress-document-rules.md`
-  - `2026-07-01-p1-p2-certificate-loop.md`
-  - `2026-07-01-dlm-python-environment.md`
-  - `2026-07-01-env-cert-repro-hardening.md`
-  - `2026-07-01-git-initialization.md`
-  - `2026-07-01-failure-kind-and-3x3-matrix.md`
+- [x] 将原 `docs/project_progress.md` 中的历史记录按事件拆成 7 个文件；后续已改为顺序编号命名：
+  - `2026-07-01-01-mvp0-environment-runner.md`
+  - `2026-07-01-02-progress-document-rules.md`
+  - `2026-07-01-03-p1-p2-certificate-loop.md`
+  - `2026-07-01-04-dlm-python-environment.md`
+  - `2026-07-01-05-env-cert-repro-hardening.md`
+  - `2026-07-01-06-git-initialization.md`
+  - `2026-07-01-07-failure-kind-and-3x3-matrix.md`
 - [x] 将 `docs/project_progress.md` 改成项目进度索引。
 - [x] 在索引中明确新规则：以后大改动、新阶段、批量实验、验证结果或风险变化，都新建独立进度文件。
 - [x] 修正索引链接，使其从 `docs/project_progress.md` 相对跳转到 `progress/*.md`。
@@ -47,7 +47,7 @@ docs/progress/ 下已有 8 个独立进度文件
 ### 下一步
 
 1. 后续功能改动时，新建 `docs/progress/YYYY-MM-DD-topic.md`。
-2. 在 `docs/project_progress.md` 索引表中追加新文件链接。
+2. 在 `docs/project_progress.md` 索引表中追加新文件链接，并使用下一个两位顺序号。
 3. 保持每个进度文件包含目标、完成内容、验证结果、风险/备注、下一步和代码快照。
 
 ### 本次代码快照：`docs/project_progress.md` 索引规则片段
@@ -70,7 +70,7 @@ docs/progress/ 下已有 8 个独立进度文件
 ```markdown
 | 日期 | 主题 | 文件 |
 | --- | --- | --- |
-| 2026-07-01 | MVP-0/P0 环境与 Runner 基础 | [2026-07-01-mvp0-environment-runner.md](progress/2026-07-01-mvp0-environment-runner.md) |
-| 2026-07-01 | P1.5 failure kind 与 P2 3×3 最小证书表 | [2026-07-01-failure-kind-and-3x3-matrix.md](progress/2026-07-01-failure-kind-and-3x3-matrix.md) |
-| 2026-07-01 | 拆分进度文件并建立索引规则 | [2026-07-01-progress-file-split.md](progress/2026-07-01-progress-file-split.md) |
+| 2026-07-01 | MVP-0/P0 环境与 Runner 基础 | [2026-07-01-01-mvp0-environment-runner.md](progress/2026-07-01-01-mvp0-environment-runner.md) |
+| 2026-07-01 | P1.5 failure kind 与 P2 3×3 最小证书表 | [2026-07-01-07-failure-kind-and-3x3-matrix.md](progress/2026-07-01-07-failure-kind-and-3x3-matrix.md) |
+| 2026-07-01 | 拆分进度文件并建立索引规则 | [2026-07-01-08-progress-file-split.md](progress/2026-07-01-08-progress-file-split.md) |
 ```
