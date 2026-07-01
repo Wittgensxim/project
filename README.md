@@ -11,6 +11,7 @@ The current workspace implements MVP-0/P0:
 - state-indexed adjacent-swap pair certificates
 - certificate summary reporting, not-certified diff reports, and text-level IR feature scanning
 - high-recall static pair-filter candidate reports
+- minimal lazy validation and bounded local one-swap exploration
 - three C microbenchmarks for smoke testing
 
 ## Local LLVM
@@ -123,6 +124,13 @@ Run minimal P4 anchor-adjacent lazy validation:
 ```powershell
 $env:PYTHONPATH = "src"
 D:\Miniconda\envs\dlm\python.exe -m ecpor.adjacent_swap_driver --program-preset stanford-8 --opt E:\llvm\build\bin\opt.exe --cert-dir data\certs\lazy_validation_p4 --out data\outputs\lazy_validation_p4 --attempts-csv data\outputs\lazy_validation_p4_first.csv --report data\outputs\lazy_validation_p4_first.md --env-id 3c3dab32ea1756773748a56d639e6bb201042576bb0653fd466e109d1946298e --llvm-version 23.0.0git
+```
+
+Run P5 bounded local one-swap exploration from a P4 attempts CSV:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.bounded_local_driver --program-preset stanford-8 --pipeline configs\pipeline_scalar.yaml --attempts-csv data\outputs\lazy_validation_p4_e83c409_first.csv --out data\outputs\bounded_local_p5_final --opt E:\llvm\build\bin\opt.exe --timeout-sec 30
 ```
 
 Scan soft IR features for one output:

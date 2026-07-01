@@ -194,7 +194,7 @@ def summarize_attempts(attempts: Sequence[AdjacentSwapAttempt]) -> dict[str, Any
             certified / attempted if attempted else 0.0
         ),
         "certified_pruning_ratio_dynamic": (
-            certified / dynamic_tests if dynamic_tests else 0.0
+            certified / dynamic_tests if dynamic_tests else None
         ),
         "second_run_cache_hit_rate": (
             cache_hits / candidate_swaps
@@ -251,7 +251,7 @@ def build_summary_report(title: str, summary: dict[str, Any]) -> str:
         "CertifiedPruningRatioAttempted: "
         f"{summary['certified_pruning_ratio_attempted'] * 100.0:.2f}%",
         "CertifiedPruningRatioDynamic: "
-        f"{summary['certified_pruning_ratio_dynamic'] * 100.0:.2f}%",
+        f"{_format_optional_percent(summary['certified_pruning_ratio_dynamic'])}",
         "SecondRunCacheHitRate: "
         f"{summary['second_run_cache_hit_rate'] * 100.0:.2f}%",
     ]
@@ -325,6 +325,12 @@ def _attempt_from_validation(
 
 def _safe_name(value: str) -> str:
     return "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in value)
+
+
+def _format_optional_percent(value: float | None) -> str:
+    if value is None:
+        return "N/A"
+    return f"{value * 100.0:.2f}%"
 
 
 if __name__ == "__main__":

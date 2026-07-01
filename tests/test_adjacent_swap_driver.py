@@ -8,6 +8,38 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 
 class AdjacentSwapDriverTests(unittest.TestCase):
+    def test_dynamic_pruning_ratio_is_not_applicable_without_dynamic_tests(self):
+        from ecpor.adjacent_swap_driver import (
+            AdjacentSwapAttempt,
+            build_summary_report,
+            summarize_attempts,
+        )
+
+        attempts = [
+            AdjacentSwapAttempt(
+                program="tiny",
+                prefix_passes=[],
+                state_path="input.ll",
+                state_hash="h0",
+                pass_a="sroa",
+                pass_b="early-cse",
+                static_decision="candidate",
+                static_reason="shared_tags_in_window",
+                action="cache_hit",
+                label="certified_independent",
+                cache_hit=True,
+                dynamic_test=False,
+                reproduced=True,
+                cert_id="cert-1",
+            )
+        ]
+
+        summary = summarize_attempts(attempts)
+        report = build_summary_report("P4 Lazy Validation Report", summary)
+
+        self.assertIsNone(summary["certified_pruning_ratio_dynamic"])
+        self.assertIn("CertifiedPruningRatioDynamic: N/A", report)
+
     def test_driver_validates_anchor_adjacent_pairs_and_reuses_cache(self):
         from ecpor.adjacent_swap_driver import run_adjacent_swap_validation
         from ecpor.certificate_db import CertificateDB
