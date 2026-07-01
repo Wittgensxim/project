@@ -6,6 +6,7 @@ import argparse
 import csv
 from dataclasses import dataclass
 from pathlib import Path
+import re
 from typing import Any, Mapping, Sequence
 
 from .feature_scan import FEATURE_FIELDS, scan_ir_file
@@ -21,6 +22,24 @@ DEFAULT_SUFFIX = ("reassociate", "gvn", "dce", "adce")
 
 NUMERIC_FEATURE_FIELDS = [
     field for field in FEATURE_FIELDS if field.startswith("num_")
+]
+
+OPCODE_NAMES = [
+    "icmp",
+    "select",
+    "getelementptr",
+    "bitcast",
+    "zext",
+    "sext",
+    "trunc",
+    "unreachable",
+    "switch",
+    "add",
+    "sub",
+    "mul",
+    "shl",
+    "or",
+    "and",
 ]
 
 STATE_FIELDS = [
@@ -40,6 +59,13 @@ DELTA_FIELDS = [
     "right_state",
     "hard_hash_equal",
     *[f"{field}_delta" for field in NUMERIC_FEATURE_FIELDS],
+]
+
+OPCODE_DELTA_FIELDS = [
+    "comparison",
+    "left_state",
+    "right_state",
+    *[f"num_{opcode}_delta" for opcode in OPCODE_NAMES],
 ]
 
 OBJECT_SIZE_FIELDS = [
@@ -66,6 +92,7 @@ OBJECT_SIZE_FIELDS = [
 class EffectAttributionResult:
     state_rows: list[dict[str, str]]
     feature_delta_rows: list[dict[str, str]]
+    opcode_delta_rows: list[dict[str, str]]
     object_size_rows: list[dict[str, str]]
     summary: dict[str, Any]
 
@@ -120,6 +147,7 @@ def run_effect_attribution(
     definitions = _state_definitions(prefix, pass_a, pass_b, suffix)
     state_rows: list[dict[str, str]] = []
     state_features: dict[str, dict[str, int | bool]] = {}
+    state_opcodes: dict[str, dict[str, int]] = {}
     for state_name, passes in definitions.items():
         output_ir = state_root / f"{state_name}.ll"
         pipeline = _pipeline(passes)
@@ -133,6 +161,9 @@ def run_effect_attribution(
         features: dict[str, int | bool] = {}
         if result.failure_kind is None and output_ir.exists():
             features = scan_ir_file(output_ir)
+            state_opcodes[state_name] = scan_opcode_multiset(output_ir)
+        else:
+            state_opcodes[state_name] = {}
         state_features[state_name] = features
         state_rows.append(
             _state_row(
@@ -148,6 +179,7 @@ def run_effect_attribution(
         )
 
     delta_rows = _feature_delta_rows(state_rows, state_features)
+    opcode_delta_rows = _opcode_delta_rows(state_opcodes)
     object_rows = _object_size_rows(
         program=program,
         state_rows=state_rows,
@@ -157,31 +189,48 @@ def run_effect_attribution(
         llvm_size_path=llvm_size_path,
         timeout_sec=timeout_sec,
     )
-    summary = _summary(state_rows, delta_rows, object_rows)
+    summary = _summary(state_rows, delta_rows, opcode_delta_rows, object_rows)
 
     _write_csv(output_root / "states.csv", state_rows, STATE_FIELDS)
     _write_csv(output_root / "feature_deltas.csv", delta_rows, DELTA_FIELDS)
+    _write_csv(output_root / "opcode_delta.csv", opcode_delta_rows, OPCODE_DELTA_FIELDS)
     _write_csv(output_root / "object_size.csv", object_rows, OBJECT_SIZE_FIELDS)
     (output_root / "attribution_report.md").write_text(
-        build_attribution_report(summary, state_rows, delta_rows, object_rows),
+        build_attribution_report(
+            summary, state_rows, delta_rows, opcode_delta_rows, object_rows
+        ),
         encoding="utf-8",
     )
     return EffectAttributionResult(
         state_rows=state_rows,
         feature_delta_rows=delta_rows,
+        opcode_delta_rows=opcode_delta_rows,
         object_size_rows=object_rows,
         summary=summary,
     )
+
+
+def scan_opcode_multiset(path: str | Path) -> dict[str, int]:
+    counts = {f"num_{opcode}": 0 for opcode in OPCODE_NAMES}
+    for raw_line in Path(path).read_text(encoding="utf-8", errors="replace").splitlines():
+        opcode = _opcode(raw_line)
+        key = f"num_{opcode}"
+        if key in counts:
+            counts[key] += 1
+    return counts
 
 
 def build_attribution_report(
     summary: Mapping[str, Any],
     state_rows: Sequence[dict[str, str]],
     delta_rows: Sequence[dict[str, str]],
+    opcode_delta_rows: Sequence[dict[str, str]],
     object_rows: Sequence[dict[str, str]],
 ) -> str:
     local = _row_by_key(delta_rows, "comparison", "local_AB_vs_BA")
     final = _row_by_key(delta_rows, "comparison", "final_AB_vs_BA")
+    local_opcode = _row_by_key(opcode_delta_rows, "comparison", "local_AB_vs_BA")
+    final_opcode = _row_by_key(opcode_delta_rows, "comparison", "final_AB_vs_BA")
     lines = [
         "# P8c Queens Effect Attribution",
         "",
@@ -198,6 +247,7 @@ def build_attribution_report(
         f"LlcTextDelta: {summary['LlcTextDelta']}",
         f"ClangTextDelta: {summary['ClangTextDelta']}",
         f"BothCodegenSmaller: {summary['BothCodegenSmaller']}",
+        f"FinalOpcodeDeltaNonZero: {summary['FinalOpcodeDeltaNonZero']}",
         "",
         "## Five Questions",
         "",
@@ -205,9 +255,11 @@ def build_attribution_report(
         f"   结果：{not summary['LocalABBAHardHashEqual']}。",
         "2. 局部 AB/BA 的 feature delta 是什么？",
         f"   num_instructions_delta = {local.get('num_instructions_delta', '')}。",
+        f"   opcode delta = {_format_nonzero_opcode_delta(local_opcode)}。",
         "3. 加上 suffix 后，最终 feature delta 是否扩大、缩小或保持？",
         f"   结果：{summary['FeatureDeltaPropagation']}；"
         f"final num_instructions_delta = {final.get('num_instructions_delta', '')}。",
+        f"   final opcode delta = {_format_nonzero_opcode_delta(final_opcode)}。",
         "4. llc 和 clang-c 下的 .text delta 是否仍然都是 smaller？",
         f"   结果：{summary['BothCodegenSmaller']}。",
         "5. 根据 feature delta，能提出什么 observed attribution hypothesis？",
@@ -221,6 +273,22 @@ def build_attribution_report(
         lines.append(
             "| {state_name} | {num_instructions} | {num_basic_blocks} | "
             "{num_branch} | {num_call} | {hard_hash} |".format(**row)
+        )
+    lines.extend(
+        [
+            "",
+            "## Opcode Delta",
+            "",
+            "| comparison | nonzero opcode delta |",
+            "| --- | --- |",
+        ]
+    )
+    for row in opcode_delta_rows:
+        lines.append(
+            "| {comparison} | {delta} |".format(
+                comparison=row["comparison"],
+                delta=_format_nonzero_opcode_delta(row),
+            )
         )
     lines.extend(
         [
@@ -294,12 +362,8 @@ def _state_row(
     return row
 
 
-def _feature_delta_rows(
-    state_rows: Sequence[dict[str, str]],
-    state_features: Mapping[str, Mapping[str, int | bool]],
-) -> list[dict[str, str]]:
-    state_by_name = {row["state_name"]: row for row in state_rows}
-    comparisons = [
+def _comparison_pairs() -> list[tuple[str, str, str]]:
+    return [
         ("S_to_A", "S", "A"),
         ("S_to_B", "S", "B"),
         ("local_AB_vs_BA", "AB_local", "BA_local"),
@@ -307,8 +371,15 @@ def _feature_delta_rows(
         ("AB_local_to_final", "AB_local", "AB_final"),
         ("BA_local_to_final", "BA_local", "BA_final"),
     ]
+
+
+def _feature_delta_rows(
+    state_rows: Sequence[dict[str, str]],
+    state_features: Mapping[str, Mapping[str, int | bool]],
+) -> list[dict[str, str]]:
+    state_by_name = {row["state_name"]: row for row in state_rows}
     rows: list[dict[str, str]] = []
-    for comparison, left_name, right_name in comparisons:
+    for comparison, left_name, right_name in _comparison_pairs():
         left_features = state_features.get(left_name, {})
         right_features = state_features.get(right_name, {})
         row = {
@@ -324,6 +395,25 @@ def _feature_delta_rows(
             row[f"{field}_delta"] = _delta_text(
                 left_features.get(field), right_features.get(field)
             )
+        rows.append(row)
+    return rows
+
+
+def _opcode_delta_rows(
+    state_opcodes: Mapping[str, Mapping[str, int]],
+) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for comparison, left_name, right_name in _comparison_pairs():
+        left = state_opcodes.get(left_name, {})
+        right = state_opcodes.get(right_name, {})
+        row = {
+            "comparison": comparison,
+            "left_state": left_name,
+            "right_state": right_name,
+        }
+        for opcode in OPCODE_NAMES:
+            key = f"num_{opcode}"
+            row[f"{key}_delta"] = str(int(right.get(key, 0)) - int(left.get(key, 0)))
         rows.append(row)
     return rows
 
@@ -401,6 +491,7 @@ def _object_size_row(
 def _summary(
     state_rows: Sequence[dict[str, str]],
     delta_rows: Sequence[dict[str, str]],
+    opcode_delta_rows: Sequence[dict[str, str]],
     object_rows: Sequence[dict[str, str]],
 ) -> dict[str, Any]:
     state_by_name = {row["state_name"]: row for row in state_rows}
@@ -408,6 +499,7 @@ def _summary(
     final = _row_by_key(delta_rows, "comparison", "final_AB_vs_BA")
     llc_ba = _object_row(object_rows, "llc", "BA_final")
     clang_ba = _object_row(object_rows, "clang", "BA_final")
+    final_opcode = _row_by_key(opcode_delta_rows, "comparison", "final_AB_vs_BA")
     local_instruction_delta = _parse_optional_int(local.get("num_instructions_delta"))
     final_instruction_delta = _parse_optional_int(final.get("num_instructions_delta"))
     return {
@@ -428,6 +520,7 @@ def _summary(
         "ClangTextDelta": _parse_optional_int(clang_ba.get("text_delta")),
         "BothCodegenSmaller": llc_ba.get("direction") == "smaller"
         and clang_ba.get("direction") == "smaller",
+        "FinalOpcodeDeltaNonZero": _format_nonzero_opcode_delta(final_opcode),
     }
 
 
@@ -464,6 +557,28 @@ def _row_by_key(
     rows: Sequence[dict[str, str]], key: str, value: str
 ) -> dict[str, str]:
     return next((row for row in rows if row.get(key) == value), {})
+
+
+def _format_nonzero_opcode_delta(row: Mapping[str, str]) -> str:
+    deltas: list[str] = []
+    for opcode in OPCODE_NAMES:
+        key = f"num_{opcode}_delta"
+        value = row.get(key, "")
+        if value not in {"", "0"}:
+            deltas.append(f"{key}={value}")
+    return ";".join(deltas) if deltas else "none"
+
+
+def _opcode(raw_line: str) -> str:
+    line = raw_line.split(";", 1)[0].strip()
+    if not line or line.startswith(("declare ", "define ")) or line == "}":
+        return ""
+    if re.match(r"^[A-Za-z$._-][A-Za-z0-9$._-]*:\s*$", line):
+        return ""
+    if "=" in line:
+        line = line.split("=", 1)[1].strip()
+    match = re.match(r"([A-Za-z][A-Za-z0-9._-]*)\b", line)
+    return "" if match is None else match.group(1)
 
 
 def _delta_text(left: object, right: object) -> str:

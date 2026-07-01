@@ -252,11 +252,13 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["result_generated_from_commit"], "cafe123")
         self.assertIn("states_csv", loaded["outputs"])
         self.assertIn("feature_deltas_csv", loaded["outputs"])
+        self.assertIn("opcode_delta_csv", loaded["outputs"])
         self.assertIn("object_size_csv", loaded["outputs"])
         self.assertIn("attribution_report", loaded["sha256"])
         self.assertIn("clang", loaded["sha256"])
         self.assertEqual(loaded["summary"]["BothCodegenSmaller"], True)
         self.assertEqual(loaded["summary"]["LocalABBAHardHashEqual"], False)
+        self.assertEqual(loaded["summary"]["FinalOpcodeDeltaNonZero"], "num_add_delta=-1")
         self.assertEqual(loaded["scope_limits"]["single_program"], "testsuite_stanford_queens")
 
 
@@ -505,6 +507,11 @@ def _write_p8c_outputs(out_dir: Path) -> None:
         "final_AB_vs_BA,AB_final,BA_final,-1\n",
     )
     _write_text(
+        out_dir / "opcode_delta.csv",
+        "comparison,left_state,right_state,num_add_delta\n"
+        "final_AB_vs_BA,AB_final,BA_final,-1\n",
+    )
+    _write_text(
         out_dir / "object_size.csv",
         "compile_mode,state_name,text_delta,direction\n"
         "llc,BA_final,-32,smaller\nclang,BA_final,-16,smaller\n",
@@ -525,6 +532,7 @@ def _write_p8c_outputs(out_dir: Path) -> None:
             LlcTextDelta: -32
             ClangTextDelta: -16
             BothCodegenSmaller: True
+            FinalOpcodeDeltaNonZero: num_add_delta=-1
             """
         ).strip()
         + "\n",

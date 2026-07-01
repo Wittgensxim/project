@@ -34,6 +34,7 @@ class EffectAttributionTests(unittest.TestCase):
 
             states = _read_csv(output_dir / "states.csv")
             deltas = _read_csv(output_dir / "feature_deltas.csv")
+            opcode_deltas = _read_csv(output_dir / "opcode_delta.csv")
             object_rows = _read_csv(output_dir / "object_size.csv")
             report = (output_dir / "attribution_report.md").read_text(encoding="utf-8")
 
@@ -48,6 +49,15 @@ class EffectAttributionTests(unittest.TestCase):
         self.assertEqual(local["hard_hash_equal"], "False")
         self.assertEqual(final["hard_hash_equal"], "False")
         self.assertLess(int(final["num_instructions_delta"]), 0)
+        local_opcodes = next(
+            row for row in opcode_deltas if row["comparison"] == "local_AB_vs_BA"
+        )
+        final_opcodes = next(
+            row for row in opcode_deltas if row["comparison"] == "final_AB_vs_BA"
+        )
+        self.assertEqual(local_opcodes["num_add_delta"], "-1")
+        self.assertEqual(final_opcodes["num_add_delta"], "-1")
+        self.assertEqual(result.summary["FinalOpcodeDeltaNonZero"], "num_add_delta=-1")
 
         ba_final_sizes = {
             row["compile_mode"]: row
@@ -58,6 +68,8 @@ class EffectAttributionTests(unittest.TestCase):
         self.assertEqual(ba_final_sizes["clang"]["direction"], "smaller")
         self.assertTrue(result.summary["BothCodegenSmaller"])
         self.assertIn("Observed Attribution Hypothesis", report)
+        self.assertIn("Opcode Delta", report)
+        self.assertIn("FinalOpcodeDeltaNonZero: num_add_delta=-1", report)
         self.assertIn("LocalABBAHardHashEqual: False", report)
         self.assertIn("BothCodegenSmaller: True", report)
 

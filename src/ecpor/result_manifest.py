@@ -113,6 +113,7 @@ P8C_ATTRIBUTION_SUMMARY_KEYS = {
     "LlcTextDelta",
     "ClangTextDelta",
     "BothCodegenSmaller",
+    "FinalOpcodeDeltaNonZero",
 }
 
 
@@ -448,6 +449,7 @@ def build_queens_effect_attribution_manifest(
             "output_dir": out,
             "states_csv": out / "states.csv",
             "feature_deltas_csv": out / "feature_deltas.csv",
+            "opcode_delta_csv": out / "opcode_delta.csv",
             "object_size_csv": out / "object_size.csv",
             "attribution_report": report,
         },
