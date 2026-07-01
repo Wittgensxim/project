@@ -17,14 +17,15 @@
 ## 最新状态
 
 - 当前分支：`feature/phase-ordering-footprint`
-- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening。
-- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `70 passed`。
+- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening、P6.5 result manifest 与 candidate-source invariant。
+- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `71 passed`。
 - 最新 P4 真实实验：8 个 Stanford 输入 × 7 个 anchor-adjacent pair，共 `56` 次 lazy validation；第一轮 `48` 个 candidate 动态测试、`8` 个 low_priority skip、`32` 个 certified、`16` 个 not-certified、`run_failed = 0`、`CertificateReproductionRate = 100.00%`。
 - 最新 P4 cache 验证：第二轮同一批输入 `cache_hits = 48`、`dynamic_tests = 0`、`SecondRunCacheHitRate = 100.00%`。
 - 最新 state-indexing safety 验证：input-state certificate 对 input hash 命中，对 `sroa` 后不同 prefix hash 不命中。
 - 最新 P5 真实实验：输入 `data/outputs/lazy_validation_p4_e83c409_first.csv`，输出 `data/outputs/bounded_local_p5_p6_final/`；生成 `8` 个 anchor candidate 和 `16` 个 single-swap candidate；完整 pipeline 运行 `24` 次，`pipeline_run_failed = 0`，`same_as_anchor = 8`，`different_from_anchor = 16`。
 - 最新 P5 report 修正：新增 `single_swap_same_as_anchor = 0`、`single_swap_different_from_anchor = 16`，并记录 `attempts_csv_sha256` 和 `pipeline_config_sha256`。
-- 最新 P6 真实实验：输入 `data/outputs/bounded_local_p5_p6_final/`，输出 `data/outputs/code_size_p6_final/`；object build `24/24` 成功，`ObjectBuildFailed = 0`，`SizeParseFailed = 0`，`CodeSizeDeltaVsAnchor computed = 16`；single-swap text size 相对 anchor 为 `smaller_text = 1`、`equal_text = 15`、`larger_text = 0`；`IRDifferentButTextEqualCount = 15`、`IRDifferentButTextEqualRate = 93.75%`。
+- 最新 P6 真实实验：输入 `data/outputs/bounded_local_p5_p6_final/`，输出 `data/outputs/code_size_p6_final/`；object build `24/24` 成功，`ObjectBuildFailed = 0`，`SizeParseFailed = 0`，`CodeSizeDeltaVsAnchor computed = 16`；single-swap text size 相对 anchor 为 `smaller_text = 1`、`equal_text = 15`、`larger_text = 0`；`SingleSwapP5SameAsAnchor = 0`、`SingleSwapP5DifferentFromAnchor = 16`、`IRDifferentButTextEqualCount = 15`、`IRDifferentButTextEqualRate = 93.75%`。
+- 最新可提交结果清单：`docs/results/p6_5_code_size_manifest.json`，记录 P6.5 clean run commit、P5/P6 hash、LLVM codegen 工具 hash、P5/P6 summary 和 best smaller candidate。
 - 最新 data 清理：新增 `docs/data_retention_manifest.md`；以后 `data/` 只保留必须保留的文件；删除 `*_work`、旧 P5 commit 输出和重复 P4 final 目录；保留 `data/inputs/`、P4 e83c409、P5/P6 final、pair_tests。清理后 `data/outputs` 约 `21.57 MB`，`data/certs` 约 `0.62 MB`。
 - 重要语义边界：static filter 只做 candidate generation / low priority 排序；lazy validation 只在当前 state 上查询或生成 certificate；input-state certificate 不得复用于 prefix-state。
 - 下一步建议：P6 稳定后再考虑 P7 bounded two-swap exploration；仍不直接做完整 searcher、Alive2、loop pass、inline 或 O2/O3。
@@ -51,6 +52,7 @@
 | 2026-07-01 | P6 code size evaluator 最小版 | [2026-07-01-16-p6-code-size-evaluator.md](progress/2026-07-01-16-p6-code-size-evaluator.md) |
 | 2026-07-01 | data 目录保守清理 | [2026-07-01-17-data-retention-cleanup.md](progress/2026-07-01-17-data-retention-cleanup.md) |
 | 2026-07-01 | P6.5 code size provenance 与 invariant 加固 | [2026-07-01-18-p6-5-code-size-hardening.md](progress/2026-07-01-18-p6-5-code-size-hardening.md) |
+| 2026-07-02 | P6.5 result manifest 与 candidate-source invariant | [2026-07-02-19-p6-5-manifest-source-invariant.md](progress/2026-07-02-19-p6-5-manifest-source-invariant.md) |
 
 ## 旧文档拆分说明
 

@@ -1,0 +1,74 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P6.5",
+  "description": "Clean P6 code-size run after provenance, invariant, and candidate-source hardening.",
+  "result_generated_from_commit": "4af57cd73687b9c274ac8e678c0cd1521e32f309",
+  "ecpor_git_commit": "4af57cd73687b9c274ac8e678c0cd1521e32f309",
+  "ecpor_git_dirty": false,
+  "manifest_note": "This tracked manifest records a clean generated-data run. The generated data under data/outputs is intentionally not tracked.",
+  "inputs": {
+    "p4_attempts_csv": "data/outputs/lazy_validation_p4_e83c409_first.csv",
+    "p5_output_dir": "data/outputs/bounded_local_p5_p6_final",
+    "p6_output_dir": "data/outputs/code_size_p6_final",
+    "p5_report": "data/outputs/bounded_local_p5_p6_final/report.md",
+    "candidates_csv": "data/outputs/bounded_local_p5_p6_final/candidates.csv",
+    "pipeline_runs_csv": "data/outputs/bounded_local_p5_p6_final/pipeline_runs.csv"
+  },
+  "sha256": {
+    "p4_attempts_csv": "ceada53bcb557dfd9a4d9c8217f652b7995f158154d4df5827a1a340acffb777",
+    "p5_report": "eda966ad831669db26bca8c07d89d99ed0cc7df2a57bb01d14899eb95ec2909d",
+    "candidates_csv": "802964f29d07283a76ac3cf4bf434cc467792c98eab00f1b3b133a44d7b6e635",
+    "pipeline_runs_csv": "d0561232baeeafd2d0050025d1294fc14ef83a25828d2f9f7459ebaa81275b92",
+    "llc": "1520eba7e1ee09cc6f38ce1d7ca6eb9fb5187f6ded3a9f70a37f264acebf384c",
+    "llvm_size": "f425ef87d64380ff5f8fd055ddb52e1f0d38f3031bb2a5bbddd557d71c5bc589"
+  },
+  "tools": {
+    "llc_path": "E:\\llvm\\build\\bin\\llc.exe",
+    "llvm_size_path": "E:\\llvm\\build\\bin\\llvm-size.exe"
+  },
+  "p5_summary": {
+    "anchor_candidates": 8,
+    "single_swap_candidates": 16,
+    "pipeline_runs": 24,
+    "pipeline_run_failed": 0,
+    "same_as_anchor": 8,
+    "different_from_anchor": 16,
+    "single_swap_same_as_anchor": 0,
+    "single_swap_different_from_anchor": 16
+  },
+  "p6_summary": {
+    "programs": 8,
+    "anchor_object_builds": 8,
+    "single_swap_object_builds": 16,
+    "object_builds_attempted": 24,
+    "object_build_failed": 0,
+    "size_parse_failed": 0,
+    "anchor_sizes_available": 8,
+    "single_swap_sizes_available": 16,
+    "code_size_delta_vs_anchor_computed": 16,
+    "smaller_text": 1,
+    "equal_text": 15,
+    "larger_text": 0,
+    "single_swap_p5_same_as_anchor": 0,
+    "single_swap_p5_different_from_anchor": 16,
+    "ir_different_but_text_equal_count": 15,
+    "ir_different_but_text_equal_rate": 0.9375,
+    "average_text_delta_pct": -0.2751,
+    "median_text_delta_pct": 0.0,
+    "min_text_delta_pct": -4.4017,
+    "max_text_delta_pct": 0.0
+  },
+  "best_smaller_candidate": {
+    "program": "testsuite_stanford_queens",
+    "pair": "instcombine,simplifycfg",
+    "candidate_id": "testsuite_stanford_queens__swap_2__instcombine__simplifycfg",
+    "text_delta": -32,
+    "text_delta_pct": -4.4017
+  },
+  "scope_limits": {
+    "runtime_benchmarks": false,
+    "full_searcher": false,
+    "clang_c_comparison": false,
+    "codegen_path": "llc -filetype=obj"
+  }
+}
