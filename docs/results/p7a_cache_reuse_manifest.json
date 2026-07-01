@@ -1,0 +1,110 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P7a-cache",
+  "description": "P7a second-run cache reuse check with the first P7a certificate directory.",
+  "result_generated_from_commit": "083ab55e639f289d65cd035f4b3c98e4c0c31ed7",
+  "ecpor_git_commit": "083ab55e639f289d65cd035f4b3c98e4c0c31ed7",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "p5_candidates_csv": "data/outputs/bounded_local_p5_p6_final/candidates.csv",
+    "p5_pipeline_runs_csv": "data/outputs/bounded_local_p5_p6_final/pipeline_runs.csv",
+    "p6_object_size_csv": "data/outputs/code_size_p6_final/object_size.csv",
+    "passspec": "configs/passspec.yaml"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/bounded_two_swap_p7a_second",
+    "cert_dir": "data/certs/bounded_two_swap_p7a",
+    "two_swap_candidates_csv": "data/outputs/bounded_two_swap_p7a_second/two_swap_candidates.csv",
+    "two_swap_attempts_csv": "data/outputs/bounded_two_swap_p7a_second/two_swap_attempts.csv",
+    "two_swap_pipeline_runs_csv": "data/outputs/bounded_two_swap_p7a_second/two_swap_pipeline_runs.csv",
+    "two_swap_object_size_csv": "data/outputs/bounded_two_swap_p7a_second/two_swap_object_size.csv",
+    "two_swap_report": "data/outputs/bounded_two_swap_p7a_second/two_swap_report.md"
+  },
+  "sha256": {
+    "p5_candidates_csv": "802964f29d07283a76ac3cf4bf434cc467792c98eab00f1b3b133a44d7b6e635",
+    "p5_pipeline_runs_csv": "d0561232baeeafd2d0050025d1294fc14ef83a25828d2f9f7459ebaa81275b92",
+    "p6_object_size_csv": "b69269f8f0cfea97ca1529de90fe666beb364c3775769ad02b84f13c0257ec22",
+    "passspec": "1ea7ccf17a13e023e430b32d07c97cc81f17a13e4e55794975605398f4aaaa67",
+    "two_swap_candidates_csv": "ec4a0b10ac9a619201015608a8bf1b5152f80b01e870fddb446440ea701d0542",
+    "two_swap_attempts_csv": "2ea4a2848d6f37220250ed9eeab77e499052ffc5315931776d89d8233375cf92",
+    "two_swap_pipeline_runs_csv": "d53ff792abec81c234a6725ed96de69e6d45bffec97c0447365073d39ad29f9c",
+    "two_swap_object_size_csv": "c566c1fbb78a0b127f9d4c1ea7db9d1b7b65779e41195a5f97b76a3a64df42a2",
+    "two_swap_report": "6390dde603804a7a9853e8f2e9ce605f8b9741c6b09587f05e74e2ccfeead661",
+    "opt": "f4a10cdc53c8f1288bb4051318af63ca8b07aae0f0b8ffb13b788fc98ace2543",
+    "llc": "1520eba7e1ee09cc6f38ce1d7ca6eb9fb5187f6ded3a9f70a37f264acebf384c",
+    "llvm_size": "f425ef87d64380ff5f8fd055ddb52e1f0d38f3031bb2a5bbddd557d71c5bc589"
+  },
+  "tools": {
+    "opt_path": "E:\\llvm\\build\\bin\\opt.exe",
+    "llc_path": "E:\\llvm\\build\\bin\\llc.exe",
+    "llvm_size_path": "E:\\llvm\\build\\bin\\llvm-size.exe"
+  },
+  "summary": {
+    "duplicate_sequences": 1,
+    "object_build_failed": 0,
+    "pipeline_run_failed": 0,
+    "size_parse_failed": 0,
+    "static_candidate_second_swaps": 7,
+    "cache_hits": 7,
+    "seed_candidates": 1,
+    "low_priority_skipped": 0,
+    "not_certified_independent": 4,
+    "validated_second_swaps": 7,
+    "raw_depth2_candidates": 4,
+    "total_pipeline_runs": 11,
+    "best_depth1_text_delta_pct_vs_anchor": -4.4017,
+    "attempted_second_swaps": 7,
+    "depth2_candidate_runs": 3,
+    "best_depth2_text_delta_pct_vs_anchor": -4.4017,
+    "anchor_runs": 8,
+    "unique_depth2_candidates": 3,
+    "depth2_improves_over_depth1_best": false,
+    "run_failed": 0,
+    "depth1_seed_runs": 0,
+    "best_depth2_delta_pct_vs_parent": 0.0,
+    "certified_independent": 3,
+    "dynamic_tests": 0
+  },
+  "seed": {
+    "program": "testsuite_stanford_queens",
+    "candidate_id": "testsuite_stanford_queens__swap_2__instcombine__simplifycfg",
+    "depth1_text_delta_pct_vs_anchor": -4.401651
+  },
+  "depth2_candidates": [
+    {
+      "candidate_id": "testsuite_stanford_queens__depth2__testsuite_stanford_queens__swap_2__instcombine__simplifycfg__swap_0__sroa__early-cse",
+      "swap_index": 0,
+      "pass_a": "sroa",
+      "pass_b": "early-cse",
+      "parent_candidate_id": "testsuite_stanford_queens__swap_2__instcombine__simplifycfg",
+      "candidate_pipeline": "early-cse,sroa,simplifycfg,instcombine,reassociate,gvn,dce,adce",
+      "text_delta_pct_vs_anchor": -4.401651,
+      "delta_pct_vs_parent": 0.0
+    },
+    {
+      "candidate_id": "testsuite_stanford_queens__depth2__testsuite_stanford_queens__swap_2__instcombine__simplifycfg__swap_3__instcombine__reassociate",
+      "swap_index": 3,
+      "pass_a": "instcombine",
+      "pass_b": "reassociate",
+      "parent_candidate_id": "testsuite_stanford_queens__swap_2__instcombine__simplifycfg",
+      "candidate_pipeline": "sroa,early-cse,simplifycfg,reassociate,instcombine,gvn,dce,adce",
+      "text_delta_pct_vs_anchor": -4.401651,
+      "delta_pct_vs_parent": 0.0
+    },
+    {
+      "candidate_id": "testsuite_stanford_queens__depth2__testsuite_stanford_queens__swap_2__instcombine__simplifycfg__swap_4__reassociate__gvn",
+      "swap_index": 4,
+      "pass_a": "reassociate",
+      "pass_b": "gvn",
+      "parent_candidate_id": "testsuite_stanford_queens__swap_2__instcombine__simplifycfg",
+      "candidate_pipeline": "sroa,early-cse,simplifycfg,instcombine,gvn,reassociate,dce,adce",
+      "text_delta_pct_vs_anchor": -2.200825,
+      "delta_pct_vs_parent": 2.200826
+    }
+  ],
+  "scope_limits": {
+    "runtime_benchmarks": false,
+    "full_searcher": false,
+    "codegen_path": "llc -filetype=obj"
+  }
+}
