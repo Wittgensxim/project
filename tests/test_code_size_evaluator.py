@@ -117,6 +117,41 @@ class CodeSizeEvaluatorTests(unittest.TestCase):
         self.assertTrue(any("missing program anchor" in error for error in errors))
         self.assertTrue(any("text_delta mismatch" in error for error in errors))
 
+    def test_validates_candidate_source_invariants(self):
+        from ecpor.code_size_evaluator import validate_object_size_invariants
+
+        rows = [
+            _summary_row("tiny", "tiny__anchor", "anchor", "False", "100", "0"),
+            {
+                **_summary_row(
+                    "tiny",
+                    "tiny__swap",
+                    "single_swap",
+                    "",
+                    "90",
+                    "-10",
+                ),
+                "anchor_text_size": "",
+                "text_delta": "",
+                "text_delta_pct": "",
+            },
+        ]
+
+        errors = validate_object_size_invariants(rows, pipeline_run_count=2)
+
+        self.assertTrue(
+            any("anchor p5_same_as_anchor is not True" in error for error in errors)
+        )
+        self.assertTrue(
+            any("single_swap p5_same_as_anchor missing" in error for error in errors)
+        )
+        self.assertTrue(
+            any("single_swap anchor_text_size missing" in error for error in errors)
+        )
+        self.assertTrue(
+            any("single_swap text_delta missing" in error for error in errors)
+        )
+
     def test_counts_ir_different_but_text_equal_candidates(self):
         from ecpor.code_size_evaluator import summarize_object_size_rows
 
@@ -131,6 +166,8 @@ class CodeSizeEvaluatorTests(unittest.TestCase):
 
         self.assertEqual(summary["ir_different_but_text_equal_count"], 1)
         self.assertAlmostEqual(summary["ir_different_but_text_equal_rate"], 1 / 2)
+        self.assertEqual(summary["single_swap_p5_same_as_anchor"], 1)
+        self.assertEqual(summary["single_swap_p5_different_from_anchor"], 2)
 
 
 def _write_candidates_csv(path: Path) -> None:

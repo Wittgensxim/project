@@ -145,6 +145,11 @@ def summarize_object_size_rows(rows: Sequence[dict[str, str]]) -> dict[str, Any]
         if row.get("p5_same_as_anchor", "").lower() == "false"
         and row.get("text_delta", "") != ""
     ]
+    single_swap_same_as_anchor = [
+        row
+        for row in single_swap_rows
+        if row.get("p5_same_as_anchor", "").lower() == "true"
+    ]
     ir_different_but_text_equal = [
         row for row in ir_different_rows if int(row["text_delta"]) == 0
     ]
@@ -167,6 +172,8 @@ def summarize_object_size_rows(rows: Sequence[dict[str, str]]) -> dict[str, Any]
         "median_text_delta_pct": median(delta_pcts) if delta_pcts else 0.0,
         "min_text_delta_pct": min(delta_pcts) if delta_pcts else 0.0,
         "max_text_delta_pct": max(delta_pcts) if delta_pcts else 0.0,
+        "single_swap_p5_same_as_anchor": len(single_swap_same_as_anchor),
+        "single_swap_p5_different_from_anchor": len(ir_different_rows),
         "ir_different_but_text_equal_count": len(ir_different_but_text_equal),
         "ir_different_but_text_equal_rate": (
             len(ir_different_but_text_equal) / len(ir_different_rows)
@@ -228,6 +235,10 @@ def build_code_size_report(
         f"  median_text_delta_pct: {summary['median_text_delta_pct']:.4f}",
         f"  min_text_delta_pct: {summary['min_text_delta_pct']:.4f}",
         f"  max_text_delta_pct: {summary['max_text_delta_pct']:.4f}",
+        "SingleSwapP5SameAsAnchor: "
+        f"{summary['single_swap_p5_same_as_anchor']}",
+        "SingleSwapP5DifferentFromAnchor: "
+        f"{summary['single_swap_p5_different_from_anchor']}",
         f"IRDifferentButTextEqualCount: {summary['ir_different_but_text_equal_count']}",
         "IRDifferentButTextEqualRate: "
         f"{summary['ir_different_but_text_equal_rate'] * 100.0:.2f}%",
@@ -322,12 +333,20 @@ def validate_object_size_invariants(
                 or row.get("anchor_candidate_id") != anchor.get("candidate_id")
             ):
                 errors.append(f"{candidate_id}: missing program anchor")
+            if _parse_optional_int(row.get("anchor_text_size")) is None:
+                errors.append(f"{candidate_id}: single_swap anchor_text_size missing")
+            if _parse_optional_int(row.get("text_delta")) is None:
+                errors.append(f"{candidate_id}: single_swap text_delta missing")
+            if row.get("p5_same_as_anchor") not in {"True", "False"}:
+                errors.append(f"{candidate_id}: single_swap p5_same_as_anchor missing")
 
         if source == "anchor":
             for field in ("text_delta", "total_delta"):
                 delta = _parse_optional_int(row.get(field))
                 if delta not in {None, 0}:
                     errors.append(f"{candidate_id}: anchor delta is not zero")
+            if row.get("p5_same_as_anchor") != "True":
+                errors.append(f"{candidate_id}: anchor p5_same_as_anchor is not True")
 
         _validate_delta(
             errors,
