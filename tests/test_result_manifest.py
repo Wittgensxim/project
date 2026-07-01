@@ -63,6 +63,8 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["sha256"]["opt"], expected_opt_sha256)
         self.assertEqual(loaded["summary"]["static_candidate_second_swaps"], 7)
         self.assertEqual(loaded["summary"]["unique_depth2_candidates"], 3)
+        self.assertNotIn("ecpor_git_commit", loaded["summary"])
+        self.assertNotIn("p5_candidates_csv", loaded["summary"])
         self.assertEqual(loaded["seed"]["candidate_id"], "seed")
         self.assertEqual(
             loaded["depth2_candidates"][0]["text_delta_pct_vs_anchor"], -10.0
@@ -106,6 +108,8 @@ def _write_p7a_outputs(out_dir: Path) -> None:
             """
             # P7a Bounded Two-Swap Smoke Report
 
+            ecpor_git_commit: abc123
+            p5_candidates_csv: data/outputs/p5/candidates.csv
             seed_candidates: 1
             attempted_second_swaps: 7
             static_candidate_second_swaps: 7

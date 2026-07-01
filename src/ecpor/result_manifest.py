@@ -11,6 +11,34 @@ from typing import Any, Mapping, Sequence
 from .environment import file_sha256, git_info
 
 
+P7A_SUMMARY_KEYS = {
+    "seed_candidates",
+    "attempted_second_swaps",
+    "static_candidate_second_swaps",
+    "low_priority_skipped",
+    "validated_second_swaps",
+    "cache_hits",
+    "dynamic_tests",
+    "certified_independent",
+    "not_certified_independent",
+    "run_failed",
+    "raw_depth2_candidates",
+    "duplicate_sequences",
+    "unique_depth2_candidates",
+    "anchor_runs",
+    "depth1_seed_runs",
+    "depth2_candidate_runs",
+    "total_pipeline_runs",
+    "pipeline_run_failed",
+    "object_build_failed",
+    "size_parse_failed",
+    "best_depth1_text_delta_pct_vs_anchor",
+    "best_depth2_text_delta_pct_vs_anchor",
+    "best_depth2_delta_pct_vs_parent",
+    "depth2_improves_over_depth1_best",
+}
+
+
 def build_result_manifest(
     *,
     stage: str,
@@ -106,7 +134,7 @@ def build_p7a_manifest(
             "llc": llc_path,
             "llvm_size": llvm_size_path,
         },
-        summary=_parse_key_value_report(report_md),
+        summary=_filter_keys(_parse_key_value_report(report_md), P7A_SUMMARY_KEYS),
         repo_root=repo_root,
         result_generated_from_commit=result_generated_from_commit,
         extra=extra,
@@ -262,6 +290,12 @@ def _parse_key_value_report(path: str | Path) -> dict[str, Any]:
             continue
         summary[key] = _parse_scalar(value.strip())
     return summary
+
+
+def _filter_keys(
+    values: Mapping[str, Any], allowed_keys: set[str]
+) -> dict[str, Any]:
+    return {key: values[key] for key in allowed_keys if key in values}
 
 
 def _parse_scalar(value: str) -> Any:
