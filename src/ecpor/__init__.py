@@ -18,6 +18,7 @@ __all__ = [
     "pipeline_runner",
     "pipeline_dedup",
     "code_size_evaluator",
+    "result_manifest",
     "runner",
     "state_materializer",
     "summary_report",

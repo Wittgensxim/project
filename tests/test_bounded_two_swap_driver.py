@@ -54,16 +54,35 @@ class BoundedTwoSwapDriverTests(unittest.TestCase):
             with object_size_path.open(newline="", encoding="utf-8") as handle:
                 object_rows = list(csv.DictReader(handle))
             report = report_path.read_text(encoding="utf-8")
+            report_lines = report.splitlines()
 
         self.assertEqual(result.summary["seed_candidates"], 1)
         self.assertEqual(result.summary["attempted_second_swaps"], 2)
-        self.assertGreaterEqual(result.summary["two_swap_candidates_generated"], 1)
+        self.assertEqual(result.summary["static_candidate_second_swaps"], 2)
+        self.assertEqual(result.summary["validated_second_swaps"], 2)
+        self.assertEqual(result.summary["raw_depth2_candidates"], 2)
+        self.assertEqual(result.summary["duplicate_sequences"], 1)
+        self.assertEqual(result.summary["unique_depth2_candidates"], 1)
+        self.assertEqual(result.summary["anchor_runs"], 1)
+        self.assertEqual(result.summary["depth1_seed_runs"], 0)
+        self.assertEqual(result.summary["depth2_candidate_runs"], 1)
+        self.assertEqual(result.summary["total_pipeline_runs"], 2)
+        self.assertAlmostEqual(
+            result.summary["best_depth1_text_delta_pct_vs_anchor"], -10.0
+        )
+        self.assertAlmostEqual(
+            result.summary["best_depth2_text_delta_pct_vs_anchor"], -10.0
+        )
+        self.assertAlmostEqual(result.summary["best_depth2_delta_pct_vs_parent"], 0.0)
+        self.assertNotIn("candidate_second_swaps", result.summary)
+        self.assertNotIn("two_swap_candidates_generated", result.summary)
+        self.assertNotIn("pipeline_runs", result.summary)
         self.assertEqual(result.summary["pipeline_run_failed"], 0)
         self.assertEqual(result.summary["object_build_failed"], 0)
         self.assertEqual(result.summary["size_parse_failed"], 0)
 
         depth2_rows = [row for row in candidate_rows if row["depth"] == "2"]
-        self.assertEqual(len(depth2_rows), result.summary["two_swap_candidates_generated"])
+        self.assertEqual(len(depth2_rows), result.summary["unique_depth2_candidates"])
         self.assertTrue(all(row["source"] == "two_swap" for row in depth2_rows))
         self.assertTrue(all(row["parent_candidate_id"] == "tiny__swap_0__a__b" for row in depth2_rows))
         self.assertTrue(all(row["pipeline_sequence_hash"] for row in depth2_rows))
@@ -78,6 +97,14 @@ class BoundedTwoSwapDriverTests(unittest.TestCase):
         self.assertTrue(any(row["source"] == "two_swap" for row in object_rows))
         self.assertIn("P7a Bounded Two-Swap Smoke Report", report)
         self.assertIn("seed_candidates: 1", report)
+        self.assertIn("static_candidate_second_swaps: 2", report)
+        self.assertIn("raw_depth2_candidates: 2", report)
+        self.assertIn("unique_depth2_candidates: 1", report)
+        self.assertIn("total_pipeline_runs: 2", report)
+        self.assertIn("best_depth2_delta_pct_vs_parent: 0.0000", report)
+        self.assertNotIn("candidate_second_swaps:", report_lines)
+        self.assertNotIn("two_swap_candidates_generated:", report_lines)
+        self.assertNotIn("pipeline_runs: 2", report_lines)
 
 
 def _write_input_ir(tmp_path: Path) -> Path:

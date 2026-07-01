@@ -187,6 +187,7 @@ def run_bounded_two_swap_smoke(
         candidate_rows=candidate_rows,
         duplicate_rows=duplicate_rows,
         pipeline_runs=pipeline_runs,
+        object_size_rows=code_size.rows,
         object_summary=code_size.summary,
     )
     report = build_two_swap_report(summary, metadata=metadata)
@@ -220,17 +221,36 @@ def summarize_two_swap_run(
     candidate_rows: Sequence[dict[str, str]],
     duplicate_rows: Sequence[dict[str, str]],
     pipeline_runs: Sequence[PipelineRunRecord],
+    object_size_rows: Sequence[dict[str, str]],
     object_summary: dict[str, Any],
 ) -> dict[str, Any]:
     depth2_rows = [row for row in candidate_rows if row.get("depth") == "2"]
+    candidate_by_id = {row["candidate_id"]: row for row in candidate_rows}
+    run_sources = [
+        candidate_by_id.get(record.candidate_id, {}).get("source", "")
+        for record in pipeline_runs
+    ]
+    raw_depth2_candidates = len(depth2_rows) + len(duplicate_rows)
+    best_depth1 = _best_depth1_text_delta_pct(seed_rows)
+    best_depth2 = _best_depth2_text_delta_pct(object_size_rows)
+    best_depth2_vs_parent = _best_depth2_delta_pct_vs_parent(
+        depth2_rows=depth2_rows,
+        object_size_rows=object_size_rows,
+        seed_rows=seed_rows,
+    )
     return {
         "seed_candidates": len(seed_rows),
         "attempted_second_swaps": len(attempt_rows),
-        "candidate_second_swaps": sum(
+        "static_candidate_second_swaps": sum(
             1 for row in attempt_rows if row.get("static_decision") == "candidate"
         ),
         "low_priority_skipped": sum(
             1 for row in attempt_rows if row.get("action") == "skipped_low_priority"
+        ),
+        "validated_second_swaps": sum(
+            1
+            for row in attempt_rows
+            if row.get("cache_hit") == "True" or row.get("dynamic_test") == "True"
         ),
         "cache_hits": sum(1 for row in attempt_rows if row.get("cache_hit") == "True"),
         "dynamic_tests": sum(
@@ -245,15 +265,20 @@ def summarize_two_swap_run(
             if row.get("label") == "not_certified_independent"
         ),
         "run_failed": sum(1 for row in attempt_rows if row.get("label") == "run_failed"),
-        "two_swap_candidates_generated": len(depth2_rows),
+        "raw_depth2_candidates": raw_depth2_candidates,
         "duplicate_sequences": len(duplicate_rows),
-        "pipeline_runs": len(pipeline_runs),
+        "unique_depth2_candidates": len(depth2_rows),
+        "anchor_runs": sum(1 for source in run_sources if source == "anchor"),
+        "depth1_seed_runs": sum(1 for source in run_sources if source == "single_swap"),
+        "depth2_candidate_runs": sum(1 for source in run_sources if source == "two_swap"),
+        "total_pipeline_runs": len(pipeline_runs),
         "pipeline_run_failed": sum(1 for record in pipeline_runs if record.failure_kind),
         "object_build_failed": object_summary["object_build_failed"],
         "size_parse_failed": object_summary["size_parse_failed"],
-        "best_depth2_text_delta_pct": _best_depth2_text_delta_pct(
-            object_summary, depth2_rows
-        ),
+        "best_depth1_text_delta_pct_vs_anchor": best_depth1,
+        "best_depth2_text_delta_pct_vs_anchor": best_depth2,
+        "best_depth2_delta_pct_vs_parent": best_depth2_vs_parent,
+        "depth2_improves_over_depth1_best": best_depth2 < best_depth1,
     }
 
 
@@ -287,24 +312,41 @@ def build_two_swap_report(
     for key in [
         "seed_candidates",
         "attempted_second_swaps",
-        "candidate_second_swaps",
+        "static_candidate_second_swaps",
         "low_priority_skipped",
+        "validated_second_swaps",
         "cache_hits",
         "dynamic_tests",
         "certified_independent",
         "not_certified_independent",
         "run_failed",
-        "two_swap_candidates_generated",
+        "raw_depth2_candidates",
         "duplicate_sequences",
-        "pipeline_runs",
+        "unique_depth2_candidates",
+        "anchor_runs",
+        "depth1_seed_runs",
+        "depth2_candidate_runs",
+        "total_pipeline_runs",
         "pipeline_run_failed",
         "object_build_failed",
         "size_parse_failed",
     ]:
         lines.append(f"{key}: {summary[key]}")
     lines.append(
-        "best_depth2_text_delta_pct: "
-        f"{summary['best_depth2_text_delta_pct']:.4f}"
+        "best_depth1_text_delta_pct_vs_anchor: "
+        f"{summary['best_depth1_text_delta_pct_vs_anchor']:.4f}"
+    )
+    lines.append(
+        "best_depth2_text_delta_pct_vs_anchor: "
+        f"{summary['best_depth2_text_delta_pct_vs_anchor']:.4f}"
+    )
+    lines.append(
+        "best_depth2_delta_pct_vs_parent: "
+        f"{summary['best_depth2_delta_pct_vs_parent']:.4f}"
+    )
+    lines.append(
+        "depth2_improves_over_depth1_best: "
+        f"{summary['depth2_improves_over_depth1_best']}"
     )
     return "\n".join(lines) + "\n"
 
@@ -659,13 +701,54 @@ def _two_swap_candidate_row(
     }
 
 
-def _best_depth2_text_delta_pct(
-    object_summary: dict[str, Any],
+def _best_depth1_text_delta_pct(seed_rows: Sequence[dict[str, str]]) -> float:
+    values = [
+        value
+        for value in (
+            _parse_optional_float(row.get("text_delta_pct")) for row in seed_rows
+        )
+        if value is not None
+    ]
+    return min(values) if values else 0.0
+
+
+def _best_depth2_text_delta_pct(object_size_rows: Sequence[dict[str, str]]) -> float:
+    values = [
+        value
+        for value in (
+            _parse_optional_float(row.get("text_delta_pct"))
+            for row in object_size_rows
+            if row.get("source") == "two_swap"
+        )
+        if value is not None
+    ]
+    return min(values) if values else 0.0
+
+
+def _best_depth2_delta_pct_vs_parent(
+    *,
     depth2_rows: Sequence[dict[str, str]],
+    object_size_rows: Sequence[dict[str, str]],
+    seed_rows: Sequence[dict[str, str]],
 ) -> float:
-    if not depth2_rows:
-        return 0.0
-    return float(object_summary.get("min_text_delta_pct", 0.0))
+    parent_pct_by_id = {
+        row["candidate_id"]: _parse_optional_float(row.get("text_delta_pct"))
+        for row in seed_rows
+    }
+    parent_by_depth2_id = {
+        row["candidate_id"]: row.get("parent_candidate_id", "") for row in depth2_rows
+    }
+    deltas: list[float] = []
+    for row in object_size_rows:
+        if row.get("source") != "two_swap":
+            continue
+        depth2_pct = _parse_optional_float(row.get("text_delta_pct"))
+        parent_id = parent_by_depth2_id.get(row.get("candidate_id", ""))
+        parent_pct = parent_pct_by_id.get(parent_id or "")
+        if depth2_pct is None or parent_pct is None:
+            continue
+        deltas.append(depth2_pct - parent_pct)
+    return min(deltas) if deltas else 0.0
 
 
 def _build_metadata(
