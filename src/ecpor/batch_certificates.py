@@ -6,6 +6,7 @@ import argparse
 import csv
 import json
 from collections import Counter
+from itertools import combinations
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -26,6 +27,17 @@ DEFAULT_STANFORD_PROGRAMS: list[Program] = [
     ("testsuite_stanford_perm", "data/inputs/testsuite_stanford_perm.ll"),
 ]
 
+SCALAR_PIPELINE_PASSES = [
+    "sroa",
+    "early-cse",
+    "instcombine",
+    "simplifycfg",
+    "reassociate",
+    "gvn",
+    "dce",
+    "adce",
+]
+
 STANFORD_3X3_PASS_PAIRS: list[PassPair] = [
     ("instcombine", "dce"),
     ("simplifycfg", "instcombine"),
@@ -41,6 +53,10 @@ DEFAULT_PASS_PAIRS: list[PassPair] = [
     ("sroa", "early-cse"),
     ("sroa", "instcombine"),
     ("early-cse", "gvn"),
+]
+
+FULL_SCALAR_PASS_PAIRS: list[PassPair] = [
+    (left, right) for left, right in combinations(SCALAR_PIPELINE_PASSES, 2)
 ]
 
 SUMMARY_FIELDS = [
@@ -203,7 +219,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Generate a certificate matrix.")
     parser.add_argument(
         "--preset",
-        choices=["stanford-3x3", "stanford-3x8"],
+        choices=["stanford-3x3", "stanford-3x8", "stanford-3x28"],
         default="stanford-3x8",
         help="Program/pass-pair preset to run.",
     )
@@ -228,11 +244,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         opt_path = args.opt
 
-    pass_pairs = (
-        STANFORD_3X3_PASS_PAIRS
-        if args.preset == "stanford-3x3"
-        else DEFAULT_PASS_PAIRS
-    )
+    pass_pairs = _preset_pass_pairs(args.preset)
     rows = run_certificate_matrix(
         programs=DEFAULT_STANFORD_PROGRAMS,
         pass_pairs=pass_pairs,
@@ -263,6 +275,14 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def _safe_name(value: str) -> str:
     return "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in value)
+
+
+def _preset_pass_pairs(preset: str) -> list[PassPair]:
+    if preset == "stanford-3x3":
+        return STANFORD_3X3_PASS_PAIRS
+    if preset == "stanford-3x28":
+        return FULL_SCALAR_PASS_PAIRS
+    return DEFAULT_PASS_PAIRS
 
 
 def _scan_output_features(path: str | Path) -> dict[str, int | bool]:

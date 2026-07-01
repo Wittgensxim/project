@@ -1,0 +1,132 @@
+passes:
+  sroa:
+    level: function
+    requires_any:
+      - has_alloca
+    may_consume:
+      - alloca
+      - aggregate
+      - memory_access
+    may_produce:
+      - scalar_value
+      - simplified_load_store
+      - load_store
+      - scalar_cfg_opportunity
+      - instcombine_opportunity
+      - early_cse_opportunity
+    tags:
+      - scalar
+      - memory
+
+  early-cse:
+    level: function
+    requires_any:
+      - has_load_store
+      - has_call
+      - instruction
+    may_consume:
+      - repeated_expr
+      - load_store
+      - scalar_value
+      - early_cse_opportunity
+    may_produce:
+      - dead_instruction
+      - simplified_expr
+    tags:
+      - scalar
+      - memory
+      - cse
+
+  instcombine:
+    level: function
+    requires_any:
+      - instruction
+    may_consume:
+      - algebraic_expr
+      - canonical_expr
+      - constant_operand
+      - scalar_value
+      - simplified_load_store
+      - instcombine_opportunity
+      - simplified_expr
+    may_produce:
+      - dead_instruction
+      - simplified_expr
+      - dce_opportunity
+    tags:
+      - scalar
+      - canonicalization
+
+  simplifycfg:
+    level: function
+    requires_any:
+      - has_branch
+    may_consume:
+      - branch
+      - phi
+      - unreachable
+      - cfg
+      - scalar_cfg_opportunity
+    may_produce:
+      - simplified_cfg
+      - instcombine_opportunity
+      - dce_opportunity
+    tags:
+      - cfg
+
+  reassociate:
+    level: function
+    requires_any:
+      - instruction
+    may_consume:
+      - algebraic_expr
+      - scalar_value
+    may_produce:
+      - canonical_expr
+      - instcombine_opportunity
+    tags:
+      - scalar
+
+  gvn:
+    level: function
+    requires_any:
+      - instruction
+    may_consume:
+      - repeated_expr
+      - load_store
+      - scalar_value
+      - simplified_expr
+    may_produce:
+      - dead_instruction
+      - simplified_expr
+      - dce_opportunity
+      - scalar_cfg_opportunity
+    tags:
+      - scalar
+      - memory
+      - cse
+
+  dce:
+    level: function
+    requires_any:
+      - instruction
+    may_consume:
+      - dead_instruction
+      - dce_opportunity
+    may_produce:
+      - smaller_ir
+    tags:
+      - cleanup
+
+  adce:
+    level: function
+    requires_any:
+      - instruction
+    may_consume:
+      - dead_instruction
+      - dce_opportunity
+      - control_dependence
+    may_produce:
+      - smaller_ir
+    tags:
+      - cleanup

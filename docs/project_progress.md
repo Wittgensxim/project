@@ -16,11 +16,12 @@
 ## 最新状态
 
 - 当前分支：`feature/phase-ordering-footprint`
-- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3×3 最小证书表、P2.5 summary report 与 feature scan、P2.6 not-certified diff report 与 3×8 matrix。
-- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `31 passed`。
-- 最新真实实验：3 个 Stanford 输入 × 8 个 pass pair，`24/24` reproduction，`HardFalseIndependent = 0`，`CertifiedFeatureMismatchCount = 0`，`run_failed = 0`，`no_failure = 48 / 48`。
+- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3×3 最小证书表、P2.5 summary report 与 feature scan、P2.6 not-certified diff report 与 3×8 matrix、P3 high-recall static filter。
+- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `39 passed`。
+- 最新真实实验：3 个 Stanford 输入 × 28 个 unordered pass pair，`84/84` reproduction，`HardFalseIndependent = 0`，`CertifiedFeatureMismatchCount = 0`，`run_failed = 0`，`no_failure = 168 / 168`。
+- 最新静态过滤评估：`all_pairs = 28`，`candidate_pairs = 22`，`low_priority_pairs = 6`，`StaticCandidateRecall = 100.00%`，`StaticFalseNegativeObserved = 0`，`StaticCandidateReduction = 21.43%`。
 - 进度文档规则：`docs/progress/` 下的文件按先后顺序编号命名。
-- 下一步建议：先做 high-recall `passspec.yaml` 与 `static_filter.py` 候选生成，不直接做搜索器。
+- 下一步建议：在 P3 报告稳定后，再进入 lazy validation / local search；不直接扩大 benchmark 或做完整 O2/O3。
 
 ## 进度文件索引
 
@@ -37,6 +38,7 @@
 | 2026-07-01 | 按先后顺序命名进度文件 | [2026-07-01-09-progress-file-ordering.md](progress/2026-07-01-09-progress-file-ordering.md) |
 | 2026-07-01 | P2.5 summary report 与 feature scan soft evidence | [2026-07-01-10-summary-report-feature-scan.md](progress/2026-07-01-10-summary-report-feature-scan.md) |
 | 2026-07-01 | P2.6 diff report 与 3×8 matrix | [2026-07-01-11-diff-report-and-3x8-matrix.md](progress/2026-07-01-11-diff-report-and-3x8-matrix.md) |
+| 2026-07-01 | P3 passspec 与 static filter 评估 | [2026-07-01-12-passspec-static-filter-eval.md](progress/2026-07-01-12-passspec-static-filter-eval.md) |
 
 ## 旧文档拆分说明
 

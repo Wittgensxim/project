@@ -26,6 +26,14 @@ class BatchCertificateTests(unittest.TestCase):
             ],
         )
 
+    def test_full_scalar_pass_pairs_cover_8_pass_universe(self):
+        from ecpor.batch_certificates import FULL_SCALAR_PASS_PAIRS
+
+        self.assertEqual(len(FULL_SCALAR_PASS_PAIRS), 28)
+        self.assertEqual(FULL_SCALAR_PASS_PAIRS[0], ("sroa", "early-cse"))
+        self.assertEqual(FULL_SCALAR_PASS_PAIRS[-1], ("dce", "adce"))
+        self.assertIn(("instcombine", "simplifycfg"), FULL_SCALAR_PASS_PAIRS)
+
     def test_run_certificate_matrix_writes_summary_and_reproduces(self):
         from ecpor.batch_certificates import SUMMARY_FIELDS, run_certificate_matrix
 

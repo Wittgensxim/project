@@ -10,4 +10,5 @@ __all__ = [
     "pair_test",
     "runner",
     "summary_report",
+    "static_filter",
 ]
