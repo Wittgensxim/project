@@ -204,7 +204,9 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["stage"], "P8a.5")
         self.assertEqual(loaded["result_generated_from_commit"], "abc999")
         self.assertIn("ecpor_core_evidence_report", loaded["outputs"])
-        self.assertIn("ecpor_reduction_funnel_csv", loaded["outputs"])
+        self.assertIn("ecpor_validation_funnel_csv", loaded["outputs"])
+        self.assertIn("ecpor_candidate_propagation_funnel_csv", loaded["outputs"])
+        self.assertIn("ecpor_objective_layer_summary_csv", loaded["outputs"])
         self.assertIn("ecpor_core_evidence_report", loaded["sha256"])
         self.assertEqual(loaded["summary"]["DirectionAgreementRate"], "68.42%")
         self.assertEqual(loaded["summary"]["SmallerUnderBothCount"], 4)
@@ -414,15 +416,19 @@ def _write_p8a_outputs(out_dir: Path) -> None:
 
 def _write_core_evidence_outputs(out_dir: Path) -> None:
     _write_text(
-        out_dir / "ecpor_reduction_funnel.csv",
-        "stage,input_count\nP4,56\n",
+        out_dir / "ecpor_validation_funnel.csv",
+        "stage,attempted_swaps\nP4,56\n",
+    )
+    _write_text(
+        out_dir / "ecpor_candidate_propagation_funnel.csv",
+        "stage,unique_depth2_candidates\nP7b,22\n",
     )
     _write_text(
         out_dir / "ecpor_certified_pruning_summary.csv",
-        "stage,evidence_type,count\nP4,certified_independent,32\n",
+        "stage,evidence_event,count\nP4,certified_independent_events,32\n",
     )
     _write_text(
-        out_dir / "ecpor_codegen_sensitivity_summary.csv",
+        out_dir / "ecpor_objective_layer_summary.csv",
         "direction_comparison_candidates,direction_agreement_rate,smaller_under_both\n38,68.42%,4\n",
     )
     _write_text(

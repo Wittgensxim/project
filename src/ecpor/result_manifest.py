@@ -386,11 +386,13 @@ def build_core_evidence_manifest(
         outputs={
             "output_dir": out,
             "ecpor_core_evidence_report": report,
-            "ecpor_reduction_funnel_csv": out / "ecpor_reduction_funnel.csv",
+            "ecpor_validation_funnel_csv": out / "ecpor_validation_funnel.csv",
+            "ecpor_candidate_propagation_funnel_csv": out
+            / "ecpor_candidate_propagation_funnel.csv",
             "ecpor_certified_pruning_summary_csv": out
             / "ecpor_certified_pruning_summary.csv",
-            "ecpor_codegen_sensitivity_summary_csv": out
-            / "ecpor_codegen_sensitivity_summary.csv",
+            "ecpor_objective_layer_summary_csv": out
+            / "ecpor_objective_layer_summary.csv",
         },
         tools={},
         summary=_filter_keys(

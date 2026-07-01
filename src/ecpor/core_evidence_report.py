@@ -9,28 +9,46 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 
-FUNNEL_FIELDS = [
+VALIDATION_FUNNEL_FIELDS = [
     "stage",
-    "input_count",
-    "candidate_count",
-    "certified_collapsed",
-    "not_certified_kept",
-    "low_priority_frozen",
+    "count_basis",
+    "attempted_swaps",
+    "static_candidate_swaps",
+    "dynamic_tests",
+    "cache_hits",
+    "certified_independent_events",
+    "not_certified_events",
+    "low_priority_events",
+    "run_failed",
+    "notes",
+]
+
+CANDIDATE_PROPAGATION_FIELDS = [
+    "stage",
+    "count_basis",
+    "anchor_candidates",
+    "single_swap_candidates",
+    "raw_depth2_candidates",
     "duplicates_removed",
-    "unique_candidates",
+    "unique_depth2_candidates",
+    "object_size_evaluated_candidates",
+    "clang_c_compared_candidates",
     "notes",
 ]
 
 PRUNING_FIELDS = [
     "stage",
-    "evidence_type",
+    "evidence_event",
     "count",
+    "scope",
     "hard_prune",
+    "proof_level",
     "evidence_source",
     "meaning",
 ]
 
-CODEGEN_FIELDS = [
+OBJECTIVE_LAYER_FIELDS = [
+    "count_basis",
     "direction_comparison_candidates",
     "direction_agreement_count",
     "direction_agreement_rate",
@@ -43,9 +61,10 @@ CODEGEN_FIELDS = [
 
 @dataclass(frozen=True)
 class CoreEvidenceReport:
-    funnel_rows: list[dict[str, str]]
+    validation_rows: list[dict[str, str]]
+    propagation_rows: list[dict[str, str]]
     pruning_rows: list[dict[str, str]]
-    codegen_rows: list[dict[str, str]]
+    objective_rows: list[dict[str, str]]
     summary: dict[str, Any]
 
 
@@ -72,13 +91,15 @@ def run_core_evidence_report(
     p7b_analysis = _parse_key_value_report(p7b_analysis_report)
     p8a_compare = _load_csv(p8a_compare_csv)
 
-    funnel_rows = _build_funnel_rows(
+    validation_rows = _build_validation_rows(
         p4_attempts=p4_attempts,
-        p5_candidates=p5_candidates,
-        p5_pipeline_runs=p5_pipeline_runs,
-        p6_object_rows=p6_object_rows,
         p7b_attempts=p7b_attempts,
+    )
+    propagation_rows = _build_propagation_rows(
+        p5_candidates=p5_candidates,
+        p6_object_rows=p6_object_rows,
         p7b_candidates=p7b_candidates,
+        p7b_object_rows=p7b_object_rows,
         p7b_analysis=p7b_analysis,
         p8a_compare=p8a_compare,
     )
@@ -88,11 +109,12 @@ def run_core_evidence_report(
         p7b_analysis=p7b_analysis,
         p8a_compare=p8a_compare,
     )
-    codegen_rows = [_build_codegen_summary(p8a_compare)]
+    objective_rows = [_build_objective_summary(p8a_compare)]
     summary = _build_summary(
-        funnel_rows=funnel_rows,
+        validation_rows=validation_rows,
+        propagation_rows=propagation_rows,
         pruning_rows=pruning_rows,
-        codegen_row=codegen_rows[0],
+        objective_row=objective_rows[0],
         p6_object_rows=p6_object_rows,
         p7b_object_rows=p7b_object_rows,
         p7b_analysis=p7b_analysis,
@@ -100,30 +122,41 @@ def run_core_evidence_report(
 
     output_root = Path(output_dir)
     output_root.mkdir(parents=True, exist_ok=True)
-    _write_csv(output_root / "ecpor_reduction_funnel.csv", funnel_rows, FUNNEL_FIELDS)
+    _write_csv(
+        output_root / "ecpor_validation_funnel.csv",
+        validation_rows,
+        VALIDATION_FUNNEL_FIELDS,
+    )
+    _write_csv(
+        output_root / "ecpor_candidate_propagation_funnel.csv",
+        propagation_rows,
+        CANDIDATE_PROPAGATION_FIELDS,
+    )
     _write_csv(
         output_root / "ecpor_certified_pruning_summary.csv",
         pruning_rows,
         PRUNING_FIELDS,
     )
     _write_csv(
-        output_root / "ecpor_codegen_sensitivity_summary.csv",
-        codegen_rows,
-        CODEGEN_FIELDS,
+        output_root / "ecpor_objective_layer_summary.csv",
+        objective_rows,
+        OBJECTIVE_LAYER_FIELDS,
     )
     (output_root / "ecpor_core_evidence_report.md").write_text(
         build_core_evidence_report(
             summary=summary,
-            funnel_rows=funnel_rows,
+            validation_rows=validation_rows,
+            propagation_rows=propagation_rows,
             pruning_rows=pruning_rows,
-            codegen_rows=codegen_rows,
+            objective_rows=objective_rows,
         ),
         encoding="utf-8",
     )
     return CoreEvidenceReport(
-        funnel_rows=funnel_rows,
+        validation_rows=validation_rows,
+        propagation_rows=propagation_rows,
         pruning_rows=pruning_rows,
-        codegen_rows=codegen_rows,
+        objective_rows=objective_rows,
         summary=summary,
     )
 
@@ -131,55 +164,85 @@ def run_core_evidence_report(
 def build_core_evidence_report(
     *,
     summary: Mapping[str, Any],
-    funnel_rows: Sequence[dict[str, str]],
+    validation_rows: Sequence[dict[str, str]],
+    propagation_rows: Sequence[dict[str, str]],
     pruning_rows: Sequence[dict[str, str]],
-    codegen_rows: Sequence[dict[str, str]],
+    objective_rows: Sequence[dict[str, str]],
 ) -> str:
-    codegen = codegen_rows[0] if codegen_rows else {}
+    objective = objective_rows[0] if objective_rows else {}
     lines = [
         "# ECPOR Core Evidence Report",
         "",
         "本报告把 P4-P8a 的结果收束回最初问题：搜索空间坍缩、证据等级、以及目标函数层的 codegen 敏感性。",
         "它不新增搜索、不新增 certificate、不运行 runtime benchmark。",
         "",
-        "## 搜索空间坍缩",
+        "## Validation Funnel",
         "",
-        "| stage | input | candidate | certified collapsed | not-certified kept | low-priority frozen | duplicates removed | unique |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| stage | basis | attempts | static candidate | dynamic tests | cache hits | certified events | not-certified events | low-priority events | run failed |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
-    for row in funnel_rows:
+    for row in validation_rows:
         lines.append(
-            "| {stage} | {input_count} | {candidate_count} | {certified_collapsed} | "
-            "{not_certified_kept} | {low_priority_frozen} | {duplicates_removed} | "
-            "{unique_candidates} |".format(**row)
-        )
-    lines.extend(
-        [
-            "",
-            "## Hard Evidence Vs Soft Evidence",
-            "",
-            "| stage | evidence | count | hard prune | meaning |",
-            "| --- | --- | ---: | --- | --- |",
-        ]
-    )
-    for row in pruning_rows:
-        lines.append(
-            "| {stage} | {evidence_type} | {count} | {hard_prune} | {meaning} |".format(
+            "| {stage} | {count_basis} | {attempted_swaps} | {static_candidate_swaps} | "
+            "{dynamic_tests} | {cache_hits} | {certified_independent_events} | "
+            "{not_certified_events} | {low_priority_events} | {run_failed} |".format(
                 **row
             )
         )
     lines.extend(
         [
             "",
-            "## Codegen Sensitivity",
+            "## Candidate Propagation Funnel",
             "",
-            f"DirectionComparisonCandidates: {codegen.get('direction_comparison_candidates', '0')}",
-            f"DirectionAgreementCount: {codegen.get('direction_agreement_count', '0')}",
-            f"DirectionAgreementRate: {codegen.get('direction_agreement_rate', '0.00%')}",
-            f"SmallerUnderBothCount: {codegen.get('smaller_under_both', '0')}",
-            f"SmallerOnlyUnderLlcCount: {codegen.get('smaller_only_under_llc', '0')}",
-            f"SmallerOnlyUnderClangCount: {codegen.get('smaller_only_under_clang', '0')}",
-            f"DirectionDisagreementCount: {codegen.get('direction_disagreement_count', '0')}",
+            "| stage | basis | anchors | single-swap | raw depth2 | duplicates removed | unique depth2 | object-size evaluated | clang-c compared |",
+            "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        ]
+    )
+    for row in propagation_rows:
+        lines.append(
+            "| {stage} | {count_basis} | {anchor_candidates} | {single_swap_candidates} | "
+            "{raw_depth2_candidates} | {duplicates_removed} | {unique_depth2_candidates} | "
+            "{object_size_evaluated_candidates} | {clang_c_compared_candidates} |".format(
+                **row
+            )
+        )
+    lines.extend(
+        [
+            "",
+            "## Hard Evidence Vs Soft Evidence",
+            "",
+            "| stage | evidence event | count | scope | hard prune | proof level | meaning |",
+            "| --- | --- | ---: | --- | --- | --- | --- |",
+        ]
+    )
+    for row in pruning_rows:
+        lines.append(
+            "| {stage} | {evidence_event} | {count} | {scope} | {hard_prune} | "
+            "{proof_level} | {meaning} |".format(**row)
+        )
+    lines.extend(
+        [
+            "",
+            "## Objective-layer Evidence",
+            "",
+            "This is objective-layer evidence, not pruning evidence.",
+            "",
+            f"DirectionComparisonCandidates: {objective.get('direction_comparison_candidates', '0')}",
+            f"DirectionAgreementCount: {objective.get('direction_agreement_count', '0')}",
+            f"DirectionAgreementRate: {objective.get('direction_agreement_rate', '0.00%')}",
+            f"SmallerUnderBothCount: {objective.get('smaller_under_both', '0')}",
+            f"SmallerOnlyUnderLlcCount: {objective.get('smaller_only_under_llc', '0')}",
+            f"SmallerOnlyUnderClangCount: {objective.get('smaller_only_under_clang', '0')}",
+            f"DirectionDisagreementCount: {objective.get('direction_disagreement_count', '0')}",
+            "",
+            "## Relation to Original Research Question",
+            "",
+            "ECPOR 当前已经证明：",
+            "1. 一部分 state-indexed adjacent ordering 可以被 hard certificate 折叠。",
+            "2. 一部分 not-certified ordering 必须保留为 candidate。",
+            "3. static filter 只减少动态测试优先级，不产生 proof。",
+            "4. sequence-level duplicate 能减少重复 candidate path，但不是语义等价证明。",
+            "5. code-size observation 必须按 codegen path 区分。",
             "",
             "## 当前结论",
             "",
@@ -247,85 +310,121 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(
         build_core_evidence_report(
             summary=result.summary,
-            funnel_rows=result.funnel_rows,
+            validation_rows=result.validation_rows,
+            propagation_rows=result.propagation_rows,
             pruning_rows=result.pruning_rows,
-            codegen_rows=result.codegen_rows,
+            objective_rows=result.objective_rows,
         ),
         end="",
     )
     return 0
 
 
-def _build_funnel_rows(
+def _build_validation_rows(
     *,
     p4_attempts: Sequence[dict[str, str]],
-    p5_candidates: Sequence[dict[str, str]],
-    p5_pipeline_runs: Sequence[dict[str, str]],
-    p6_object_rows: Sequence[dict[str, str]],
     p7b_attempts: Sequence[dict[str, str]],
+) -> list[dict[str, str]]:
+    return [
+        _validation_row("P4", p4_attempts, "anchor-adjacent validation"),
+        _validation_row("P7b", p7b_attempts, "second-swap prefix validation"),
+    ]
+
+
+def _validation_row(
+    stage: str, attempts: Sequence[dict[str, str]], notes: str
+) -> dict[str, str]:
+    return {
+        "stage": stage,
+        "count_basis": "state_indexed_adjacent_swap_events",
+        "attempted_swaps": str(len(attempts)),
+        "static_candidate_swaps": str(_count_static_candidate(attempts)),
+        "dynamic_tests": str(_count_true(attempts, "dynamic_test")),
+        "cache_hits": str(_count_true(attempts, "cache_hit")),
+        "certified_independent_events": str(
+            _count_label(attempts, "certified_independent")
+        ),
+        "not_certified_events": str(
+            _count_label(attempts, "not_certified_independent")
+        ),
+        "low_priority_events": str(_count_action(attempts, "skipped_low_priority")),
+        "run_failed": str(_count_label(attempts, "run_failed")),
+        "notes": notes,
+    }
+
+
+def _build_propagation_rows(
+    *,
+    p5_candidates: Sequence[dict[str, str]],
+    p6_object_rows: Sequence[dict[str, str]],
     p7b_candidates: Sequence[dict[str, str]],
+    p7b_object_rows: Sequence[dict[str, str]],
     p7b_analysis: Mapping[str, Any],
     p8a_compare: Sequence[dict[str, str]],
 ) -> list[dict[str, str]]:
+    p5_anchor = [row for row in p5_candidates if row.get("source") == "anchor"]
     p5_single = [row for row in p5_candidates if row.get("source") == "single_swap"]
     p6_candidate_rows = [
         row for row in p6_object_rows if row.get("source") == "single_swap"
     ]
+    p7b_anchor = [row for row in p7b_candidates if row.get("source") == "anchor"]
     p7b_depth2 = [row for row in p7b_candidates if row.get("source") == "two_swap"]
+    p7b_depth2_object_rows = [
+        row for row in p7b_object_rows if row.get("source") == "two_swap"
+    ]
     return [
         {
-            "stage": "P4",
-            "input_count": str(len(p4_attempts)),
-            "candidate_count": str(_count_true(p4_attempts, "dynamic_test")),
-            "certified_collapsed": str(_count_label(p4_attempts, "certified_independent")),
-            "not_certified_kept": str(_count_label(p4_attempts, "not_certified_independent")),
-            "low_priority_frozen": str(_count_action(p4_attempts, "skipped_low_priority")),
-            "duplicates_removed": "0",
-            "unique_candidates": str(_count_label(p4_attempts, "not_certified_independent")),
-            "notes": "state-indexed adjacent lazy validation",
-        },
-        {
             "stage": "P5",
-            "input_count": str(len(p5_pipeline_runs)),
-            "candidate_count": str(len(p5_single)),
-            "certified_collapsed": str(_count_label(p4_attempts, "certified_independent")),
-            "not_certified_kept": str(len(p5_single)),
-            "low_priority_frozen": str(_count_action(p4_attempts, "skipped_low_priority")),
+            "count_basis": "candidate_pipelines_from_P4_evidence",
+            "anchor_candidates": str(len(p5_anchor)),
+            "single_swap_candidates": str(len(p5_single)),
+            "raw_depth2_candidates": "0",
             "duplicates_removed": "0",
-            "unique_candidates": str(len(p5_single)),
+            "unique_depth2_candidates": "0",
+            "object_size_evaluated_candidates": "0",
+            "clang_c_compared_candidates": "0",
             "notes": "one-swap candidates from not-certified adjacent pairs",
         },
         {
             "stage": "P6",
-            "input_count": str(len(p6_candidate_rows)),
-            "candidate_count": str(len(p6_candidate_rows)),
-            "certified_collapsed": "0",
-            "not_certified_kept": str(_count_ir_different(p6_candidate_rows)),
-            "low_priority_frozen": "0",
+            "count_basis": "single_swap_candidate_object_eval",
+            "anchor_candidates": str(
+                sum(1 for row in p6_object_rows if row.get("source") == "anchor")
+            ),
+            "single_swap_candidates": str(len(p6_candidate_rows)),
+            "raw_depth2_candidates": "0",
             "duplicates_removed": "0",
-            "unique_candidates": str(len(p6_candidate_rows)),
+            "unique_depth2_candidates": "0",
+            "object_size_evaluated_candidates": str(len(p6_candidate_rows)),
+            "clang_c_compared_candidates": "0",
             "notes": "llc object .text objective layer",
         },
         {
             "stage": "P7b",
-            "input_count": str(len(p7b_attempts)),
-            "candidate_count": str(_as_int(p7b_analysis.get("RawDepth2Candidates"), _count_label(p7b_attempts, "not_certified_independent"))),
-            "certified_collapsed": str(_count_label(p7b_attempts, "certified_independent")),
-            "not_certified_kept": str(_count_label(p7b_attempts, "not_certified_independent")),
-            "low_priority_frozen": str(_count_action(p7b_attempts, "skipped_low_priority")),
+            "count_basis": "depth2_candidate_pipelines",
+            "anchor_candidates": str(len(p7b_anchor)),
+            "single_swap_candidates": "0",
+            "raw_depth2_candidates": str(
+                _as_int(p7b_analysis.get("RawDepth2Candidates"), len(p7b_depth2))
+            ),
             "duplicates_removed": str(_as_int(p7b_analysis.get("DuplicateSequences"), 0)),
-            "unique_candidates": str(_as_int(p7b_analysis.get("UniqueDepth2Candidates"), len(p7b_depth2))),
+            "unique_depth2_candidates": str(
+                _as_int(p7b_analysis.get("UniqueDepth2Candidates"), len(p7b_depth2))
+            ),
+            "object_size_evaluated_candidates": str(len(p7b_depth2_object_rows)),
+            "clang_c_compared_candidates": "0",
             "notes": "bounded depth2 candidates after sequence-level dedup",
         },
         {
             "stage": "P8a",
-            "input_count": str(len(p8a_compare)),
-            "candidate_count": str(len(p8a_compare)),
-            "certified_collapsed": "0",
-            "not_certified_kept": str(len(p8a_compare)),
-            "low_priority_frozen": "0",
+            "count_basis": "objective_layer_codegen_comparison",
+            "anchor_candidates": "0",
+            "single_swap_candidates": "0",
+            "raw_depth2_candidates": "0",
             "duplicates_removed": "0",
-            "unique_candidates": str(len(p8a_compare)),
+            "unique_depth2_candidates": "0",
+            "object_size_evaluated_candidates": "0",
+            "clang_c_compared_candidates": str(len(p8a_compare)),
             "notes": "llc vs clang-c objective direction comparison",
         },
     ]
@@ -352,48 +451,58 @@ def _build_pruning_rows(
     return [
         {
             "stage": "P4/P7b",
-            "evidence_type": "certified_independent",
+            "evidence_event": "certified_independent_events",
             "count": str(certified),
+            "scope": "state-indexed adjacent swap events",
             "hard_prune": "True",
+            "proof_level": "hard",
             "evidence_source": "hard hash equality certificate",
             "meaning": "A;B and B;A are equal for the same materialized state",
         },
         {
             "stage": "P4/P7b",
-            "evidence_type": "not_certified_independent",
+            "evidence_event": "not_certified_events",
             "count": str(not_certified),
+            "scope": "state-indexed adjacent swap events",
             "hard_prune": "False",
+            "proof_level": "hard_negative_for_equality",
             "evidence_source": "hard hash differs",
             "meaning": "order remains observable and must not be pruned as independent",
         },
         {
             "stage": "P4/P7b",
-            "evidence_type": "low_priority",
+            "evidence_event": "low_priority_events",
             "count": str(low_priority),
+            "scope": "static filter classification events",
             "hard_prune": "False",
+            "proof_level": "soft",
             "evidence_source": "static filter hint",
             "meaning": "static ordering priority only, not a proof",
         },
         {
             "stage": "P7b",
-            "evidence_type": "sequence_duplicate",
+            "evidence_event": "sequence_duplicates",
             "count": str(duplicate_sequences),
+            "scope": "identical pass sequence paths",
             "hard_prune": "False",
+            "proof_level": "syntactic_dedup",
             "evidence_source": "pipeline sequence hash",
             "meaning": "same pass sequence can be deduplicated but is not semantic equivalence",
         },
         {
             "stage": "P8a",
-            "evidence_type": "llc_clang_both_smaller",
+            "evidence_event": "llc_clang_both_smaller_object",
             "count": str(both_smaller),
+            "scope": "objective-layer object-size observations",
             "hard_prune": "False",
+            "proof_level": "target_layer",
             "evidence_source": "object .text under llc and clang-c",
             "meaning": "stronger objective-layer observation, not an independence proof",
         },
     ]
 
 
-def _build_codegen_summary(rows: Sequence[dict[str, str]]) -> dict[str, str]:
+def _build_objective_summary(rows: Sequence[dict[str, str]]) -> dict[str, str]:
     total = len(rows)
     agreement = sum(1 for row in rows if row.get("direction_agree") == "True")
     disagreement = total - agreement
@@ -411,6 +520,7 @@ def _build_codegen_summary(rows: Sequence[dict[str, str]]) -> dict[str, str]:
         and row.get("clang_direction") == "smaller"
     )
     return {
+        "count_basis": "objective_layer_codegen_comparison",
         "direction_comparison_candidates": str(total),
         "direction_agreement_count": str(agreement),
         "direction_agreement_rate": _percent(agreement, total),
@@ -423,20 +533,22 @@ def _build_codegen_summary(rows: Sequence[dict[str, str]]) -> dict[str, str]:
 
 def _build_summary(
     *,
-    funnel_rows: Sequence[dict[str, str]],
+    validation_rows: Sequence[dict[str, str]],
+    propagation_rows: Sequence[dict[str, str]],
     pruning_rows: Sequence[dict[str, str]],
-    codegen_row: Mapping[str, str],
+    objective_row: Mapping[str, str],
     p6_object_rows: Sequence[dict[str, str]],
     p7b_object_rows: Sequence[dict[str, str]],
     p7b_analysis: Mapping[str, Any],
 ) -> dict[str, Any]:
     return {
-        "Stages": len(funnel_rows),
+        "ValidationStages": len(validation_rows),
+        "PropagationStages": len(propagation_rows),
         "CertifiedIndependentTotal": _summary_count(
-            pruning_rows, "certified_independent"
+            pruning_rows, "certified_independent_events"
         ),
         "NotCertifiedIndependentTotal": _summary_count(
-            pruning_rows, "not_certified_independent"
+            pruning_rows, "not_certified_events"
         ),
         "SequenceDuplicates": _as_int(p7b_analysis.get("DuplicateSequences"), 0),
         "P6SmallerText": _count_delta(p6_object_rows, "single_swap", "smaller"),
@@ -445,8 +557,8 @@ def _build_summary(
             p7b_analysis.get("Depth2SmallerPrograms"), 0
         ),
         "P7bObjectRows": len(p7b_object_rows),
-        "DirectionAgreementRate": codegen_row.get("direction_agreement_rate", "0.00%"),
-        "SmallerUnderBothCount": _parse_int(codegen_row.get("smaller_under_both")),
+        "DirectionAgreementRate": objective_row.get("direction_agreement_rate", "0.00%"),
+        "SmallerUnderBothCount": _parse_int(objective_row.get("smaller_under_both")),
     }
 
 
@@ -507,6 +619,10 @@ def _count_true(rows: Sequence[dict[str, str]], field: str) -> int:
     return sum(1 for row in rows if row.get(field) == "True")
 
 
+def _count_static_candidate(rows: Sequence[dict[str, str]]) -> int:
+    return sum(1 for row in rows if row.get("static_decision") == "candidate")
+
+
 def _count_ir_different(rows: Sequence[dict[str, str]]) -> int:
     return sum(1 for row in rows if row.get("p5_same_as_anchor") == "False")
 
@@ -543,7 +659,7 @@ def _count_direction(
 
 def _summary_count(rows: Sequence[dict[str, str]], evidence_type: str) -> int:
     for row in rows:
-        if row.get("evidence_type") == evidence_type:
+        if row.get("evidence_event") == evidence_type:
             return _parse_int(row.get("count"))
     return 0
 

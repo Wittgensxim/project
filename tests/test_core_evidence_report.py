@@ -60,34 +60,50 @@ class CoreEvidenceReportTests(unittest.TestCase):
                 p8a_compare_csv=p8a_compare,
                 output_dir=output_dir,
             )
-            funnel_rows = _read_csv(output_dir / "ecpor_reduction_funnel.csv")
+            validation_rows = _read_csv(output_dir / "ecpor_validation_funnel.csv")
+            propagation_rows = _read_csv(
+                output_dir / "ecpor_candidate_propagation_funnel.csv"
+            )
             evidence_rows = _read_csv(output_dir / "ecpor_certified_pruning_summary.csv")
-            codegen_rows = _read_csv(output_dir / "ecpor_codegen_sensitivity_summary.csv")
+            objective_rows = _read_csv(output_dir / "ecpor_objective_layer_summary.csv")
             report = (output_dir / "ecpor_core_evidence_report.md").read_text(
                 encoding="utf-8"
             )
 
-        p4 = next(row for row in funnel_rows if row["stage"] == "P4")
-        self.assertEqual(p4["input_count"], "3")
-        self.assertEqual(p4["certified_collapsed"], "1")
-        self.assertEqual(p4["not_certified_kept"], "1")
-        self.assertEqual(p4["low_priority_frozen"], "1")
+        p4 = next(row for row in validation_rows if row["stage"] == "P4")
+        self.assertEqual(p4["count_basis"], "state_indexed_adjacent_swap_events")
+        self.assertEqual(p4["attempted_swaps"], "3")
+        self.assertEqual(p4["dynamic_tests"], "2")
+        self.assertEqual(p4["certified_independent_events"], "1")
+        self.assertEqual(p4["not_certified_events"], "1")
+        self.assertEqual(p4["low_priority_events"], "1")
 
-        p7b = next(row for row in funnel_rows if row["stage"] == "P7b")
-        self.assertEqual(p7b["candidate_count"], "2")
-        self.assertEqual(p7b["duplicates_removed"], "1")
-        self.assertEqual(p7b["unique_candidates"], "1")
+        p7b_candidates = next(row for row in propagation_rows if row["stage"] == "P7b")
+        self.assertEqual(p7b_candidates["count_basis"], "depth2_candidate_pipelines")
+        self.assertEqual(p7b_candidates["raw_depth2_candidates"], "2")
+        self.assertEqual(p7b_candidates["duplicates_removed"], "1")
+        self.assertEqual(p7b_candidates["unique_depth2_candidates"], "1")
 
-        hard = next(row for row in evidence_rows if row["evidence_type"] == "certified_independent")
+        hard = next(
+            row
+            for row in evidence_rows
+            if row["evidence_event"] == "certified_independent_events"
+        )
         self.assertEqual(hard["hard_prune"], "True")
         self.assertEqual(hard["count"], "2")
+        self.assertEqual(hard["scope"], "state-indexed adjacent swap events")
+        self.assertEqual(hard["proof_level"], "hard")
 
-        codegen = codegen_rows[0]
-        self.assertEqual(codegen["direction_comparison_candidates"], "2")
-        self.assertEqual(codegen["direction_agreement_count"], "1")
-        self.assertEqual(codegen["direction_agreement_rate"], "50.00%")
+        objective = objective_rows[0]
+        self.assertEqual(objective["count_basis"], "objective_layer_codegen_comparison")
+        self.assertEqual(objective["direction_comparison_candidates"], "2")
+        self.assertEqual(objective["direction_agreement_count"], "1")
+        self.assertEqual(objective["direction_agreement_rate"], "50.00%")
         self.assertEqual(result.summary["DirectionAgreementRate"], "50.00%")
-        self.assertIn("搜索空间坍缩", report)
+        self.assertIn("Validation Funnel", report)
+        self.assertIn("Candidate Propagation Funnel", report)
+        self.assertIn("Objective-layer Evidence", report)
+        self.assertIn("Relation to Original Research Question", report)
         self.assertIn("DirectionAgreementRate: 50.00%", report)
 
 
