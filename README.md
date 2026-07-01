@@ -225,6 +225,20 @@ $env:PYTHONPATH = "src"
 D:\Miniconda\envs\dlm\python.exe -m ecpor.result_manifest core-evidence --out-manifest docs\results\core_evidence_manifest.json --p4-attempts data\outputs\lazy_validation_p4_e83c409_first.csv --p5-candidates data\outputs\bounded_local_p5_p6_final\candidates.csv --p5-pipeline-runs data\outputs\bounded_local_p5_p6_final\pipeline_runs.csv --p6-object-size data\outputs\code_size_p6_final\object_size.csv --p7b-attempts data\outputs\bounded_two_swap_p7b\two_swap_attempts.csv --p7b-candidates data\outputs\bounded_two_swap_p7b\two_swap_candidates.csv --p7b-object-size data\outputs\bounded_two_swap_p7b\two_swap_object_size.csv --p7b-analysis-report data\outputs\bounded_two_swap_p7b_analysis\p7b_analysis_report.md --p8a-compare data\outputs\codegen_sensitivity_p8a\p8a_codegen_direction_compare.csv --output-dir data\outputs\core_evidence_report --repo-root . --result-generated-from-commit 346dbedd1c4beabaa80268923ad0904cf4ec8aca
 ```
 
+Run P8c Queens effect attribution:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.effect_attribution --input-ir data\inputs\testsuite_stanford_queens.ll --out data\outputs\effect_attribution_queens --opt E:\llvm\build\bin\opt.exe --llc E:\llvm\build\bin\llc.exe --clang E:\llvm\build\bin\clang.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --timeout-sec 30
+```
+
+Generate a tracked P8c Queens attribution manifest:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.result_manifest p8c-attribution --out-manifest docs\results\queens_effect_attribution_manifest.json --input-ir data\inputs\testsuite_stanford_queens.ll --output-dir data\outputs\effect_attribution_queens --opt E:\llvm\build\bin\opt.exe --llc E:\llvm\build\bin\llc.exe --clang E:\llvm\build\bin\clang.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --repo-root . --result-generated-from-commit b3dcad808adec8ffc8a163075c3d31b7e2273a8b
+```
+
 Scan soft IR features for one output:
 
 ```powershell

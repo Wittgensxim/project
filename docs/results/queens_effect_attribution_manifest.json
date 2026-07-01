@@ -1,0 +1,54 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P8c",
+  "description": "Queens instcombine/simplifycfg observed effect attribution.",
+  "result_generated_from_commit": "b3dcad808adec8ffc8a163075c3d31b7e2273a8b",
+  "ecpor_git_commit": "b3dcad808adec8ffc8a163075c3d31b7e2273a8b",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "input_ir": "data/inputs/testsuite_stanford_queens.ll"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/effect_attribution_queens",
+    "states_csv": "data/outputs/effect_attribution_queens/states.csv",
+    "feature_deltas_csv": "data/outputs/effect_attribution_queens/feature_deltas.csv",
+    "object_size_csv": "data/outputs/effect_attribution_queens/object_size.csv",
+    "attribution_report": "data/outputs/effect_attribution_queens/attribution_report.md"
+  },
+  "sha256": {
+    "input_ir": "af436b465499abea686d7bba2b0f5fa0feed2091914773bfb1ab5830b553d7cb",
+    "states_csv": "05c7603340d5c4fe4cb32fee7f10888a11c526e4853967a9fd2f210b5e7a7b9c",
+    "feature_deltas_csv": "92181104653cd00df1adfefc2c31fb495a89145ce92fe2d88b8380de9465fb5f",
+    "object_size_csv": "f104a926fd2a81bb73e13ce6a59c64c73414cf74adfc65db99ca91cf95c1b3e7",
+    "attribution_report": "81ea92c3bf76b91fe5351bc0a8c7e145821e5c6b52a27af4f7bdb542bbd29b4a",
+    "opt": "f4a10cdc53c8f1288bb4051318af63ca8b07aae0f0b8ffb13b788fc98ace2543",
+    "llc": "1520eba7e1ee09cc6f38ce1d7ca6eb9fb5187f6ded3a9f70a37f264acebf384c",
+    "clang": "7813948a1b853beb1806fd1bb28b09917bcbd9e35d67b43345af02c100b93551",
+    "llvm_size": "f425ef87d64380ff5f8fd055ddb52e1f0d38f3031bb2a5bbddd557d71c5bc589"
+  },
+  "tools": {
+    "opt_path": "E:\\llvm\\build\\bin\\opt.exe",
+    "llc_path": "E:\\llvm\\build\\bin\\llc.exe",
+    "clang_path": "E:\\llvm\\build\\bin\\clang.exe",
+    "llvm_size_path": "E:\\llvm\\build\\bin\\llvm-size.exe"
+  },
+  "summary": {
+    "LocalInstructionDelta": -1,
+    "Program": "testsuite_stanford_queens",
+    "FeatureDeltaPropagation": "kept",
+    "LocalABBAHardHashEqual": false,
+    "ClangTextDelta": -16,
+    "BothCodegenSmaller": true,
+    "FinalABBAHardHashEqual": false,
+    "LlcTextDelta": -32,
+    "StateCount": 7,
+    "FinalInstructionDelta": -1
+  },
+  "scope_limits": {
+    "single_program": "testsuite_stanford_queens",
+    "runtime_benchmarks": false,
+    "new_certificates": false,
+    "new_search": false,
+    "observed_attribution_not_causal_proof": true
+  }
+}

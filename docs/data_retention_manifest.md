@@ -17,6 +17,7 @@ data/outputs/bounded_two_swap_p7b_second/
 data/outputs/bounded_two_swap_p7b_analysis/
 data/outputs/codegen_sensitivity_p8a/
 data/outputs/core_evidence_report/
+data/outputs/effect_attribution_queens/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
@@ -38,6 +39,19 @@ ecpor_validation_funnel.csv
 ```
 
 旧版 `ecpor_reduction_funnel.csv` 与 `ecpor_codegen_sensitivity_summary.csv` 已删除；它们可由旧提交再生成，但当前语义下不再保留。
+
+`data/outputs/effect_attribution_queens/` 当前保留 P8c 必要文件：
+
+```text
+states.csv
+feature_deltas.csv
+object_size.csv
+attribution_report.md
+state_outputs/
+object_outputs/
+```
+
+原因：P8c 是单程序归因证据，`states.csv` / `feature_deltas.csv` / `object_size.csv` 是可读摘要；`state_outputs/` 和 `object_outputs/` 用于人工复查具体 IR 与目标文件大小来源。
 
 ## 可删除：临时或重复目录
 

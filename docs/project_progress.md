@@ -17,8 +17,8 @@
 ## 最新状态
 
 - 当前分支：`feature/phase-ordering-footprint`
-- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening、P6.5 result manifest 与 candidate-source invariant、P7a bounded two-swap smoke test、P7a report/manifest/cache 收尾、P7b per-program top-3 seed bounded two-swap controlled experiment、P7b.5 two-swap result interpretation and distribution analysis、P8a clang-c codegen sensitivity、P8a.5 core evidence report、P8a.6 core evidence 语义收尾。
-- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `88 passed in 11.16s`。
+- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening、P6.5 result manifest 与 candidate-source invariant、P7a bounded two-swap smoke test、P7a report/manifest/cache 收尾、P7b per-program top-3 seed bounded two-swap controlled experiment、P7b.5 two-swap result interpretation and distribution analysis、P8a clang-c codegen sensitivity、P8a.5 core evidence report、P8a.6 core evidence 语义收尾、P8c Queens effect attribution。
+- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `90 passed in 11.53s`。
 - 最新 P4 真实实验：8 个 Stanford 输入 × 7 个 anchor-adjacent pair，共 `56` 次 lazy validation；第一轮 `48` 个 candidate 动态测试、`8` 个 low_priority skip、`32` 个 certified、`16` 个 not-certified、`run_failed = 0`、`CertificateReproductionRate = 100.00%`。
 - 最新 P4 cache 验证：第二轮同一批输入 `cache_hits = 48`、`dynamic_tests = 0`、`SecondRunCacheHitRate = 100.00%`。
 - 最新 state-indexing safety 验证：input-state certificate 对 input hash 命中，对 `sroa` 后不同 prefix hash 不命中。
@@ -47,9 +47,13 @@
 - 最新 P8a.6 evidence summary：`certified_independent_events = 90` 是 P4/P7b state-indexed adjacent swap event 级 hard-prune evidence；`not_certified_events = 58` 是 hard negative，必须保留；`low_priority_events = 20` 只是 static hint；`sequence_duplicates = 20` 只是 sequence-level dedup；`llc_clang_both_smaller_object = 4` 是目标层 observation。
 - 最新 P8a.6 objective-layer summary：`DirectionComparisonCandidates = 38`、`DirectionAgreementCount = 26`、`DirectionAgreementRate = 68.42%`、`SmallerUnderBothCount = 4`、`SmallerOnlyUnderLlcCount = 0`、`SmallerOnlyUnderClangCount = 5`、`DirectionDisagreementCount = 12`。
 - 最新 P8a.6 manifest：`docs/results/core_evidence_manifest.json`，记录 P4/P5/P6/P7b/P7b.5/P8a 输入 hash、core evidence 输出 hash、`ecpor_git_dirty = false` 和 report-only scope；输出键已更新为 validation/candidate-propagation/objective-layer 三类当前语义文件。
+- 最新 P8c Queens effect attribution：新增 `src/ecpor/effect_attribution.py`，输出 `data/outputs/effect_attribution_queens/`；materialize `S/A/B/AB_local/BA_local/AB_final/BA_final` 7 个 state，不新增搜索、不新增 certificate。
+- 最新 P8c feature 结论：`LocalABBAHardHashEqual = False`、`FinalABBAHardHashEqual = False`、`LocalInstructionDelta = -1`、`FinalInstructionDelta = -1`、`FeatureDeltaPropagation = kept`；说明 Queens 的 `simplifycfg,instcombine` 顺序差异在局部 pair 后已经出现，并在 suffix 后保持。
+- 最新 P8c object-size 结论：`BA_final` 相对 `AB_final` 在 `llc` 下 `.text = 695 vs 727`，`LlcTextDelta = -32`、`-4.401651%`；在 `clang -c` 下 `.text = 940 vs 956`，`ClangTextDelta = -16`、`-1.673640%`；`BothCodegenSmaller = True`。
+- 最新 P8c manifest：`docs/results/queens_effect_attribution_manifest.json`，记录 input IR、P8c 输出 hash、`opt.exe` / `llc.exe` / `clang.exe` / `llvm-size.exe` hash、`ecpor_git_dirty = false` 和 single-program observed-attribution scope。
 - 最新 data 清理：新增 `docs/data_retention_manifest.md`；以后 `data/` 只保留必须保留的文件；删除 `*_work`、旧 P5 commit 输出和重复 P4 final 目录；保留 `data/inputs/`、P4 e83c409、P5/P6 final、pair_tests。清理后 `data/outputs` 约 `21.57 MB`，`data/certs` 约 `0.62 MB`。
 - 重要语义边界：static filter 只做 candidate generation / low priority 排序；lazy validation 只在当前 state 上查询或生成 certificate；input-state certificate 不得复用于 prefix-state。
-- 下一步建议：不要马上 depth=3；先做 Queens effect attribution 小实验，解释当前最稳定的 `instcombine/simplifycfg` code-size observation，再进入 P8b benchmark expansion。
+- 下一步建议：不要马上 depth=3；进入 P8b benchmark expansion，先用新 8 个小程序验证 pair matrix / static filter / depth1 code-size 现象是否能泛化。
 
 ## 进度文件索引
 
@@ -81,6 +85,7 @@
 | 2026-07-02 | P8a clang-c codegen sensitivity | [2026-07-02-24-p8a-clang-codegen-sensitivity.md](progress/2026-07-02-24-p8a-clang-codegen-sensitivity.md) |
 | 2026-07-02 | P8a.5 core evidence report | [2026-07-02-25-p8a5-core-evidence-report.md](progress/2026-07-02-25-p8a5-core-evidence-report.md) |
 | 2026-07-02 | P8a.6 core evidence 语义收尾 | [2026-07-02-26-p8a6-core-evidence-semantics.md](progress/2026-07-02-26-p8a6-core-evidence-semantics.md) |
+| 2026-07-02 | P8c Queens effect attribution | [2026-07-02-27-p8c-queens-effect-attribution.md](progress/2026-07-02-27-p8c-queens-effect-attribution.md) |
 
 ## 旧文档拆分说明
 
