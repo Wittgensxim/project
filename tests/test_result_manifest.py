@@ -76,6 +76,39 @@ class ResultManifestTests(unittest.TestCase):
         )
         self.assertEqual(loaded["depth2_candidates"][0]["delta_pct_vs_parent"], 0.0)
 
+    def test_builds_p7b_analysis_manifest_from_analysis_outputs(self):
+        from ecpor.result_manifest import build_p7b_analysis_manifest, write_manifest
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            p7_dir = root / "p7b"
+            analysis_dir = root / "analysis"
+            p7_dir.mkdir()
+            analysis_dir.mkdir()
+            p6_object_size = root / "p6_object_size.csv"
+            _write_text(p6_object_size, "program,candidate_id,source,text_delta_pct\n")
+            _write_p7b_base_outputs(p7_dir)
+            _write_p7b_analysis_outputs(analysis_dir)
+
+            manifest = build_p7b_analysis_manifest(
+                p7_dir=p7_dir,
+                p6_object_size_csv=p6_object_size,
+                analysis_dir=analysis_dir,
+                repo_root=root,
+                result_generated_from_commit="def456",
+            )
+            manifest_path = root / "analysis_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P7b.5")
+        self.assertEqual(loaded["result_generated_from_commit"], "def456")
+        self.assertIn("p7b_program_summary_csv", loaded["outputs"])
+        self.assertIn("p7b_cache_audit_csv", loaded["outputs"])
+        self.assertIn("p7b_analysis_report", loaded["sha256"])
+        self.assertEqual(loaded["summary"]["Depth2SmallerText"], 3)
+        self.assertEqual(loaded["summary"]["DuplicateSequenceRate"], "47.62%")
+
 
 def _write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
@@ -204,6 +237,43 @@ def _write_p7a_outputs(out_dir: Path) -> None:
                 "text_delta_pct": "-10.000000",
             }
         )
+
+
+def _write_p7b_base_outputs(out_dir: Path) -> None:
+    for name in [
+        "two_swap_seeds.csv",
+        "two_swap_attempts.csv",
+        "two_swap_candidates.csv",
+        "two_swap_pipeline_runs.csv",
+        "two_swap_object_size.csv",
+        "two_swap_report.md",
+    ]:
+        _write_text(out_dir / name, f"name\n{name}\n")
+
+
+def _write_p7b_analysis_outputs(out_dir: Path) -> None:
+    for name in [
+        "p7b_program_summary.csv",
+        "p7b_pair_summary.csv",
+        "p7b_depth2_details.csv",
+        "p7b_cache_audit.csv",
+        "p7b_duplicate_audit.csv",
+    ]:
+        _write_text(out_dir / name, f"name\n{name}\n")
+    _write_text(
+        out_dir / "p7b_analysis_report.md",
+        textwrap.dedent(
+            """
+            # P7b.5 Two-Swap Analysis Report
+
+            Programs: 8
+            SelectedSeeds: 16
+            Depth2SmallerText: 3
+            DuplicateSequenceRate: 47.62%
+            """
+        ).strip()
+        + "\n",
+    )
 
 
 def _sha256_text(path: Path) -> str:

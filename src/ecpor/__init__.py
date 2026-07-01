@@ -23,5 +23,6 @@ __all__ = [
     "state_materializer",
     "summary_report",
     "static_filter",
+    "two_swap_analysis",
     "two_swap_seed",
 ]

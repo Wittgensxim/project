@@ -208,6 +208,54 @@ def build_p6_5_manifest(
     )
 
 
+def build_p7b_analysis_manifest(
+    *,
+    p7_dir: str | Path,
+    p6_object_size_csv: str | Path,
+    analysis_dir: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    p7 = Path(p7_dir)
+    analysis = Path(analysis_dir)
+    report = analysis / "p7b_analysis_report.md"
+    return build_result_manifest(
+        stage="P7b.5",
+        description="P7b two-swap result interpretation and distribution analysis.",
+        inputs={
+            "p7b_output_dir": p7,
+            "p6_object_size_csv": p6_object_size_csv,
+            "two_swap_seeds_csv": p7 / "two_swap_seeds.csv",
+            "two_swap_attempts_csv": p7 / "two_swap_attempts.csv",
+            "two_swap_candidates_csv": p7 / "two_swap_candidates.csv",
+            "two_swap_pipeline_runs_csv": p7 / "two_swap_pipeline_runs.csv",
+            "two_swap_object_size_csv": p7 / "two_swap_object_size.csv",
+            "two_swap_report": p7 / "two_swap_report.md",
+        },
+        outputs={
+            "analysis_dir": analysis,
+            "p7b_program_summary_csv": analysis / "p7b_program_summary.csv",
+            "p7b_pair_summary_csv": analysis / "p7b_pair_summary.csv",
+            "p7b_depth2_details_csv": analysis / "p7b_depth2_details.csv",
+            "p7b_cache_audit_csv": analysis / "p7b_cache_audit.csv",
+            "p7b_duplicate_audit_csv": analysis / "p7b_duplicate_audit.csv",
+            "p7b_analysis_report": report,
+        },
+        tools={},
+        summary=_parse_key_value_report(report),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "runtime_benchmarks": False,
+                "new_certificates": False,
+                "llvm_rerun": False,
+                "analysis_only": True,
+            }
+        },
+    )
+
+
 def write_manifest(path: str | Path, manifest: Mapping[str, Any]) -> None:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -250,6 +298,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     p65.add_argument("--repo-root", default=".")
     p65.add_argument("--result-generated-from-commit")
 
+    p7b_analysis = subparsers.add_parser(
+        "p7b-analysis", help="Build a P7b.5 two-swap analysis manifest."
+    )
+    p7b_analysis.add_argument("--out-manifest", required=True)
+    p7b_analysis.add_argument("--p7-dir", required=True)
+    p7b_analysis.add_argument("--p6-object-size", required=True)
+    p7b_analysis.add_argument("--analysis-dir", required=True)
+    p7b_analysis.add_argument("--repo-root", default=".")
+    p7b_analysis.add_argument("--result-generated-from-commit")
+
     args = parser.parse_args(argv)
     if args.stage == "p7a":
         manifest = build_p7a_manifest(
@@ -267,13 +325,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             stage=args.stage_name,
             description=args.description,
         )
-    else:
+    elif args.stage == "p6-5":
         manifest = build_p6_5_manifest(
             p4_attempts_csv=args.p4_attempts,
             p5_dir=args.p5_dir,
             p6_dir=args.p6_dir,
             llc_path=args.llc,
             llvm_size_path=args.llvm_size,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    else:
+        manifest = build_p7b_analysis_manifest(
+            p7_dir=args.p7_dir,
+            p6_object_size_csv=args.p6_object_size,
+            analysis_dir=args.analysis_dir,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )
