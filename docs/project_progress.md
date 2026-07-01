@@ -12,6 +12,7 @@
 6. 每个独立进度文件都要附上与本次进度相关的代码快照；文件过大时可附关键完整片段并说明原因。
 7. 生成产物如 `.ll`、`.o`、大体量报告、批量日志默认不贴全文，只记录路径、命令、hash 和验证结果。
 8. 大改动完成后，把新进度文件链接追加到下方索引，并更新“最新状态”。
+9. `data/` 目录只保留必须保留的文件；阶段完成后清理 `*_work`、旧 final、旧 commit 输出和可再生成中间产物。
 
 ## 最新状态
 
@@ -24,7 +25,7 @@
 - 最新 P5 真实实验：输入 `data/outputs/lazy_validation_p4_e83c409_first.csv`，输出 `data/outputs/bounded_local_p5_final/`；生成 `8` 个 anchor candidate 和 `16` 个 single-swap candidate；完整 pipeline 运行 `24` 次，`pipeline_run_failed = 0`，`same_as_anchor = 8`，`different_from_anchor = 16`。
 - 最新 P5 report 修正：新增 `single_swap_same_as_anchor = 0`、`single_swap_different_from_anchor = 16`，并记录 `attempts_csv_sha256` 和 `pipeline_config_sha256`。
 - 最新 P6 真实实验：输入 `data/outputs/bounded_local_p5_p6_final/`，输出 `data/outputs/code_size_p6_final/`；object build `24/24` 成功，`ObjectBuildFailed = 0`，`SizeParseFailed = 0`，`CodeSizeDeltaVsAnchor computed = 16`；single-swap text size 相对 anchor 为 `smaller_text = 1`、`equal_text = 15`、`larger_text = 0`。
-- 最新 data 清理：新增 `docs/data_retention_manifest.md`；删除 `*_work`、旧 P5 commit 输出和重复 P4 final 目录；保留 `data/inputs/`、P4 e83c409、P5/P6 final、pair_tests。清理后 `data/outputs` 约 `21.57 MB`，`data/certs` 约 `0.62 MB`。
+- 最新 data 清理：新增 `docs/data_retention_manifest.md`；以后 `data/` 只保留必须保留的文件；删除 `*_work`、旧 P5 commit 输出和重复 P4 final 目录；保留 `data/inputs/`、P4 e83c409、P5/P6 final、pair_tests。清理后 `data/outputs` 约 `21.57 MB`，`data/certs` 约 `0.62 MB`。
 - 重要语义边界：static filter 只做 candidate generation / low priority 排序；lazy validation 只在当前 state 上查询或生成 certificate；input-state certificate 不得复用于 prefix-state。
 - 下一步建议：P6 稳定后再考虑 P7 bounded two-swap exploration；仍不直接做完整 searcher、Alive2、loop pass、inline 或 O2/O3。
 

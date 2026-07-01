@@ -11,6 +11,7 @@
 - 删除明确的 `*_work`、旧 commit P5 输出和重复的 P4 final 目录。
 - 不删除 `pair_tests`，避免破坏历史证书和 diff report 的人工检查链路。
 - 建立一份可复用的 data retention manifest。
+- 以后 `data/` 只保留必须保留的文件；可再生成的中间产物不长期保留。
 
 ### 已完成内容
 
@@ -173,4 +174,5 @@ foreach ($target in $targets) {
 
 - 后续新实验默认输出到阶段命名 final 目录。
 - 临时目录继续使用 `*_work` 后缀，阶段完成后按 manifest 清理。
+- `data/` 以后默认只保留必要输入、当前 final 结果和仍支撑复现/人工检查的证据。
 - P7 开始前不需要再清理 `pair_tests`。
