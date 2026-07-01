@@ -1,0 +1,56 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P8a.5",
+  "description": "Core evidence report for ECPOR pruning and objective-layer sensitivity.",
+  "result_generated_from_commit": "0310bd948dc972aecae88553dcb3a0a5eb4fc0e9",
+  "ecpor_git_commit": "0310bd948dc972aecae88553dcb3a0a5eb4fc0e9",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "p4_attempts_csv": "data/outputs/lazy_validation_p4_e83c409_first.csv",
+    "p5_candidates_csv": "data/outputs/bounded_local_p5_p6_final/candidates.csv",
+    "p5_pipeline_runs_csv": "data/outputs/bounded_local_p5_p6_final/pipeline_runs.csv",
+    "p6_object_size_csv": "data/outputs/code_size_p6_final/object_size.csv",
+    "p7b_attempts_csv": "data/outputs/bounded_two_swap_p7b/two_swap_attempts.csv",
+    "p7b_candidates_csv": "data/outputs/bounded_two_swap_p7b/two_swap_candidates.csv",
+    "p7b_object_size_csv": "data/outputs/bounded_two_swap_p7b/two_swap_object_size.csv",
+    "p7b_analysis_report": "data/outputs/bounded_two_swap_p7b_analysis/p7b_analysis_report.md",
+    "p8a_compare_csv": "data/outputs/codegen_sensitivity_p8a/p8a_codegen_direction_compare.csv"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/core_evidence_report",
+    "ecpor_core_evidence_report": "data/outputs/core_evidence_report/ecpor_core_evidence_report.md",
+    "ecpor_reduction_funnel_csv": "data/outputs/core_evidence_report/ecpor_reduction_funnel.csv",
+    "ecpor_certified_pruning_summary_csv": "data/outputs/core_evidence_report/ecpor_certified_pruning_summary.csv",
+    "ecpor_codegen_sensitivity_summary_csv": "data/outputs/core_evidence_report/ecpor_codegen_sensitivity_summary.csv"
+  },
+  "sha256": {
+    "p4_attempts_csv": "ceada53bcb557dfd9a4d9c8217f652b7995f158154d4df5827a1a340acffb777",
+    "p5_candidates_csv": "802964f29d07283a76ac3cf4bf434cc467792c98eab00f1b3b133a44d7b6e635",
+    "p5_pipeline_runs_csv": "d0561232baeeafd2d0050025d1294fc14ef83a25828d2f9f7459ebaa81275b92",
+    "p6_object_size_csv": "b69269f8f0cfea97ca1529de90fe666beb364c3775769ad02b84f13c0257ec22",
+    "p7b_attempts_csv": "53c4e4c5fb797187feff8c88d59b89ae9d55ebade7d5ef415072a3201a3efcd6",
+    "p7b_candidates_csv": "0a922ab3ab617e777a0c546db0dae32e3c24d47a3162986bbedf4aa641f32d7e",
+    "p7b_object_size_csv": "45b5e0f8ab787079c6a3a67c8c0a34d8bf251ed8c6215a4056a233e157953e5e",
+    "p7b_analysis_report": "f93c70736717e61b48c2eea06c9aa03201cc13ed3fccfec33b22ccd1be2a6184",
+    "p8a_compare_csv": "f252aab4b7f440888f41b1d9445e80c2d4ce888dc5146fa64cd5ddd63c68a7df",
+    "ecpor_core_evidence_report": "fd2a25fc353ae1b14bd80a8ee3a0921e45644b657bf9012cd8de5976a6e5c64c",
+    "ecpor_reduction_funnel_csv": "f68773bad7dfa9012e5da9995309ddd3ed059430cc16a1c78e17a1bce320a311",
+    "ecpor_certified_pruning_summary_csv": "33cee63669790970dbb7b131df59b594d275e4737e8a02817c1a28365e55d8d1",
+    "ecpor_codegen_sensitivity_summary_csv": "979e843eeadff349250901611bbed94efb8e1d171013a24fe96db0a6f0e8cf00"
+  },
+  "tools": {},
+  "summary": {
+    "SmallerUnderBothCount": 4,
+    "SmallerOnlyUnderLlcCount": 0,
+    "DirectionDisagreementCount": 12,
+    "SmallerOnlyUnderClangCount": 5,
+    "DirectionComparisonCandidates": 38,
+    "DirectionAgreementRate": "68.42%"
+  },
+  "scope_limits": {
+    "runtime_benchmarks": false,
+    "new_certificates": false,
+    "new_search": false,
+    "report_only": true
+  }
+}
