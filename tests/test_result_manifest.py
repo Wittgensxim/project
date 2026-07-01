@@ -153,6 +153,63 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["summary"]["DirectionAgreementRate"], "100.00%")
         self.assertNotIn("testsuite_stanford_queens", loaded["summary"])
 
+    def test_builds_core_evidence_manifest(self):
+        from ecpor.result_manifest import build_core_evidence_manifest, write_manifest
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            p4_attempts = root / "p4_attempts.csv"
+            p5_candidates = root / "p5_candidates.csv"
+            p5_pipeline_runs = root / "p5_pipeline_runs.csv"
+            p6_object_size = root / "p6_object_size.csv"
+            p7b_attempts = root / "p7b_attempts.csv"
+            p7b_candidates = root / "p7b_candidates.csv"
+            p7b_object_size = root / "p7b_object_size.csv"
+            p7b_analysis_report = root / "p7b_analysis_report.md"
+            p8a_compare = root / "p8a_compare.csv"
+            out_dir = root / "core"
+            out_dir.mkdir()
+            for path in [
+                p4_attempts,
+                p5_candidates,
+                p5_pipeline_runs,
+                p6_object_size,
+                p7b_attempts,
+                p7b_candidates,
+                p7b_object_size,
+                p8a_compare,
+            ]:
+                _write_text(path, "name\nrow\n")
+            _write_text(p7b_analysis_report, "Depth2SmallerText: 3\n")
+            _write_core_evidence_outputs(out_dir)
+
+            manifest = build_core_evidence_manifest(
+                p4_attempts_csv=p4_attempts,
+                p5_candidates_csv=p5_candidates,
+                p5_pipeline_runs_csv=p5_pipeline_runs,
+                p6_object_size_csv=p6_object_size,
+                p7b_attempts_csv=p7b_attempts,
+                p7b_candidates_csv=p7b_candidates,
+                p7b_object_size_csv=p7b_object_size,
+                p7b_analysis_report=p7b_analysis_report,
+                p8a_compare_csv=p8a_compare,
+                output_dir=out_dir,
+                repo_root=root,
+                result_generated_from_commit="abc999",
+            )
+            manifest_path = root / "core_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P8a.5")
+        self.assertEqual(loaded["result_generated_from_commit"], "abc999")
+        self.assertIn("ecpor_core_evidence_report", loaded["outputs"])
+        self.assertIn("ecpor_reduction_funnel_csv", loaded["outputs"])
+        self.assertIn("ecpor_core_evidence_report", loaded["sha256"])
+        self.assertEqual(loaded["summary"]["DirectionAgreementRate"], "68.42%")
+        self.assertEqual(loaded["summary"]["SmallerUnderBothCount"], 4)
+        self.assertNotIn("queens", loaded["summary"])
+
 
 def _write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
@@ -349,6 +406,35 @@ def _write_p8a_outputs(out_dir: Path) -> None:
             SmallerOnlyUnderClangCount: 0
             DirectionDisagreementCount: 0
             testsuite_stanford_queens: detail line
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_core_evidence_outputs(out_dir: Path) -> None:
+    _write_text(
+        out_dir / "ecpor_reduction_funnel.csv",
+        "stage,input_count\nP4,56\n",
+    )
+    _write_text(
+        out_dir / "ecpor_certified_pruning_summary.csv",
+        "stage,evidence_type,count\nP4,certified_independent,32\n",
+    )
+    _write_text(
+        out_dir / "ecpor_codegen_sensitivity_summary.csv",
+        "direction_comparison_candidates,direction_agreement_rate,smaller_under_both\n38,68.42%,4\n",
+    )
+    _write_text(
+        out_dir / "ecpor_core_evidence_report.md",
+        textwrap.dedent(
+            """
+            # ECPOR Core Evidence Report
+
+            DirectionComparisonCandidates: 38
+            DirectionAgreementRate: 68.42%
+            SmallerUnderBothCount: 4
+            queens: detail line
             """
         ).strip()
         + "\n",

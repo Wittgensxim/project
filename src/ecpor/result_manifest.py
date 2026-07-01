@@ -93,6 +93,15 @@ P8A_CODEGEN_SUMMARY_KEYS = {
     "DirectionDisagreementCount",
 }
 
+CORE_EVIDENCE_SUMMARY_KEYS = {
+    "DirectionComparisonCandidates",
+    "DirectionAgreementRate",
+    "SmallerUnderBothCount",
+    "SmallerOnlyUnderLlcCount",
+    "SmallerOnlyUnderClangCount",
+    "DirectionDisagreementCount",
+}
+
 
 def build_result_manifest(
     *,
@@ -343,6 +352,64 @@ def build_p8a_codegen_sensitivity_manifest(
     )
 
 
+def build_core_evidence_manifest(
+    *,
+    p4_attempts_csv: str | Path,
+    p5_candidates_csv: str | Path,
+    p5_pipeline_runs_csv: str | Path,
+    p6_object_size_csv: str | Path,
+    p7b_attempts_csv: str | Path,
+    p7b_candidates_csv: str | Path,
+    p7b_object_size_csv: str | Path,
+    p7b_analysis_report: str | Path,
+    p8a_compare_csv: str | Path,
+    output_dir: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    out = Path(output_dir)
+    report = out / "ecpor_core_evidence_report.md"
+    return build_result_manifest(
+        stage="P8a.5",
+        description="Core evidence report for ECPOR pruning and objective-layer sensitivity.",
+        inputs={
+            "p4_attempts_csv": p4_attempts_csv,
+            "p5_candidates_csv": p5_candidates_csv,
+            "p5_pipeline_runs_csv": p5_pipeline_runs_csv,
+            "p6_object_size_csv": p6_object_size_csv,
+            "p7b_attempts_csv": p7b_attempts_csv,
+            "p7b_candidates_csv": p7b_candidates_csv,
+            "p7b_object_size_csv": p7b_object_size_csv,
+            "p7b_analysis_report": p7b_analysis_report,
+            "p8a_compare_csv": p8a_compare_csv,
+        },
+        outputs={
+            "output_dir": out,
+            "ecpor_core_evidence_report": report,
+            "ecpor_reduction_funnel_csv": out / "ecpor_reduction_funnel.csv",
+            "ecpor_certified_pruning_summary_csv": out
+            / "ecpor_certified_pruning_summary.csv",
+            "ecpor_codegen_sensitivity_summary_csv": out
+            / "ecpor_codegen_sensitivity_summary.csv",
+        },
+        tools={},
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            CORE_EVIDENCE_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "runtime_benchmarks": False,
+                "new_certificates": False,
+                "new_search": False,
+                "report_only": True,
+            }
+        },
+    )
+
+
 def write_manifest(path: str | Path, manifest: Mapping[str, Any]) -> None:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -407,6 +474,23 @@ def main(argv: Sequence[str] | None = None) -> int:
     p8a.add_argument("--repo-root", default=".")
     p8a.add_argument("--result-generated-from-commit")
 
+    core = subparsers.add_parser(
+        "core-evidence", help="Build a P8a.5 core evidence manifest."
+    )
+    core.add_argument("--out-manifest", required=True)
+    core.add_argument("--p4-attempts", required=True)
+    core.add_argument("--p5-candidates", required=True)
+    core.add_argument("--p5-pipeline-runs", required=True)
+    core.add_argument("--p6-object-size", required=True)
+    core.add_argument("--p7b-attempts", required=True)
+    core.add_argument("--p7b-candidates", required=True)
+    core.add_argument("--p7b-object-size", required=True)
+    core.add_argument("--p7b-analysis-report", required=True)
+    core.add_argument("--p8a-compare", required=True)
+    core.add_argument("--output-dir", required=True)
+    core.add_argument("--repo-root", default=".")
+    core.add_argument("--result-generated-from-commit")
+
     args = parser.parse_args(argv)
     if args.stage == "p7a":
         manifest = build_p7a_manifest(
@@ -442,13 +526,28 @@ def main(argv: Sequence[str] | None = None) -> int:
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )
-    else:
+    elif args.stage == "p8a-codegen":
         manifest = build_p8a_codegen_sensitivity_manifest(
             p6_object_size_csv=args.p6_object_size,
             p7_object_size_csv=args.p7_object_size,
             output_dir=args.output_dir,
             clang_path=args.clang,
             llvm_size_path=args.llvm_size,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    else:
+        manifest = build_core_evidence_manifest(
+            p4_attempts_csv=args.p4_attempts,
+            p5_candidates_csv=args.p5_candidates,
+            p5_pipeline_runs_csv=args.p5_pipeline_runs,
+            p6_object_size_csv=args.p6_object_size,
+            p7b_attempts_csv=args.p7b_attempts,
+            p7b_candidates_csv=args.p7b_candidates,
+            p7b_object_size_csv=args.p7b_object_size,
+            p7b_analysis_report=args.p7b_analysis_report,
+            p8a_compare_csv=args.p8a_compare,
+            output_dir=args.output_dir,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )

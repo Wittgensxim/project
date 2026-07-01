@@ -36,6 +36,7 @@ def measure_object_size(
     candidate_id: str,
     ir_path: str | Path,
     object_path: str | Path,
+    compiler_path: ToolPath | None = None,
     llc_path: ToolPath = "llc",
     llvm_size_path: ToolPath = "llvm-size",
     timeout_sec: float = 30.0,
@@ -44,7 +45,8 @@ def measure_object_size(
     ir = Path(ir_path)
     obj = Path(object_path)
     obj.parent.mkdir(parents=True, exist_ok=True)
-    compile_result = _run_compile(ir, obj, llc_path, timeout_sec, compile_mode)
+    compiler = compiler_path if compiler_path is not None else llc_path
+    compile_result = _run_compile(ir, obj, compiler, timeout_sec, compile_mode)
     compile_failure = _compile_failure_kind(
         compile_result.returncode,
         obj.exists(),
@@ -138,13 +140,13 @@ class _CommandResult:
 def _run_compile(
     ir_path: Path,
     object_path: Path,
-    llc_path: ToolPath,
+    compiler_path: ToolPath,
     timeout_sec: float,
     compile_mode: CompileMode,
 ) -> _CommandResult:
     if compile_mode == "clang":
         command = [
-            *_normalize_tool_path(llc_path),
+            *_normalize_tool_path(compiler_path),
             "-x",
             "ir",
             "-c",
@@ -154,7 +156,7 @@ def _run_compile(
         ]
     else:
         command = [
-            *_normalize_tool_path(llc_path),
+            *_normalize_tool_path(compiler_path),
             str(ir_path),
             "-filetype=obj",
             "-o",

@@ -91,7 +91,7 @@ def run_codegen_sensitivity(
                 candidate_id=candidate_id,
                 ir_path=row["ir_path"],
                 object_path=object_root / f"{_safe_name(candidate_id)}.o",
-                llc_path=clang_path,
+                compiler_path=clang_path,
                 llvm_size_path=llvm_size_path,
                 timeout_sec=timeout_sec,
                 compile_mode="clang",

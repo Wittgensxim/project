@@ -93,6 +93,31 @@ class ObjectSizeRunnerTests(unittest.TestCase):
         self.assertIsNone(record.compile_failure_kind)
         self.assertEqual(record.text_size, 123)
 
+    def test_compiler_path_alias_avoids_llc_name_for_clang_mode(self):
+        from ecpor.object_size_runner import measure_object_size
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            input_ir = tmp_path / "input.ll"
+            output_obj = tmp_path / "input.o"
+            input_ir.write_text("define void @f() { ret void }\n", encoding="utf-8")
+            fake_clang = _write_fake_clang(tmp_path)
+            fake_size = _write_fake_size(tmp_path)
+
+            record = measure_object_size(
+                program="tiny",
+                candidate_id="tiny__anchor",
+                ir_path=input_ir,
+                object_path=output_obj,
+                compiler_path=[sys.executable, str(fake_clang)],
+                llvm_size_path=[sys.executable, str(fake_size)],
+                compile_mode="clang",
+            )
+
+        self.assertEqual(record.compile_exit_code, 0)
+        self.assertIsNone(record.compile_failure_kind)
+        self.assertEqual(record.total_size, 135)
+
     def test_size_parse_failure_is_explicit(self):
         from ecpor.object_size_runner import measure_object_size
 
