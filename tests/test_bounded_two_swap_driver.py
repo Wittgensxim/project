@@ -106,6 +106,89 @@ class BoundedTwoSwapDriverTests(unittest.TestCase):
         self.assertNotIn("two_swap_candidates_generated:", report_lines)
         self.assertNotIn("pipeline_runs: 2", report_lines)
 
+    def test_top_k_seed_mode_writes_seed_audit_and_enforces_depth2_budget(self):
+        from ecpor.bounded_two_swap_driver import run_bounded_two_swap_smoke
+        from ecpor.certificate_db import CertificateDB
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            input_ir = _write_input_ir(tmp_path)
+            fake_opt = _write_fake_opt(tmp_path)
+            fake_llc = _write_fake_llc(tmp_path)
+            fake_size = _write_fake_size(tmp_path)
+            p5_dir = tmp_path / "p5"
+            p6_dir = tmp_path / "p6"
+            out_dir = tmp_path / "p7b"
+            p5_dir.mkdir()
+            p6_dir.mkdir()
+            _write_p7b_candidates(p5_dir / "candidates.csv")
+            _write_p7b_pipeline_runs(p5_dir / "pipeline_runs.csv")
+            _write_p7b_object_size(p6_dir / "object_size.csv")
+
+            result = run_bounded_two_swap_smoke(
+                programs=[("tiny", input_ir)],
+                p5_candidates_csv=p5_dir / "candidates.csv",
+                p5_pipeline_runs_csv=p5_dir / "pipeline_runs.csv",
+                p6_object_size_csv=p6_dir / "object_size.csv",
+                passspec=_passspec_4(),
+                cert_db=CertificateDB(tmp_path / "certs"),
+                opt_path=[sys.executable, str(fake_opt)],
+                output_dir=out_dir,
+                env_id="env-test",
+                llvm_version="llvm-test",
+                llc_path=[sys.executable, str(fake_llc)],
+                llvm_size_path=[sys.executable, str(fake_size)],
+                seed_mode="top-k-per-program",
+                max_seeds_per_program=2,
+                max_unique_depth2_per_program=1,
+                max_total_depth2=5,
+                stage_name="P7b-test",
+            )
+
+            with (out_dir / "two_swap_seeds.csv").open(
+                newline="", encoding="utf-8"
+            ) as handle:
+                seed_rows = list(csv.DictReader(handle))
+            with (out_dir / "two_swap_candidates.csv").open(
+                newline="", encoding="utf-8"
+            ) as handle:
+                candidate_rows = list(csv.DictReader(handle))
+            report = (out_dir / "two_swap_report.md").read_text(encoding="utf-8")
+
+        self.assertEqual(
+            [row["candidate_id"] for row in seed_rows],
+            ["tiny__swap_0__a__b", "tiny__swap_1__b__c"],
+        )
+        self.assertEqual(result.summary["seed_candidates"], 2)
+        self.assertEqual(result.summary["selected_seed_candidates"], 2)
+        self.assertEqual(result.summary["selected_smaller_seeds"], 1)
+        self.assertEqual(result.summary["selected_equal_seeds"], 1)
+        self.assertEqual(result.summary["selected_seed_programs"], 1)
+        self.assertEqual(result.summary["seed_mode"], "top-k-per-program")
+        self.assertEqual(result.summary["max_seeds_per_program"], 2)
+        self.assertEqual(result.summary["max_unique_depth2_per_program"], 1)
+        self.assertEqual(result.summary["max_total_unique_depth2"], 5)
+        self.assertEqual(result.summary["max_observed_depth2_per_program"], 1)
+        self.assertEqual(result.summary["unique_depth2_candidates"], 1)
+        self.assertGreater(result.summary["budget_skipped_depth2_candidates"], 0)
+
+        depth2_rows = [row for row in candidate_rows if row["depth"] == "2"]
+        self.assertEqual(len(depth2_rows), 1)
+        self.assertTrue(all(row["parent_candidate_id"] for row in depth2_rows))
+        self.assertTrue(all(row["prefix_state_hash"] for row in depth2_rows))
+        self.assertTrue(
+            all(row["validation_label"] == "not_certified_independent" for row in depth2_rows)
+        )
+        self.assertEqual(
+            len({row["pipeline_sequence_hash"] for row in depth2_rows}),
+            len(depth2_rows),
+        )
+        self.assertIn("P7b-test Bounded Two-Swap Report", report)
+        self.assertIn(
+            "depth1_seed_runs reuses P5/P6 seed metadata and is not re-run here.",
+            report,
+        )
+
 
 def _write_input_ir(tmp_path: Path) -> Path:
     input_ir = tmp_path / "input.ll"
@@ -260,11 +343,157 @@ def _write_p6_object_size(path: Path) -> None:
         )
 
 
+def _write_p7b_candidates(path: Path) -> None:
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "program",
+                "candidate_id",
+                "source",
+                "base_pipeline",
+                "candidate_pipeline",
+                "swap_index",
+                "pass_a",
+                "pass_b",
+                "prefix_state_hash",
+                "validation_label",
+                "cert_id",
+                "reason",
+            ],
+        )
+        writer.writeheader()
+        writer.writerows(
+            [
+                _candidate_row("tiny__anchor", "anchor", "a,b,c,d", "", "", ""),
+                _candidate_row(
+                    "tiny__swap_0__a__b", "single_swap", "b,a,c,d", "0", "a", "b"
+                ),
+                _candidate_row(
+                    "tiny__swap_1__b__c", "single_swap", "a,c,b,d", "1", "b", "c"
+                ),
+                _candidate_row(
+                    "tiny__swap_2__c__d", "single_swap", "a,b,d,c", "2", "c", "d"
+                ),
+            ]
+        )
+
+
+def _candidate_row(
+    candidate_id: str,
+    source: str,
+    pipeline: str,
+    swap_index: str,
+    pass_a: str,
+    pass_b: str,
+) -> dict[str, str]:
+    return {
+        "program": "tiny",
+        "candidate_id": candidate_id,
+        "source": source,
+        "base_pipeline": "a,b,c,d",
+        "candidate_pipeline": pipeline,
+        "swap_index": swap_index,
+        "pass_a": pass_a,
+        "pass_b": pass_b,
+        "prefix_state_hash": "" if source == "anchor" else f"prefix-{candidate_id}",
+        "validation_label": "anchor" if source == "anchor" else "not_certified_independent",
+        "cert_id": "" if source == "anchor" else f"cert-{candidate_id}",
+        "reason": "anchor" if source == "anchor" else "hard hash differs",
+    }
+
+
+def _write_p7b_pipeline_runs(path: Path) -> None:
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "program",
+                "candidate_id",
+                "pipeline",
+                "exit_code",
+                "failure_kind",
+                "hard_hash",
+                "same_as_anchor",
+                "num_instructions",
+                "num_basic_blocks",
+                "num_load",
+                "num_store",
+                "num_branch",
+            ],
+        )
+        writer.writeheader()
+        for candidate_id in [
+            "tiny__anchor",
+            "tiny__swap_0__a__b",
+            "tiny__swap_1__b__c",
+            "tiny__swap_2__c__d",
+        ]:
+            writer.writerow(
+                {
+                    "program": "tiny",
+                    "candidate_id": candidate_id,
+                    "pipeline": "function(a,b,c,d)",
+                    "exit_code": "0",
+                    "failure_kind": "",
+                    "hard_hash": f"hash-{candidate_id}",
+                    "same_as_anchor": "True" if candidate_id == "tiny__anchor" else "False",
+                    "num_instructions": "1",
+                    "num_basic_blocks": "1",
+                    "num_load": "0",
+                    "num_store": "0",
+                    "num_branch": "0",
+                }
+            )
+
+
+def _write_p7b_object_size(path: Path) -> None:
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "program",
+                "candidate_id",
+                "source",
+                "text_delta",
+                "text_delta_pct",
+            ],
+        )
+        writer.writeheader()
+        writer.writerows(
+            [
+                _p7b_size_row("tiny__anchor", "anchor", "0", "0.000000"),
+                _p7b_size_row("tiny__swap_0__a__b", "single_swap", "-10", "-10.000000"),
+                _p7b_size_row("tiny__swap_1__b__c", "single_swap", "0", "0.000000"),
+                _p7b_size_row("tiny__swap_2__c__d", "single_swap", "5", "5.000000"),
+            ]
+        )
+
+
+def _p7b_size_row(
+    candidate_id: str, source: str, text_delta: str, text_delta_pct: str
+) -> dict[str, str]:
+    return {
+        "program": "tiny",
+        "candidate_id": candidate_id,
+        "source": source,
+        "text_delta": text_delta,
+        "text_delta_pct": text_delta_pct,
+    }
+
+
 def _passspec():
     return {
         "a": {"level": "scalar", "requires_any": [], "may_consume": [], "may_produce": [], "tags": ["scalar"]},
         "b": {"level": "scalar", "requires_any": [], "may_consume": [], "may_produce": [], "tags": ["scalar"]},
         "c": {"level": "scalar", "requires_any": [], "may_consume": [], "may_produce": [], "tags": ["scalar"]},
+    }
+
+
+def _passspec_4():
+    return {
+        **_passspec(),
+        "d": {"level": "scalar", "requires_any": [], "may_consume": [], "may_produce": [], "tags": ["scalar"]},
     }
 
 

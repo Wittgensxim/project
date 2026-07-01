@@ -50,12 +50,13 @@ class ResultManifestTests(unittest.TestCase):
                 llvm_size_path=llvm_size,
                 repo_root=root,
                 result_generated_from_commit="abc123",
+                stage="P7b",
             )
             manifest_path = root / "manifest.json"
             write_manifest(manifest_path, manifest)
             loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(loaded["stage"], "P7a")
+        self.assertEqual(loaded["stage"], "P7b")
         self.assertEqual(loaded["result_generated_from_commit"], "abc123")
         self.assertEqual(
             loaded["sha256"]["p6_object_size_csv"], expected_p6_object_size_sha256
@@ -63,6 +64,10 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["sha256"]["opt"], expected_opt_sha256)
         self.assertEqual(loaded["summary"]["static_candidate_second_swaps"], 7)
         self.assertEqual(loaded["summary"]["unique_depth2_candidates"], 3)
+        self.assertEqual(loaded["summary"]["selected_seed_candidates"], 3)
+        self.assertEqual(loaded["summary"]["budget_skipped_depth2_candidates"], 2)
+        self.assertIn("two_swap_seeds_csv", loaded["outputs"])
+        self.assertIn("two_swap_seeds_csv", loaded["sha256"])
         self.assertNotIn("ecpor_git_commit", loaded["summary"])
         self.assertNotIn("p5_candidates_csv", loaded["summary"])
         self.assertEqual(loaded["seed"]["candidate_id"], "seed")
@@ -114,8 +119,17 @@ def _write_p7a_outputs(out_dir: Path) -> None:
             attempted_second_swaps: 7
             static_candidate_second_swaps: 7
             validated_second_swaps: 7
+            selected_seed_candidates: 3
+            selected_smaller_seeds: 1
+            selected_equal_seeds: 2
+            selected_seed_programs: 1
+            seed_mode: top-k-per-program
+            max_seeds_per_program: 3
+            max_unique_depth2_per_program: 5
+            max_total_unique_depth2: 40
             raw_depth2_candidates: 4
             duplicate_sequences: 1
+            budget_skipped_depth2_candidates: 2
             unique_depth2_candidates: 3
             anchor_runs: 8
             depth1_seed_runs: 0
@@ -127,6 +141,14 @@ def _write_p7a_outputs(out_dir: Path) -> None:
             """
         ).strip()
         + "\n",
+    )
+    _write_text(
+        out_dir / "two_swap_seeds.csv",
+        (
+            "program,candidate_id,seed_candidate_id,seed_pipeline,"
+            "seed_text_delta_pct,seed_rank,seed_reason\n"
+            "tiny,seed,seed,\"a,b,c\",-10.000000,1,best_text_delta\n"
+        ),
     )
     _write_text(out_dir / "two_swap_attempts.csv", "program,cache_hit,dynamic_test\n")
     _write_text(out_dir / "two_swap_pipeline_runs.csv", "program,candidate_id\n")

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
@@ -16,7 +17,7 @@ from .environment import DEFAULT_EXECUTION_MODEL, detect_environment, git_info
 from .feature_scan import scan_ir_file
 from .lazy_validator import validate_adjacent_swap
 from .normalizer import NORMALIZER_VERSION
-from .pipeline_dedup import deduplicate_pipeline_rows, pipeline_sequence_hash
+from .pipeline_dedup import pipeline_sequence_hash
 from .pipeline_runner import (
     PipelineRunRecord,
     run_pipeline_candidate,
@@ -25,6 +26,7 @@ from .pipeline_runner import (
 from .runner import OptPath
 from .state_materializer import materialize_prefix_state
 from .static_filter import classify_pair, load_passspec, load_pipeline_config
+from .two_swap_seed import select_seed_rows, write_seed_csv
 
 
 P7_ATTEMPT_FIELDS = [
@@ -69,6 +71,7 @@ P7_CANDIDATE_FIELDS = [
 
 @dataclass(frozen=True)
 class BoundedTwoSwapRun:
+    seed_rows: list[dict[str, str]]
     attempt_rows: list[dict[str, str]]
     candidate_rows: list[dict[str, str]]
     pipeline_runs: list[PipelineRunRecord]
@@ -98,6 +101,11 @@ def run_bounded_two_swap_smoke(
     region_id: str = "function_scalar_mvp",
     window_size: int = 7,
     timeout_sec: float = 30.0,
+    seed_mode: str = "smaller-only",
+    max_seeds_per_program: int = 3,
+    max_unique_depth2_per_program: int | None = None,
+    max_total_depth2: int | None = None,
+    stage_name: str = "P7a",
 ) -> BoundedTwoSwapRun:
     output_root = Path(output_dir)
     output_root.mkdir(parents=True, exist_ok=True)
@@ -105,7 +113,13 @@ def run_bounded_two_swap_smoke(
     p5_candidates = _load_csv(p5_candidates_csv)
     p6_rows = _load_csv(p6_object_size_csv)
     p5_candidate_by_id = {row["candidate_id"]: row for row in p5_candidates}
-    seed_rows = _select_smaller_seed_rows(p6_rows, p5_candidate_by_id)
+    seed_rows = select_seed_rows(
+        p6_rows,
+        p5_candidate_by_id,
+        seed_mode=seed_mode,
+        max_seeds_per_program=max_seeds_per_program,
+    )
+    write_seed_csv(output_root / "two_swap_seeds.csv", seed_rows)
     reserved_hashes = _reserved_hashes_by_program(p5_candidates)
 
     attempt_rows: list[dict[str, str]] = []
@@ -144,9 +158,18 @@ def run_bounded_two_swap_smoke(
                 continue
             generated_rows.append(candidate)
 
-    deduped = deduplicate_pipeline_rows(generated_rows)
-    depth2_rows = deduped.unique_rows
-    duplicate_rows.extend(deduped.duplicate_rows)
+    deduped_unique_rows, deduped_duplicate_rows = _deduplicate_depth2_rows(generated_rows)
+    depth2_rows, budget_skipped_rows = _apply_depth2_budgets(
+        deduped_unique_rows,
+        max_unique_depth2_per_program=max_unique_depth2_per_program,
+        max_total_depth2=max_total_depth2,
+    )
+    duplicate_rows.extend(deduped_duplicate_rows)
+    _validate_depth2_invariants(
+        depth2_rows,
+        max_unique_depth2_per_program=max_unique_depth2_per_program,
+        max_total_depth2=max_total_depth2,
+    )
     candidate_rows = _anchor_rows(p5_candidates) + depth2_rows
     write_p7_candidates_csv(output_root / "two_swap_candidates.csv", candidate_rows)
     write_p7_attempts_csv(output_root / "two_swap_attempts.csv", attempt_rows)
@@ -186,13 +209,19 @@ def run_bounded_two_swap_smoke(
         attempt_rows=attempt_rows,
         candidate_rows=candidate_rows,
         duplicate_rows=duplicate_rows,
+        budget_skipped_rows=budget_skipped_rows,
         pipeline_runs=pipeline_runs,
         object_size_rows=code_size.rows,
         object_summary=code_size.summary,
+        seed_mode=seed_mode,
+        max_seeds_per_program=max_seeds_per_program,
+        max_unique_depth2_per_program=max_unique_depth2_per_program,
+        max_total_depth2=max_total_depth2,
     )
-    report = build_two_swap_report(summary, metadata=metadata)
+    report = build_two_swap_report(summary, metadata=metadata, stage_name=stage_name)
     (output_root / "two_swap_report.md").write_text(report, encoding="utf-8")
     return BoundedTwoSwapRun(
+        seed_rows=seed_rows,
         attempt_rows=attempt_rows,
         candidate_rows=candidate_rows,
         pipeline_runs=pipeline_runs,
@@ -220,9 +249,14 @@ def summarize_two_swap_run(
     attempt_rows: Sequence[dict[str, str]],
     candidate_rows: Sequence[dict[str, str]],
     duplicate_rows: Sequence[dict[str, str]],
+    budget_skipped_rows: Sequence[dict[str, str]],
     pipeline_runs: Sequence[PipelineRunRecord],
     object_size_rows: Sequence[dict[str, str]],
     object_summary: dict[str, Any],
+    seed_mode: str,
+    max_seeds_per_program: int,
+    max_unique_depth2_per_program: int | None,
+    max_total_depth2: int | None,
 ) -> dict[str, Any]:
     depth2_rows = [row for row in candidate_rows if row.get("depth") == "2"]
     candidate_by_id = {row["candidate_id"]: row for row in candidate_rows}
@@ -230,7 +264,9 @@ def summarize_two_swap_run(
         candidate_by_id.get(record.candidate_id, {}).get("source", "")
         for record in pipeline_runs
     ]
-    raw_depth2_candidates = len(depth2_rows) + len(duplicate_rows)
+    raw_depth2_candidates = (
+        len(depth2_rows) + len(duplicate_rows) + len(budget_skipped_rows)
+    )
     best_depth1 = _best_depth1_text_delta_pct(seed_rows)
     best_depth2 = _best_depth2_text_delta_pct(object_size_rows)
     best_depth2_vs_parent = _best_depth2_delta_pct_vs_parent(
@@ -240,6 +276,12 @@ def summarize_two_swap_run(
     )
     return {
         "seed_candidates": len(seed_rows),
+        "selected_seed_candidates": len(seed_rows),
+        "selected_smaller_seeds": _count_delta_kind(seed_rows, "smaller"),
+        "selected_equal_seeds": _count_delta_kind(seed_rows, "equal"),
+        "selected_seed_programs": len({row.get("program", "") for row in seed_rows}),
+        "seed_mode": seed_mode,
+        "max_seeds_per_program": max_seeds_per_program,
         "attempted_second_swaps": len(attempt_rows),
         "static_candidate_second_swaps": sum(
             1 for row in attempt_rows if row.get("static_decision") == "candidate"
@@ -267,7 +309,13 @@ def summarize_two_swap_run(
         "run_failed": sum(1 for row in attempt_rows if row.get("label") == "run_failed"),
         "raw_depth2_candidates": raw_depth2_candidates,
         "duplicate_sequences": len(duplicate_rows),
+        "unique_depth2_candidates_before_budget": len(depth2_rows)
+        + len(budget_skipped_rows),
+        "budget_skipped_depth2_candidates": len(budget_skipped_rows),
         "unique_depth2_candidates": len(depth2_rows),
+        "max_unique_depth2_per_program": max_unique_depth2_per_program or 0,
+        "max_total_unique_depth2": max_total_depth2 or 0,
+        "max_observed_depth2_per_program": _max_depth2_per_program(depth2_rows),
         "anchor_runs": sum(1 for source in run_sources if source == "anchor"),
         "depth1_seed_runs": sum(1 for source in run_sources if source == "single_swap"),
         "depth2_candidate_runs": sum(1 for source in run_sources if source == "two_swap"),
@@ -275,10 +323,26 @@ def summarize_two_swap_run(
         "pipeline_run_failed": sum(1 for record in pipeline_runs if record.failure_kind),
         "object_build_failed": object_summary["object_build_failed"],
         "size_parse_failed": object_summary["size_parse_failed"],
+        "depth1_smaller_text": _count_delta_kind(seed_rows, "smaller"),
+        "depth1_equal_text": _count_delta_kind(seed_rows, "equal"),
+        "depth1_larger_text": _count_delta_kind(seed_rows, "larger"),
+        "depth2_smaller_text": _count_delta_kind(
+            [row for row in object_size_rows if row.get("source") == "two_swap"],
+            "smaller",
+        ),
+        "depth2_equal_text": _count_delta_kind(
+            [row for row in object_size_rows if row.get("source") == "two_swap"],
+            "equal",
+        ),
+        "depth2_larger_text": _count_delta_kind(
+            [row for row in object_size_rows if row.get("source") == "two_swap"],
+            "larger",
+        ),
         "best_depth1_text_delta_pct_vs_anchor": best_depth1,
         "best_depth2_text_delta_pct_vs_anchor": best_depth2,
         "best_depth2_delta_pct_vs_parent": best_depth2_vs_parent,
         "depth2_improves_over_depth1_best": best_depth2 < best_depth1,
+        "best_candidate_depth": _best_candidate_depth(best_depth1, best_depth2),
     }
 
 
@@ -286,12 +350,19 @@ def build_two_swap_report(
     summary: dict[str, Any],
     *,
     metadata: dict[str, str] | None = None,
+    stage_name: str = "P7a",
 ) -> str:
+    title = (
+        "P7a Bounded Two-Swap Smoke Report"
+        if stage_name == "P7a"
+        else f"{stage_name} Bounded Two-Swap Report"
+    )
     lines = [
-        "# P7a Bounded Two-Swap Smoke Report",
+        f"# {title}",
         "",
-        "P7a validates bounded two-swap infrastructure only.",
+        f"{stage_name} validates bounded two-swap infrastructure.",
         "It is not a full searcher and it does not run runtime benchmarks.",
+        "depth1_seed_runs reuses P5/P6 seed metadata and is not re-run here.",
         "",
     ]
     if metadata:
@@ -311,6 +382,12 @@ def build_two_swap_report(
         )
     for key in [
         "seed_candidates",
+        "selected_seed_candidates",
+        "selected_smaller_seeds",
+        "selected_equal_seeds",
+        "selected_seed_programs",
+        "seed_mode",
+        "max_seeds_per_program",
         "attempted_second_swaps",
         "static_candidate_second_swaps",
         "low_priority_skipped",
@@ -322,7 +399,12 @@ def build_two_swap_report(
         "run_failed",
         "raw_depth2_candidates",
         "duplicate_sequences",
+        "unique_depth2_candidates_before_budget",
+        "budget_skipped_depth2_candidates",
         "unique_depth2_candidates",
+        "max_unique_depth2_per_program",
+        "max_total_unique_depth2",
+        "max_observed_depth2_per_program",
         "anchor_runs",
         "depth1_seed_runs",
         "depth2_candidate_runs",
@@ -330,6 +412,12 @@ def build_two_swap_report(
         "pipeline_run_failed",
         "object_build_failed",
         "size_parse_failed",
+        "depth1_smaller_text",
+        "depth1_equal_text",
+        "depth1_larger_text",
+        "depth2_smaller_text",
+        "depth2_equal_text",
+        "depth2_larger_text",
     ]:
         lines.append(f"{key}: {summary[key]}")
     lines.append(
@@ -348,6 +436,7 @@ def build_two_swap_report(
         "depth2_improves_over_depth1_best: "
         f"{summary['depth2_improves_over_depth1_best']}"
     )
+    lines.append(f"best_candidate_depth: {summary['best_candidate_depth']}")
     return "\n".join(lines) + "\n"
 
 
@@ -370,6 +459,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--env-id")
     parser.add_argument("--llvm-version")
     parser.add_argument("--timeout-sec", type=float, default=30.0)
+    parser.add_argument(
+        "--seed-mode",
+        choices=["smaller-only", "top-k-per-program"],
+        default="smaller-only",
+    )
+    parser.add_argument("--max-seeds-per-program", type=int, default=3)
+    parser.add_argument("--max-unique-depth2-per-program", type=int)
+    parser.add_argument("--max-total-depth2", type=int)
+    parser.add_argument("--stage-name", default="P7a")
     args = parser.parse_args(argv)
 
     env_id = args.env_id
@@ -392,8 +490,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         llc_path=args.llc,
         llvm_size_path=args.llvm_size,
         timeout_sec=args.timeout_sec,
+        seed_mode=args.seed_mode,
+        max_seeds_per_program=args.max_seeds_per_program,
+        max_unique_depth2_per_program=args.max_unique_depth2_per_program,
+        max_total_depth2=args.max_total_depth2,
+        stage_name=args.stage_name,
     )
-    print(build_two_swap_report(run.summary, metadata=run.metadata), end="")
+    print(
+        build_two_swap_report(
+            run.summary,
+            metadata=run.metadata,
+            stage_name=args.stage_name,
+        ),
+        end="",
+    )
     return 0
 
 
@@ -580,6 +690,100 @@ def _select_smaller_seed_rows(
     return sorted(seeds, key=lambda row: _parse_optional_float(row["text_delta_pct"]) or 0.0)
 
 
+def _deduplicate_depth2_rows(
+    rows: Sequence[dict[str, str]]
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+    seen: set[tuple[str, str]] = set()
+    unique_rows: list[dict[str, str]] = []
+    duplicate_rows: list[dict[str, str]] = []
+    for row in rows:
+        passes = _split_pipeline(row.get("candidate_pipeline", ""))
+        sequence_hash = row.get("pipeline_sequence_hash") or pipeline_sequence_hash(
+            passes
+        )
+        enriched = {**row, "pipeline_sequence_hash": sequence_hash}
+        key = (row.get("program", ""), sequence_hash)
+        if key in seen:
+            duplicate_rows.append(enriched)
+            continue
+        seen.add(key)
+        unique_rows.append(enriched)
+    return unique_rows, duplicate_rows
+
+
+def _apply_depth2_budgets(
+    rows: Sequence[dict[str, str]],
+    *,
+    max_unique_depth2_per_program: int | None,
+    max_total_depth2: int | None,
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+    if max_unique_depth2_per_program is not None and max_unique_depth2_per_program < 0:
+        raise ValueError("max_unique_depth2_per_program must be >= 0")
+    if max_total_depth2 is not None and max_total_depth2 < 0:
+        raise ValueError("max_total_depth2 must be >= 0")
+    kept: list[dict[str, str]] = []
+    skipped: list[dict[str, str]] = []
+    per_program: Counter[str] = Counter()
+    for row in rows:
+        program = row.get("program", "")
+        if (
+            max_total_depth2 is not None
+            and len(kept) >= max_total_depth2
+        ):
+            skipped.append({**row, "budget_skip_reason": "max_total_depth2"})
+            continue
+        if (
+            max_unique_depth2_per_program is not None
+            and per_program[program] >= max_unique_depth2_per_program
+        ):
+            skipped.append(
+                {**row, "budget_skip_reason": "max_unique_depth2_per_program"}
+            )
+            continue
+        kept.append(row)
+        per_program[program] += 1
+    return kept, skipped
+
+
+def _validate_depth2_invariants(
+    rows: Sequence[dict[str, str]],
+    *,
+    max_unique_depth2_per_program: int | None,
+    max_total_depth2: int | None,
+) -> None:
+    errors: list[str] = []
+    if max_total_depth2 is not None and len(rows) > max_total_depth2:
+        errors.append(
+            f"unique depth2 candidates exceed total budget: {len(rows)} > {max_total_depth2}"
+        )
+    per_program: Counter[str] = Counter()
+    seen: set[tuple[str, str]] = set()
+    for row in rows:
+        candidate_id = row.get("candidate_id", "")
+        program = row.get("program", "")
+        sequence_hash = row.get("pipeline_sequence_hash", "")
+        per_program[program] += 1
+        key = (program, sequence_hash)
+        if key in seen:
+            errors.append(f"{candidate_id}: duplicate pipeline_sequence_hash for program")
+        seen.add(key)
+        if not row.get("parent_candidate_id"):
+            errors.append(f"{candidate_id}: missing parent_candidate_id")
+        if not row.get("prefix_state_hash"):
+            errors.append(f"{candidate_id}: missing prefix_state_hash")
+        if row.get("validation_label") != "not_certified_independent":
+            errors.append(f"{candidate_id}: validation_label is not not_certified_independent")
+    if max_unique_depth2_per_program is not None:
+        for program, count in per_program.items():
+            if count > max_unique_depth2_per_program:
+                errors.append(
+                    f"{program}: unique depth2 candidates exceed per-program budget "
+                    f"({count} > {max_unique_depth2_per_program})"
+                )
+    if errors:
+        raise ValueError("depth2 invariant violation: " + "; ".join(errors))
+
+
 def _anchor_rows(p5_candidates: Sequence[dict[str, str]]) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     for row in p5_candidates:
@@ -710,6 +914,32 @@ def _best_depth1_text_delta_pct(seed_rows: Sequence[dict[str, str]]) -> float:
         if value is not None
     ]
     return min(values) if values else 0.0
+
+
+def _count_delta_kind(rows: Sequence[dict[str, str]], kind: str) -> int:
+    count = 0
+    for row in rows:
+        value = _parse_optional_float(row.get("text_delta_pct"))
+        if value is None:
+            continue
+        if kind == "smaller" and value < 0.0:
+            count += 1
+        elif kind == "equal" and value == 0.0:
+            count += 1
+        elif kind == "larger" and value > 0.0:
+            count += 1
+    return count
+
+
+def _max_depth2_per_program(rows: Sequence[dict[str, str]]) -> int:
+    counts = Counter(row.get("program", "") for row in rows)
+    return max(counts.values()) if counts else 0
+
+
+def _best_candidate_depth(best_depth1: float, best_depth2: float) -> int:
+    if best_depth2 < best_depth1:
+        return 2
+    return 1
 
 
 def _best_depth2_text_delta_pct(object_size_rows: Sequence[dict[str, str]]) -> float:

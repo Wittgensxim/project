@@ -13,6 +13,12 @@ from .environment import file_sha256, git_info
 
 P7A_SUMMARY_KEYS = {
     "seed_candidates",
+    "selected_seed_candidates",
+    "selected_smaller_seeds",
+    "selected_equal_seeds",
+    "selected_seed_programs",
+    "seed_mode",
+    "max_seeds_per_program",
     "attempted_second_swaps",
     "static_candidate_second_swaps",
     "low_priority_skipped",
@@ -24,7 +30,12 @@ P7A_SUMMARY_KEYS = {
     "run_failed",
     "raw_depth2_candidates",
     "duplicate_sequences",
+    "unique_depth2_candidates_before_budget",
+    "budget_skipped_depth2_candidates",
     "unique_depth2_candidates",
+    "max_unique_depth2_per_program",
+    "max_total_unique_depth2",
+    "max_observed_depth2_per_program",
     "anchor_runs",
     "depth1_seed_runs",
     "depth2_candidate_runs",
@@ -32,10 +43,17 @@ P7A_SUMMARY_KEYS = {
     "pipeline_run_failed",
     "object_build_failed",
     "size_parse_failed",
+    "depth1_smaller_text",
+    "depth1_equal_text",
+    "depth1_larger_text",
+    "depth2_smaller_text",
+    "depth2_equal_text",
+    "depth2_larger_text",
     "best_depth1_text_delta_pct_vs_anchor",
     "best_depth2_text_delta_pct_vs_anchor",
     "best_depth2_delta_pct_vs_parent",
     "depth2_improves_over_depth1_best",
+    "best_candidate_depth",
 }
 
 
@@ -91,15 +109,18 @@ def build_p7a_manifest(
 ) -> dict[str, Any]:
     out = Path(output_dir)
     candidates_csv = out / "two_swap_candidates.csv"
+    seeds_csv = out / "two_swap_seeds.csv"
     attempts_csv = out / "two_swap_attempts.csv"
     pipeline_runs_csv = out / "two_swap_pipeline_runs.csv"
     object_size_csv = out / "two_swap_object_size.csv"
     report_md = out / "two_swap_report.md"
     p6_rows = _load_csv(p6_object_size_csv)
+    seed_rows = _load_csv(seeds_csv)
     p7_candidates = _load_csv(candidates_csv)
     p7_object_rows = _load_csv(object_size_csv)
     extra = {
-        "seed": _seed_from_p6_rows(p6_rows),
+        "seed": _seed_from_seed_rows(seed_rows) or _seed_from_p6_rows(p6_rows),
+        "seeds": _seeds_from_seed_rows(seed_rows),
         "depth2_candidates": _depth2_candidates(
             candidate_rows=p7_candidates,
             object_rows=p7_object_rows,
@@ -123,6 +144,7 @@ def build_p7a_manifest(
         outputs={
             "output_dir": output_dir,
             "cert_dir": cert_dir,
+            "two_swap_seeds_csv": seeds_csv,
             "two_swap_candidates_csv": candidates_csv,
             "two_swap_attempts_csv": attempts_csv,
             "two_swap_pipeline_runs_csv": pipeline_runs_csv,
@@ -333,6 +355,30 @@ def _seed_from_p6_rows(rows: Sequence[dict[str, str]]) -> dict[str, Any]:
             seed.get("text_delta_pct")
         ),
     }
+
+
+def _seed_from_seed_rows(rows: Sequence[dict[str, str]]) -> dict[str, Any]:
+    seeds = _seeds_from_seed_rows(rows)
+    return seeds[0] if seeds else {}
+
+
+def _seeds_from_seed_rows(rows: Sequence[dict[str, str]]) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    for row in rows:
+        result.append(
+            {
+                "program": row.get("program", ""),
+                "candidate_id": row.get("seed_candidate_id")
+                or row.get("candidate_id", ""),
+                "seed_pipeline": row.get("seed_pipeline", ""),
+                "depth1_text_delta_pct_vs_anchor": _parse_optional_float(
+                    row.get("seed_text_delta_pct") or row.get("text_delta_pct")
+                ),
+                "seed_rank": _parse_optional_int(row.get("seed_rank")),
+                "seed_reason": row.get("seed_reason", ""),
+            }
+        )
+    return result
 
 
 def _depth2_candidates(
