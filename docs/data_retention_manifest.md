@@ -15,6 +15,7 @@ data/outputs/bounded_two_swap_p7a_second/
 data/outputs/bounded_two_swap_p7b/
 data/outputs/bounded_two_swap_p7b_second/
 data/outputs/bounded_two_swap_p7b_analysis/
+data/outputs/codegen_sensitivity_p8a/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md

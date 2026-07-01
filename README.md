@@ -194,7 +194,21 @@ Generate a tracked P7b.5 analysis manifest:
 
 ```powershell
 $env:PYTHONPATH = "src"
-D:\Miniconda\envs\dlm\python.exe -m ecpor.result_manifest p7b-analysis --out-manifest docs\results\p7b_analysis_manifest.json --p7-dir data\outputs\bounded_two_swap_p7b --p6-object-size data\outputs\code_size_p6_final\object_size.csv --analysis-dir data\outputs\bounded_two_swap_p7b_analysis --repo-root . --result-generated-from-commit 49a0a8fbe9b9755ec2519248b9531581eb7ed041
+D:\Miniconda\envs\dlm\python.exe -m ecpor.result_manifest p7b-analysis --out-manifest docs\results\p7b_analysis_manifest.json --p7-dir data\outputs\bounded_two_swap_p7b --p6-object-size data\outputs\code_size_p6_final\object_size.csv --analysis-dir data\outputs\bounded_two_swap_p7b_analysis --repo-root . --result-generated-from-commit 3fa87e171ec9f14e622a052e1c0e75bacb6e9488
+```
+
+Run P8a clang-c codegen sensitivity:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.codegen_sensitivity --p6-object-size data\outputs\code_size_p6_final\object_size.csv --p7-object-size data\outputs\bounded_two_swap_p7b\two_swap_object_size.csv --out data\outputs\codegen_sensitivity_p8a --clang E:\llvm\build\bin\clang.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --timeout-sec 30
+```
+
+Generate a tracked P8a result manifest:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.result_manifest p8a-codegen --out-manifest docs\results\p8a_codegen_sensitivity_manifest.json --p6-object-size data\outputs\code_size_p6_final\object_size.csv --p7-object-size data\outputs\bounded_two_swap_p7b\two_swap_object_size.csv --output-dir data\outputs\codegen_sensitivity_p8a --clang E:\llvm\build\bin\clang.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --repo-root . --result-generated-from-commit 73f3d19600dd8df0cda6481c7b0aca32d60560d7
 ```
 
 Scan soft IR features for one output:

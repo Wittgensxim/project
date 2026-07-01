@@ -17,8 +17,8 @@
 ## 最新状态
 
 - 当前分支：`feature/phase-ordering-footprint`
-- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening、P6.5 result manifest 与 candidate-source invariant、P7a bounded two-swap smoke test、P7a report/manifest/cache 收尾、P7b per-program top-3 seed bounded two-swap controlled experiment、P7b.5 two-swap result interpretation and distribution analysis。
-- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `81 passed`。
+- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening、P6.5 result manifest 与 candidate-source invariant、P7a bounded two-swap smoke test、P7a report/manifest/cache 收尾、P7b per-program top-3 seed bounded two-swap controlled experiment、P7b.5 two-swap result interpretation and distribution analysis、P8a clang-c codegen sensitivity。
+- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `85 passed`。
 - 最新 P4 真实实验：8 个 Stanford 输入 × 7 个 anchor-adjacent pair，共 `56` 次 lazy validation；第一轮 `48` 个 candidate 动态测试、`8` 个 low_priority skip、`32` 个 certified、`16` 个 not-certified、`run_failed = 0`、`CertificateReproductionRate = 100.00%`。
 - 最新 P4 cache 验证：第二轮同一批输入 `cache_hits = 48`、`dynamic_tests = 0`、`SecondRunCacheHitRate = 100.00%`。
 - 最新 state-indexing safety 验证：input-state certificate 对 input hash 命中，对 `sroa` 后不同 prefix hash 不命中。
@@ -34,12 +34,16 @@
 - 最新 P7b code-size 结果：depth1 seed `.text` 相对 anchor 为 `1` 个 smaller、`15` 个 equal、`0` 个 larger；depth2 candidate 为 `3` 个 smaller、`16` 个 equal、`3` 个 larger；best depth1 和 best depth2 均为 `-4.4017%`，`depth2_improves_over_depth1_best = False`，`best_candidate_depth = 1`。
 - 最新 P7b cache 验证：同一个 `data/certs/bounded_two_swap_p7b/` 复跑到 `data/outputs/bounded_two_swap_p7b_second/`；`cache_hits = 100`、`dynamic_tests = 0`、`validated_second_swaps = 100`、`unique_depth2_candidates = 22`，pipeline/object/size 失败均为 `0`。
 - 最新 P7b manifests：`docs/results/p7b_bounded_two_swap_manifest.json` 与 `docs/results/p7b_cache_reuse_manifest.json`，均记录 `ecpor_git_dirty = false`、输入/输出 hash、工具 hash、seed 列表、depth2 candidates 和 summary。
-- 最新 P7b.5 结果解释：新增 `src/ecpor/two_swap_analysis.py`，输出 `data/outputs/bounded_two_swap_p7b_analysis/`；核心结论为 `RawDepth2Candidates = 42`、`UniqueDepth2Candidates = 22`、`DuplicateSequences = 20`、`DuplicateSequenceRate = 47.62%`、`Depth2SmallerText = 3`、`Depth2SmallerPrograms = 1`、`Depth2ImprovesProgramDepth1Best = 0`、`Depth2ImprovesGlobalDepth1Best = 0`、`FirstRunCacheHits = 5`。
+- 最新 P7b.5 结果解释：新增 `src/ecpor/two_swap_analysis.py`，输出 `data/outputs/bounded_two_swap_p7b_analysis/`；核心结论为 `RawDepth2Candidates = 42`、`UniqueDepth2Candidates = 22`、`DuplicateSequences = 20`、`DuplicateSequenceRate = 47.62%`、`Depth2SmallerText = 3`、`Depth2SmallerPrograms = 1`、`Depth2SmallerFromSameParent = 3`、`Depth2ImprovesProgramDepth1Best = 0`、`Depth2ImprovesGlobalDepth1Best = 0`、`FirstRunCacheHits = 5`。
 - 最新 P7b.5 分析解释：3 个 smaller depth2 candidate 全部来自 `testsuite_stanford_queens`，且都没有超过该程序已有 depth1 best；P7b 增加了 smaller 候选数量，但没有扩大 smaller-text program 数量。
 - 最新 P7b.5 manifest：`docs/results/p7b_analysis_manifest.json`，记录 P7b 输入 hash、分析输出 hash、`ecpor_git_dirty = false` 和 analysis-only scope。
+- 最新 P8a 真实实验：输入 P6 `object_size.csv` 与 P7b `two_swap_object_size.csv`，输出 `data/outputs/codegen_sensitivity_p8a/`；`IRInputs = 46`、`AnchorInputs = 8`、`SingleSwapInputs = 16`、`Depth2Inputs = 22`、`ClangObjectBuildsAttempted = 46`、`ClangObjectBuildFailed = 0`、`ClangSizeParseFailed = 0`。
+- 最新 P8a 方向对照：`DirectionComparisonCandidates = 38`、`DirectionAgreementCount = 26`、`DirectionAgreementRate = 68.42%`、`SmallerUnderBothCount = 4`、`SmallerOnlyUnderLlcCount = 0`、`SmallerOnlyUnderClangCount = 5`、`DirectionDisagreementCount = 12`。
+- 最新 P8a 结论：code-size 方向存在 codegen-path sensitivity；但 Queens 的 1 个 depth1 smaller 和 3 个 depth2 smaller 在 `clang -c` 下仍然 smaller，当前关键收益不是 llc-only 假象。
+- 最新 P8a manifest：`docs/results/p8a_codegen_sensitivity_manifest.json`，记录 P6/P7b 输入 hash、P8a 输出 hash、`clang.exe` / `llvm-size.exe` hash、`ecpor_git_dirty = false` 和 no-runtime/no-new-certificate scope。
 - 最新 data 清理：新增 `docs/data_retention_manifest.md`；以后 `data/` 只保留必须保留的文件；删除 `*_work`、旧 P5 commit 输出和重复 P4 final 目录；保留 `data/inputs/`、P4 e83c409、P5/P6 final、pair_tests。清理后 `data/outputs` 约 `21.57 MB`，`data/certs` 约 `0.62 MB`。
 - 重要语义边界：static filter 只做 candidate generation / low priority 排序；lazy validation 只在当前 state 上查询或生成 certificate；input-state certificate 不得复用于 prefix-state。
-- 下一步建议：不要马上 depth=3；优先在 benchmark expansion 与 clang-c codegen sensitivity 之间二选一，并继续保持 same pass set / same budget 的保守对照。
+- 下一步建议：不要马上 depth=3；进入 P8b benchmark expansion，在 `E:\llvm-test-suite` 中新增 8 个小程序，并继续保持 same pass set / same budget 的保守对照。
 
 ## 进度文件索引
 
@@ -68,6 +72,7 @@
 | 2026-07-02 | P7a report 字段、manifest 自动化与 cache 复跑 | [2026-07-02-21-p7a-cache-report-manifest-wrapup.md](progress/2026-07-02-21-p7a-cache-report-manifest-wrapup.md) |
 | 2026-07-02 | P7b per-program top-3 seed bounded two-swap controlled experiment | [2026-07-02-22-p7b-bounded-two-swap-controlled.md](progress/2026-07-02-22-p7b-bounded-two-swap-controlled.md) |
 | 2026-07-02 | P7b.5 two-swap 结果解释与分布分析 | [2026-07-02-23-p7b5-two-swap-analysis.md](progress/2026-07-02-23-p7b5-two-swap-analysis.md) |
+| 2026-07-02 | P8a clang-c codegen sensitivity | [2026-07-02-24-p8a-clang-codegen-sensitivity.md](progress/2026-07-02-24-p8a-clang-codegen-sensitivity.md) |
 
 ## 旧文档拆分说明
 

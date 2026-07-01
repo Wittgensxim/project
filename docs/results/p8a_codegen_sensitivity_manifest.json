@@ -1,0 +1,54 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P8a",
+  "description": "Clang -c codegen sensitivity check for P6/P7b saved IR outputs.",
+  "result_generated_from_commit": "73f3d19600dd8df0cda6481c7b0aca32d60560d7",
+  "ecpor_git_commit": "73f3d19600dd8df0cda6481c7b0aca32d60560d7",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "p6_object_size_csv": "data/outputs/code_size_p6_final/object_size.csv",
+    "p7_object_size_csv": "data/outputs/bounded_two_swap_p7b/two_swap_object_size.csv"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/codegen_sensitivity_p8a",
+    "p8a_clang_object_size_csv": "data/outputs/codegen_sensitivity_p8a/p8a_clang_object_size.csv",
+    "p8a_codegen_direction_compare_csv": "data/outputs/codegen_sensitivity_p8a/p8a_codegen_direction_compare.csv",
+    "p8a_codegen_sensitivity_report": "data/outputs/codegen_sensitivity_p8a/p8a_codegen_sensitivity_report.md"
+  },
+  "sha256": {
+    "p6_object_size_csv": "b69269f8f0cfea97ca1529de90fe666beb364c3775769ad02b84f13c0257ec22",
+    "p7_object_size_csv": "45b5e0f8ab787079c6a3a67c8c0a34d8bf251ed8c6215a4056a233e157953e5e",
+    "p8a_clang_object_size_csv": "ab2f162b139665387a1c2114fe4596a48344dbde640ae84ae34db52e93c83b6c",
+    "p8a_codegen_direction_compare_csv": "f252aab4b7f440888f41b1d9445e80c2d4ce888dc5146fa64cd5ddd63c68a7df",
+    "p8a_codegen_sensitivity_report": "87220b4b43d07a4142f9061c68e1934c8f6259db9ec560c9604b5b01c2c18153",
+    "clang": "7813948a1b853beb1806fd1bb28b09917bcbd9e35d67b43345af02c100b93551",
+    "llvm_size": "f425ef87d64380ff5f8fd055ddb52e1f0d38f3031bb2a5bbddd557d71c5bc589"
+  },
+  "tools": {
+    "clang_path": "E:\\llvm\\build\\bin\\clang.exe",
+    "llvm_size_path": "E:\\llvm\\build\\bin\\llvm-size.exe"
+  },
+  "summary": {
+    "DirectionComparisonCandidates": 38,
+    "ClangObjectBuildsAttempted": 46,
+    "SingleSwapInputs": 16,
+    "Programs": 8,
+    "SmallerUnderBothCount": 4,
+    "ClangObjectBuildFailed": 0,
+    "IRInputs": 46,
+    "DirectionAgreementRate": "68.42%",
+    "Depth2Inputs": 22,
+    "SmallerOnlyUnderLlcCount": 0,
+    "AnchorInputs": 8,
+    "ClangSizeParseFailed": 0,
+    "SmallerOnlyUnderClangCount": 5,
+    "DirectionAgreementCount": 26,
+    "DirectionDisagreementCount": 12
+  },
+  "scope_limits": {
+    "runtime_benchmarks": false,
+    "new_certificates": false,
+    "llvm_opt_rerun": false,
+    "codegen_path_compared": "clang -c"
+  }
+}
