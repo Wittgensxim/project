@@ -118,6 +118,13 @@ $env:PYTHONPATH = "src"
 D:\Miniconda\envs\dlm\python.exe -m ecpor.static_filter --program-preset stanford-8 --mode per-program --observed-summary data\outputs\cert_summary.csv --out-csv data\outputs\static_filter_decisions_per_program.csv --out-report data\outputs\static_filter_report_per_program.md --window-size 7
 ```
 
+Run minimal P4 anchor-adjacent lazy validation:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.adjacent_swap_driver --program-preset stanford-8 --opt E:\llvm\build\bin\opt.exe --cert-dir data\certs\lazy_validation_p4 --out data\outputs\lazy_validation_p4 --attempts-csv data\outputs\lazy_validation_p4_first.csv --report data\outputs\lazy_validation_p4_first.md --env-id 3c3dab32ea1756773748a56d639e6bb201042576bb0653fd466e109d1946298e --llvm-version 23.0.0git
+```
+
 Scan soft IR features for one output:
 
 ```powershell

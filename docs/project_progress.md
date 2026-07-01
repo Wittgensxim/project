@@ -6,7 +6,7 @@
 
 1. 进度文档统一使用中文记录。
 2. 每次大改动、新阶段、批量实验、验证结果或风险变化，都在 `docs/progress/` 下新建一个进度文件。
-3. 文件命名使用 `YYYY-MM-DD-NN-short-topic.md`，其中 `NN` 是两位顺序号，例如 `2026-07-01-13-static-filter-per-program-holdout.md`。
+3. 文件命名使用 `YYYY-MM-DD-NN-short-topic.md`，其中 `NN` 是两位顺序号，例如 `2026-07-01-14-p4-minimal-lazy-validation.md`。
 4. `docs/project_progress.md` 只维护索引、规则和最新状态摘要，不承载完整长文。
 5. 每个独立进度文件必须包含：当前目标、完成内容、验证结果、风险/备注、下一步。
 6. 每个独立进度文件都要附上与本次进度相关的代码快照；文件过大时可附关键完整片段并说明原因。
@@ -16,12 +16,13 @@
 ## 最新状态
 
 - 当前分支：`feature/phase-ordering-footprint`
-- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证。
-- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `42 passed`。
-- 最新真实实验：8 个 Stanford 输入 × 28 个 unordered pass pair，共 `224` 个 certificate；`224/224` reproduction；`HardFalseIndependent = 0`；`CertifiedFeatureMismatchCount = 0`；`run_failed = 0`。
-- 最新静态过滤评估：per-program mode；calibration 3 个程序和 hold-out 5 个程序均 `StaticCandidateRecall = 100.00%`；`StaticFalseNegativeObserved = 0`；`StaticCandidateReduction = 17.86%`。
-- 重要语义边界：static filter 只做 candidate generation / low priority 排序，不产生 certificate，也不参与 hard pruning。
-- 下一步建议：进入 P4 minimal lazy validation / local search 接口，不直接做完整 searcher、code size evaluator、Alive2、loop pass、inline 或 O2/O3。
+- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation。
+- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `53 passed`。
+- 最新 P4 真实实验：8 个 Stanford 输入 × 7 个 anchor-adjacent pair，共 `56` 次 lazy validation；第一轮 `48` 个 candidate 动态测试、`8` 个 low_priority skip、`32` 个 certified、`16` 个 not-certified、`run_failed = 0`、`CertificateReproductionRate = 100.00%`。
+- 最新 P4 cache 验证：第二轮同一批输入 `cache_hits = 48`、`dynamic_tests = 0`、`SecondRunCacheHitRate = 100.00%`。
+- 最新 state-indexing safety 验证：input-state certificate 对 input hash 命中，对 `sroa` 后不同 prefix hash 不命中。
+- 重要语义边界：static filter 只做 candidate generation / low priority 排序；lazy validation 只在当前 state 上查询或生成 certificate；input-state certificate 不得复用于 prefix-state。
+- 下一步建议：P4 稳定后进入 P5 bounded local reorder exploration；仍不直接做完整 searcher、code size evaluator、Alive2、loop pass、inline 或 O2/O3。
 
 ## 进度文件索引
 
@@ -40,6 +41,7 @@
 | 2026-07-01 | P2.6 diff report 与 3x8 matrix | [2026-07-01-11-diff-report-and-3x8-matrix.md](progress/2026-07-01-11-diff-report-and-3x8-matrix.md) |
 | 2026-07-01 | P3 passspec 与 static filter 评估 | [2026-07-01-12-passspec-static-filter-eval.md](progress/2026-07-01-12-passspec-static-filter-eval.md) |
 | 2026-07-01 | P3.5 per-program static filter 与 hold-out 验证 | [2026-07-01-13-static-filter-per-program-holdout.md](progress/2026-07-01-13-static-filter-per-program-holdout.md) |
+| 2026-07-01 | P4 minimal lazy validation 与 cache reuse | [2026-07-01-14-p4-minimal-lazy-validation.md](progress/2026-07-01-14-p4-minimal-lazy-validation.md) |
 
 ## 旧文档拆分说明
 
