@@ -108,6 +108,7 @@ class ResultManifestTests(unittest.TestCase):
         self.assertIn("p7b_analysis_report", loaded["sha256"])
         self.assertEqual(loaded["summary"]["Depth2SmallerText"], 3)
         self.assertEqual(loaded["summary"]["DuplicateSequenceRate"], "47.62%")
+        self.assertNotIn("p1", loaded["summary"])
 
 
 def _write_text(path: Path, text: str) -> None:
@@ -270,6 +271,7 @@ def _write_p7b_analysis_outputs(out_dir: Path) -> None:
             SelectedSeeds: 16
             Depth2SmallerText: 3
             DuplicateSequenceRate: 47.62%
+            p1: seeds=1 raw_depth2=1
             """
         ).strip()
         + "\n",

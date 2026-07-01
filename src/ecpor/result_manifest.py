@@ -56,6 +56,24 @@ P7A_SUMMARY_KEYS = {
     "best_candidate_depth",
 }
 
+P7B_ANALYSIS_SUMMARY_KEYS = {
+    "Programs",
+    "SelectedSeeds",
+    "RawDepth2Candidates",
+    "UniqueDepth2Candidates",
+    "DuplicateSequences",
+    "DuplicateSequenceRate",
+    "Depth2SmallerText",
+    "Depth2EqualText",
+    "Depth2LargerText",
+    "Depth2SmallerPrograms",
+    "Depth2ImprovesProgramDepth1Best",
+    "Depth2ImprovesGlobalDepth1Best",
+    "FirstRunCacheHits",
+    "PipelineRuns",
+    "PipelineRunFailed",
+}
+
 
 def build_result_manifest(
     *,
@@ -242,7 +260,10 @@ def build_p7b_analysis_manifest(
             "p7b_analysis_report": report,
         },
         tools={},
-        summary=_parse_key_value_report(report),
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            P7B_ANALYSIS_SUMMARY_KEYS,
+        ),
         repo_root=repo_root,
         result_generated_from_commit=result_generated_from_commit,
         extra={
