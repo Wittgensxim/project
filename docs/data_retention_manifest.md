@@ -27,6 +27,18 @@ data/certs/bounded_two_swap_p7a/
 data/certs/bounded_two_swap_p7b/
 ```
 
+`data/outputs/core_evidence_report/` 当前只保留 P8a.6 必要文件：
+
+```text
+ecpor_candidate_propagation_funnel.csv
+ecpor_certified_pruning_summary.csv
+ecpor_core_evidence_report.md
+ecpor_objective_layer_summary.csv
+ecpor_validation_funnel.csv
+```
+
+旧版 `ecpor_reduction_funnel.csv` 与 `ecpor_codegen_sensitivity_summary.csv` 已删除；它们可由旧提交再生成，但当前语义下不再保留。
+
 ## 可删除：临时或重复目录
 
 ```text
