@@ -34,6 +34,23 @@ class BatchCertificateTests(unittest.TestCase):
         self.assertEqual(FULL_SCALAR_PASS_PAIRS[-1], ("dce", "adce"))
         self.assertIn(("instcombine", "simplifycfg"), FULL_SCALAR_PASS_PAIRS)
 
+    def test_stanford_8_programs_include_calibration_and_holdout(self):
+        from ecpor.batch_certificates import (
+            DEFAULT_STANFORD_PROGRAMS,
+            HOLDOUT_STANFORD_PROGRAMS,
+            STANFORD_8_PROGRAMS,
+        )
+
+        self.assertEqual(len(DEFAULT_STANFORD_PROGRAMS), 3)
+        self.assertEqual(len(HOLDOUT_STANFORD_PROGRAMS), 5)
+        self.assertEqual(len(STANFORD_8_PROGRAMS), 8)
+        self.assertTrue(
+            all(program in STANFORD_8_PROGRAMS for program in DEFAULT_STANFORD_PROGRAMS)
+        )
+        self.assertTrue(
+            all(program in STANFORD_8_PROGRAMS for program in HOLDOUT_STANFORD_PROGRAMS)
+        )
+
     def test_run_certificate_matrix_writes_summary_and_reproduces(self):
         from ecpor.batch_certificates import SUMMARY_FIELDS, run_certificate_matrix
 

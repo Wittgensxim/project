@@ -83,6 +83,13 @@ $env:PYTHONPATH = "src"
 D:\Miniconda\envs\dlm\python.exe -m ecpor.batch_certificates --preset stanford-3x28 --opt E:\llvm\build\bin\opt.exe --out data\outputs\pair_tests --cert-dir data\certs\pair_tests --summary data\outputs\cert_summary.csv --env-id 3c3dab32ea1756773748a56d639e6bb201042576bb0653fd466e109d1946298e --llvm-version 23.0.0git
 ```
 
+Generate the 8 Stanford calibration/hold-out programs by the full 28 unordered pass-pair matrix:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.batch_certificates --preset stanford-8x28 --opt E:\llvm\build\bin\opt.exe --out data\outputs\pair_tests --cert-dir data\certs\pair_tests --summary data\outputs\cert_summary.csv --env-id 3c3dab32ea1756773748a56d639e6bb201042576bb0653fd466e109d1946298e --llvm-version 23.0.0git
+```
+
 Generate a text summary report from `cert_summary.csv`:
 
 ```powershell
@@ -102,6 +109,13 @@ Generate static filter decisions and evaluate them against `cert_summary.csv`:
 ```powershell
 $env:PYTHONPATH = "src"
 D:\Miniconda\envs\dlm\python.exe -m ecpor.static_filter --program-preset stanford-3 --observed-summary data\outputs\cert_summary.csv --out-csv data\outputs\static_filter_decisions.csv --out-report data\outputs\static_filter_report.md --window-size 7
+```
+
+Generate per-program static filter decisions for the 8-program calibration/hold-out set:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.static_filter --program-preset stanford-8 --mode per-program --observed-summary data\outputs\cert_summary.csv --out-csv data\outputs\static_filter_decisions_per_program.csv --out-report data\outputs\static_filter_report_per_program.md --window-size 7
 ```
 
 Scan soft IR features for one output:

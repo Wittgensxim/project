@@ -27,6 +27,19 @@ DEFAULT_STANFORD_PROGRAMS: list[Program] = [
     ("testsuite_stanford_perm", "data/inputs/testsuite_stanford_perm.ll"),
 ]
 
+HOLDOUT_STANFORD_PROGRAMS: list[Program] = [
+    ("testsuite_stanford_oscar", "data/inputs/testsuite_stanford_oscar.ll"),
+    ("testsuite_stanford_puzzle", "data/inputs/testsuite_stanford_puzzle.ll"),
+    ("testsuite_stanford_queens", "data/inputs/testsuite_stanford_queens.ll"),
+    ("testsuite_stanford_quicksort", "data/inputs/testsuite_stanford_quicksort.ll"),
+    ("testsuite_stanford_towers", "data/inputs/testsuite_stanford_towers.ll"),
+]
+
+STANFORD_8_PROGRAMS: list[Program] = [
+    *DEFAULT_STANFORD_PROGRAMS,
+    *HOLDOUT_STANFORD_PROGRAMS,
+]
+
 SCALAR_PIPELINE_PASSES = [
     "sroa",
     "early-cse",
@@ -219,7 +232,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Generate a certificate matrix.")
     parser.add_argument(
         "--preset",
-        choices=["stanford-3x3", "stanford-3x8", "stanford-3x28"],
+        choices=["stanford-3x3", "stanford-3x8", "stanford-3x28", "stanford-8x28"],
         default="stanford-3x8",
         help="Program/pass-pair preset to run.",
     )
@@ -245,8 +258,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         opt_path = args.opt
 
     pass_pairs = _preset_pass_pairs(args.preset)
+    programs = _preset_programs(args.preset)
     rows = run_certificate_matrix(
-        programs=DEFAULT_STANFORD_PROGRAMS,
+        programs=programs,
         pass_pairs=pass_pairs,
         opt_path=opt_path,
         output_dir=args.out,
@@ -280,9 +294,15 @@ def _safe_name(value: str) -> str:
 def _preset_pass_pairs(preset: str) -> list[PassPair]:
     if preset == "stanford-3x3":
         return STANFORD_3X3_PASS_PAIRS
-    if preset == "stanford-3x28":
+    if preset in {"stanford-3x28", "stanford-8x28"}:
         return FULL_SCALAR_PASS_PAIRS
     return DEFAULT_PASS_PAIRS
+
+
+def _preset_programs(preset: str) -> list[Program]:
+    if preset == "stanford-8x28":
+        return STANFORD_8_PROGRAMS
+    return DEFAULT_STANFORD_PROGRAMS
 
 
 def _scan_output_features(path: str | Path) -> dict[str, int | bool]:

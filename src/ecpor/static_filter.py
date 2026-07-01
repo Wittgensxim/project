@@ -12,7 +12,11 @@ from typing import Any, Sequence
 
 import yaml
 
-from .batch_certificates import DEFAULT_STANFORD_PROGRAMS
+from .batch_certificates import (
+    DEFAULT_STANFORD_PROGRAMS,
+    HOLDOUT_STANFORD_PROGRAMS,
+    STANFORD_8_PROGRAMS,
+)
 from .feature_scan import scan_ir_file
 from .summary_report import load_summary_csv
 
@@ -28,6 +32,8 @@ DECISION_FIELDS = [
     "producer_consumer",
     "program_feature_gate",
 ]
+
+PROGRAM_DECISION_FIELDS = ["program", *DECISION_FIELDS]
 
 DecisionRow = dict[str, str]
 PassSpec = dict[str, dict[str, Any]]
@@ -127,6 +133,29 @@ def build_static_filter_decisions(
     return rows
 
 
+def build_static_filter_decisions_for_programs(
+    passes: Sequence[str],
+    passspec: PassSpec,
+    *,
+    program_features_by_name: dict[str, dict[str, Any]],
+    window_size: int,
+) -> list[DecisionRow]:
+    rows: list[DecisionRow] = []
+    for program, program_features in program_features_by_name.items():
+        for row in build_static_filter_decisions(
+            passes,
+            passspec,
+            program_features=program_features,
+            window_size=window_size,
+        ):
+            rows.append({"program": program, **row})
+    return rows
+
+
+def scan_program_features(programs: Sequence[Program]) -> dict[str, dict[str, Any]]:
+    return {name: scan_ir_file(path) for name, path in programs}
+
+
 def aggregate_program_features(programs: Sequence[Program]) -> dict[str, Any]:
     aggregate: dict[str, Any] = {}
     for _name, path in programs:
@@ -142,6 +171,15 @@ def aggregate_program_features(programs: Sequence[Program]) -> dict[str, Any]:
 
 
 def evaluate_static_filter(
+    decisions: Sequence[DecisionRow],
+    observed_rows: Sequence[dict[str, str]],
+) -> dict[str, Any]:
+    if any(row.get("program") for row in decisions):
+        return _evaluate_static_filter_per_program(decisions, observed_rows)
+    return _evaluate_static_filter_aggregate(decisions, observed_rows)
+
+
+def _evaluate_static_filter_aggregate(
     decisions: Sequence[DecisionRow],
     observed_rows: Sequence[dict[str, str]],
 ) -> dict[str, Any]:
@@ -178,6 +216,7 @@ def evaluate_static_filter(
 
     return {
         "all_pairs": all_pairs,
+        "decision_rows": len(decisions),
         "candidate_pairs": candidate_pairs,
         "low_priority_pairs": low_priority_pairs,
         "frozen_pairs": frozen_pairs,
@@ -201,9 +240,109 @@ def evaluate_static_filter(
             and _has_nonzero_feature_delta(row.get("feature_delta", ""))
         ),
         "static_candidate_recall": recall,
+        "macro_static_candidate_recall": recall,
         "static_false_negative_observed": len(false_negative_rows),
         "static_candidate_reduction": reduction,
         "false_negative_rows": false_negative_rows,
+        "per_program": {},
+    }
+
+
+def _evaluate_static_filter_per_program(
+    decisions: Sequence[DecisionRow],
+    observed_rows: Sequence[dict[str, str]],
+) -> dict[str, Any]:
+    decision_by_program_pair = {
+        (row.get("program", ""), _pair_key(row["pair_a"], row["pair_b"])): row[
+            "decision"
+        ]
+        for row in decisions
+    }
+    label_counts = Counter(row.get("label", "") for row in observed_rows)
+    candidate_pairs = sum(1 for row in decisions if row["decision"] == "candidate")
+    low_priority_pairs = sum(1 for row in decisions if row["decision"] == "low_priority")
+    frozen_pairs = sum(1 for row in decisions if row["decision"] == "frozen")
+    observed_interacting = [
+        row for row in observed_rows if row.get("label") == "not_certified_independent"
+    ]
+    candidate_observed_interacting = [
+        row
+        for row in observed_interacting
+        if decision_by_program_pair.get(
+            (
+                row.get("program", ""),
+                _pair_key(row.get("pair_a", ""), row.get("pair_b", "")),
+            )
+        )
+        == "candidate"
+    ]
+    false_negative_rows = [
+        row
+        for row in observed_interacting
+        if decision_by_program_pair.get(
+            (
+                row.get("program", ""),
+                _pair_key(row.get("pair_a", ""), row.get("pair_b", "")),
+            )
+        )
+        != "candidate"
+    ]
+    all_pairs = len({_pair_key(row["pair_a"], row["pair_b"]) for row in decisions})
+    observed_count = len(observed_interacting)
+    recall = (
+        len(candidate_observed_interacting) / observed_count
+        if observed_count
+        else 1.0
+    )
+    reduction = 1.0 - (candidate_pairs / len(decisions)) if decisions else 0.0
+    per_program = _per_program_metrics(
+        decisions=decisions,
+        observed_rows=observed_rows,
+        decision_by_program_pair=decision_by_program_pair,
+    )
+    recall_programs = [
+        metrics
+        for metrics in per_program.values()
+        if metrics["observed_interacting"] > 0
+    ]
+    macro_recall = (
+        sum(metrics["static_candidate_recall"] for metrics in recall_programs)
+        / len(recall_programs)
+        if recall_programs
+        else 1.0
+    )
+
+    return {
+        "all_pairs": all_pairs,
+        "decision_rows": len(decisions),
+        "candidate_pairs": candidate_pairs,
+        "low_priority_pairs": low_priority_pairs,
+        "frozen_pairs": frozen_pairs,
+        "observed_total": len(observed_rows),
+        "observed_certified_independent": label_counts["certified_independent"],
+        "observed_interacting": observed_count,
+        "observed_run_failed": label_counts["run_failed"],
+        "reproduced": sum(
+            1 for row in observed_rows if row.get("reproduced", "").lower() == "true"
+        ),
+        "hard_false_independent": sum(
+            1
+            for row in observed_rows
+            if row.get("label") == "certified_independent"
+            and row.get("hard_equal") != "True"
+        ),
+        "certified_feature_mismatch": sum(
+            1
+            for row in observed_rows
+            if row.get("label") == "certified_independent"
+            and _has_nonzero_feature_delta(row.get("feature_delta", ""))
+        ),
+        "static_candidate_recall": recall,
+        "macro_static_candidate_recall": macro_recall,
+        "static_false_negative_observed": len(false_negative_rows),
+        "static_candidate_reduction": reduction,
+        "false_negative_rows": false_negative_rows,
+        "per_program": per_program,
     }
 
 
@@ -215,6 +354,7 @@ def build_static_filter_report(
     decisions: Sequence[DecisionRow],
     observed_rows: Sequence[dict[str, str]],
     metrics: dict[str, Any],
+    program_groups: dict[str, Sequence[str]] | None = None,
 ) -> str:
     decision_counts = Counter(row["decision"] for row in decisions)
     lines = [
@@ -244,9 +384,48 @@ def build_static_filter_report(
         "",
         "Static filter quality:",
         f"  StaticCandidateRecall: {_format_percent(metrics['static_candidate_recall'])}",
+        f"  MacroStaticCandidateRecall: {_format_percent(metrics['macro_static_candidate_recall'])}",
         f"  StaticFalseNegativeObserved: {metrics['static_false_negative_observed']}",
         f"  StaticCandidateReduction: {_format_percent(metrics['static_candidate_reduction'])}",
     ]
+
+    per_program = metrics.get("per_program", {})
+    if per_program:
+        lines.extend(["", "Per-program static decisions:"])
+        for program in sorted(per_program):
+            program_metrics = per_program[program]
+            lines.append(
+                "  {program}: candidate={candidate} low_priority={low_priority} "
+                "frozen={frozen} observed_interacting={observed} "
+                "false_negative={false_negative} recall={recall}".format(
+                    program=program,
+                    candidate=program_metrics["candidate_pairs"],
+                    low_priority=program_metrics["low_priority_pairs"],
+                    frozen=program_metrics["frozen_pairs"],
+                    observed=program_metrics["observed_interacting"],
+                    false_negative=program_metrics["static_false_negative_observed"],
+                    recall=_format_percent(program_metrics["static_candidate_recall"]),
+                )
+            )
+
+    if program_groups and per_program:
+        lines.extend(["", "Program groups:"])
+        for group_name, programs in program_groups.items():
+            group_metrics = _summarize_program_group(per_program, programs)
+            lines.extend(
+                [
+                    f"  {group_name}:",
+                    f"    programs: {group_metrics['program_count']}",
+                    f"    candidate: {group_metrics['candidate_pairs']}",
+                    f"    low_priority: {group_metrics['low_priority_pairs']}",
+                    f"    frozen: {group_metrics['frozen_pairs']}",
+                    f"    observed_interacting: {group_metrics['observed_interacting']}",
+                    f"    false_negative: {group_metrics['static_false_negative_observed']}",
+                    f"    micro_recall: {_format_percent(group_metrics['static_candidate_recall'])}",
+                    f"    macro_recall: {_format_percent(group_metrics['macro_static_candidate_recall'])}",
+                    f"    candidate_reduction: {_format_percent(group_metrics['static_candidate_reduction'])}",
+                ]
+            )
 
     false_negatives = metrics["false_negative_rows"]
     if false_negatives:
@@ -268,8 +447,13 @@ def build_static_filter_report(
 def write_decisions_csv(path: str | Path, rows: Sequence[DecisionRow]) -> None:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = (
+        PROGRAM_DECISION_FIELDS
+        if any("program" in row for row in rows)
+        else DECISION_FIELDS
+    )
     with output.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=DECISION_FIELDS)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
 
@@ -283,8 +467,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--features-json")
     parser.add_argument(
         "--program-preset",
-        choices=["stanford-3"],
-        help="Scan a built-in program set to build aggregate program features.",
+        choices=["stanford-3", "stanford-8"],
+        help="Scan a built-in program set to build program features.",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["aggregate", "per-program"],
+        default="aggregate",
+        help="Build one aggregate decision table or one table per program.",
     )
     parser.add_argument("--observed-summary")
     parser.add_argument("--out-csv", default="data/outputs/static_filter_decisions.csv")
@@ -294,19 +484,32 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     pipeline = load_pipeline_config(args.pipeline)
     passspec = load_passspec(args.passspec)
-    program_features, program_count = _load_program_features_for_args(args)
     passes = list(pipeline["passes"])
-    decisions = build_static_filter_decisions(
-        passes,
-        passspec,
-        program_features=program_features,
-        window_size=args.window_size,
-    )
-    write_decisions_csv(args.out_csv, decisions)
-
     observed_rows = (
         load_summary_csv(args.observed_summary) if args.observed_summary else []
     )
+    program_groups = None
+    if args.mode == "per-program":
+        program_features_by_name, program_count = _load_program_feature_map_for_args(
+            args, observed_rows
+        )
+        decisions = build_static_filter_decisions_for_programs(
+            passes,
+            passspec,
+            program_features_by_name=program_features_by_name,
+            window_size=args.window_size,
+        )
+        program_groups = _program_groups_for_args(args)
+    else:
+        program_features, program_count = _load_program_features_for_args(args)
+        decisions = build_static_filter_decisions(
+            passes,
+            passspec,
+            program_features=program_features,
+            window_size=args.window_size,
+        )
+    write_decisions_csv(args.out_csv, decisions)
+
     metrics = evaluate_static_filter(decisions, observed_rows)
     report = build_static_filter_report(
         pipeline_name=str(pipeline.get("name", "")),
@@ -315,6 +518,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         decisions=decisions,
         observed_rows=observed_rows,
         metrics=metrics,
+        program_groups=program_groups,
     )
     output_report = Path(args.out_report)
     output_report.parent.mkdir(parents=True, exist_ok=True)
@@ -416,6 +620,144 @@ def _pair_key(pair_a: str, pair_b: str) -> tuple[str, str]:
     return tuple(sorted((pair_a, pair_b)))
 
 
+def _per_program_metrics(
+    *,
+    decisions: Sequence[DecisionRow],
+    observed_rows: Sequence[dict[str, str]],
+    decision_by_program_pair: dict[tuple[str, tuple[str, str]], str],
+) -> dict[str, dict[str, Any]]:
+    programs = sorted(
+        {
+            row.get("program", "")
+            for row in decisions
+            if row.get("program", "")
+        }
+        | {
+            row.get("program", "")
+            for row in observed_rows
+            if row.get("program", "")
+        }
+    )
+    per_program: dict[str, dict[str, Any]] = {}
+    for program in programs:
+        program_decisions = [
+            row for row in decisions if row.get("program", "") == program
+        ]
+        program_observed = [
+            row for row in observed_rows if row.get("program", "") == program
+        ]
+        observed_interacting = [
+            row
+            for row in program_observed
+            if row.get("label") == "not_certified_independent"
+        ]
+        candidate_observed_interacting = [
+            row
+            for row in observed_interacting
+            if decision_by_program_pair.get(
+                (
+                    program,
+                    _pair_key(row.get("pair_a", ""), row.get("pair_b", "")),
+                )
+            )
+            == "candidate"
+        ]
+        false_negative_rows = [
+            row
+            for row in observed_interacting
+            if decision_by_program_pair.get(
+                (
+                    program,
+                    _pair_key(row.get("pair_a", ""), row.get("pair_b", "")),
+                )
+            )
+            != "candidate"
+        ]
+        all_pairs = len(
+            {_pair_key(row["pair_a"], row["pair_b"]) for row in program_decisions}
+        )
+        candidate_pairs = sum(
+            1 for row in program_decisions if row["decision"] == "candidate"
+        )
+        observed_count = len(observed_interacting)
+        recall = (
+            len(candidate_observed_interacting) / observed_count
+            if observed_count
+            else 1.0
+        )
+        per_program[program] = {
+            "all_pairs": all_pairs,
+            "candidate_pairs": candidate_pairs,
+            "low_priority_pairs": sum(
+                1 for row in program_decisions if row["decision"] == "low_priority"
+            ),
+            "frozen_pairs": sum(
+                1 for row in program_decisions if row["decision"] == "frozen"
+            ),
+            "observed_total": len(program_observed),
+            "observed_interacting": observed_count,
+            "candidate_observed_interacting": len(candidate_observed_interacting),
+            "static_false_negative_observed": len(false_negative_rows),
+            "static_candidate_recall": recall,
+            "static_candidate_reduction": (
+                1.0 - (candidate_pairs / all_pairs) if all_pairs else 0.0
+            ),
+            "false_negative_rows": false_negative_rows,
+        }
+    return per_program
+
+
+def _summarize_program_group(
+    per_program: dict[str, dict[str, Any]],
+    programs: Sequence[str],
+) -> dict[str, Any]:
+    present = [program for program in programs if program in per_program]
+    observed_interacting = sum(
+        per_program[program]["observed_interacting"] for program in present
+    )
+    candidate_observed_interacting = sum(
+        per_program[program]["candidate_observed_interacting"] for program in present
+    )
+    candidate_pairs = sum(per_program[program]["candidate_pairs"] for program in present)
+    decision_rows = sum(
+        per_program[program]["all_pairs"] for program in present
+    )
+    recall = (
+        candidate_observed_interacting / observed_interacting
+        if observed_interacting
+        else 1.0
+    )
+    recall_programs = [
+        per_program[program]
+        for program in present
+        if per_program[program]["observed_interacting"] > 0
+    ]
+    macro_recall = (
+        sum(metrics["static_candidate_recall"] for metrics in recall_programs)
+        / len(recall_programs)
+        if recall_programs
+        else 1.0
+    )
+    return {
+        "program_count": len(present),
+        "candidate_pairs": candidate_pairs,
+        "low_priority_pairs": sum(
+            per_program[program]["low_priority_pairs"] for program in present
+        ),
+        "frozen_pairs": sum(per_program[program]["frozen_pairs"] for program in present),
+        "observed_interacting": observed_interacting,
+        "static_false_negative_observed": sum(
+            per_program[program]["static_false_negative_observed"]
+            for program in present
+        ),
+        "static_candidate_recall": recall,
+        "macro_static_candidate_recall": macro_recall,
+        "static_candidate_reduction": (
+            1.0 - (candidate_pairs / decision_rows) if decision_rows else 0.0
+        ),
+    }
+
+
 def _has_nonzero_feature_delta(raw_delta: str) -> bool:
     if not raw_delta.strip():
         return False
@@ -452,7 +794,56 @@ def _load_program_features_for_args(args: argparse.Namespace) -> tuple[dict[str,
         return aggregate_program_features(DEFAULT_STANFORD_PROGRAMS), len(
             DEFAULT_STANFORD_PROGRAMS
         )
+    if args.program_preset == "stanford-8":
+        return aggregate_program_features(STANFORD_8_PROGRAMS), len(STANFORD_8_PROGRAMS)
     return {}, 0
+
+
+def _load_program_feature_map_for_args(
+    args: argparse.Namespace,
+    observed_rows: Sequence[dict[str, str]],
+) -> tuple[dict[str, dict[str, Any]], int]:
+    if args.features_json:
+        loaded = json.loads(Path(args.features_json).read_text(encoding="utf-8"))
+        if _looks_like_feature_map(loaded):
+            feature_map = {str(name): dict(features) for name, features in loaded.items()}
+            return feature_map, len(feature_map)
+        observed_programs = sorted(
+            {row.get("program", "") for row in observed_rows if row.get("program", "")}
+        )
+        if not observed_programs:
+            observed_programs = ["program"]
+        return {program: dict(loaded) for program in observed_programs}, len(
+            observed_programs
+        )
+    if args.program_preset == "stanford-3":
+        feature_map = scan_program_features(DEFAULT_STANFORD_PROGRAMS)
+        return feature_map, len(feature_map)
+    if args.program_preset == "stanford-8":
+        feature_map = scan_program_features(STANFORD_8_PROGRAMS)
+        return feature_map, len(feature_map)
+    return {}, 0
+
+
+def _looks_like_feature_map(value: object) -> bool:
+    return (
+        isinstance(value, dict)
+        and bool(value)
+        and all(isinstance(item, dict) for item in value.values())
+    )
+
+
+def _program_groups_for_args(
+    args: argparse.Namespace,
+) -> dict[str, Sequence[str]] | None:
+    if args.program_preset == "stanford-8":
+        return {
+            "Calibration": [name for name, _path in DEFAULT_STANFORD_PROGRAMS],
+            "Hold-out": [name for name, _path in HOLDOUT_STANFORD_PROGRAMS],
+        }
+    if args.program_preset == "stanford-3":
+        return {"Calibration": [name for name, _path in DEFAULT_STANFORD_PROGRAMS]}
+    return None
 
 
 if __name__ == "__main__":

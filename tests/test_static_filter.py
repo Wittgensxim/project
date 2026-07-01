@@ -140,6 +140,42 @@ class StaticFilterTests(unittest.TestCase):
         )
         self.assertFalse(any(row["decision"] == "certified_independent" for row in decisions))
 
+    def test_build_static_filter_decisions_for_programs_can_differ_by_program(self):
+        from ecpor.static_filter import build_static_filter_decisions_for_programs
+
+        passspec = {
+            "sroa": {
+                "level": "function",
+                "requires_any": ["has_alloca"],
+                "may_consume": ["alloca"],
+                "may_produce": ["scalar_value"],
+                "tags": ["scalar"],
+            },
+            "early-cse": {
+                "level": "function",
+                "requires_any": ["instruction"],
+                "may_consume": ["scalar_value"],
+                "may_produce": ["dead_instruction"],
+                "tags": ["scalar"],
+            },
+        }
+
+        decisions = build_static_filter_decisions_for_programs(
+            ["sroa", "early-cse"],
+            passspec,
+            program_features_by_name={
+                "with_alloca": {"has_alloca": True, "num_instructions": 3},
+                "without_alloca": {"has_alloca": False, "num_instructions": 3},
+            },
+            window_size=1,
+        )
+
+        self.assertEqual(len(decisions), 2)
+        self.assertEqual(decisions[0]["program"], "with_alloca")
+        self.assertEqual(decisions[0]["decision"], "candidate")
+        self.assertEqual(decisions[1]["program"], "without_alloca")
+        self.assertEqual(decisions[1]["decision"], "low_priority")
+
     def test_real_passspec_marks_observed_false_negative_pairs_candidate(self):
         from ecpor.static_filter import classify_pair, load_passspec
 
@@ -167,9 +203,18 @@ class StaticFilterTests(unittest.TestCase):
             distance=2,
             window_size=7,
         )
+        early_cse_simplifycfg = classify_pair(
+            "early-cse",
+            "simplifycfg",
+            passspec,
+            program_features=features,
+            distance=2,
+            window_size=7,
+        )
 
         self.assertEqual(sroa_simplifycfg["decision"], "candidate")
         self.assertEqual(simplifycfg_gvn["decision"], "candidate")
+        self.assertEqual(early_cse_simplifycfg["decision"], "candidate")
 
     def test_evaluate_static_filter_reports_recall_reduction_and_false_negatives(self):
         from ecpor.static_filter import evaluate_static_filter, build_static_filter_report
@@ -204,6 +249,45 @@ class StaticFilterTests(unittest.TestCase):
         self.assertIn("StaticCandidateRecall: 50.00%", report)
         self.assertIn("simplifycfg,instcombine", report)
         self.assertIn("Static filter is candidate generation only.", report)
+
+    def test_evaluate_static_filter_uses_program_specific_decisions(self):
+        from ecpor.static_filter import evaluate_static_filter, build_static_filter_report
+
+        decisions = [
+            _decision("sroa", "early-cse", "candidate", program="p1"),
+            _decision("sroa", "early-cse", "low_priority", program="p2"),
+        ]
+        observed_rows = [
+            _summary_row("p1", "sroa", "early-cse", "not_certified_independent"),
+            _summary_row("p2", "sroa", "early-cse", "not_certified_independent"),
+        ]
+
+        metrics = evaluate_static_filter(decisions, observed_rows)
+        report = build_static_filter_report(
+            pipeline_name="mvp",
+            pass_count=2,
+            program_count=2,
+            decisions=decisions,
+            observed_rows=observed_rows,
+            metrics=metrics,
+            program_groups={
+                "Calibration": ["p1"],
+                "Hold-out": ["p2"],
+            },
+        )
+
+        self.assertEqual(metrics["all_pairs"], 1)
+        self.assertEqual(metrics["decision_rows"], 2)
+        self.assertEqual(metrics["static_false_negative_observed"], 1)
+        self.assertAlmostEqual(metrics["static_candidate_recall"], 0.5)
+        self.assertAlmostEqual(metrics["macro_static_candidate_recall"], 0.5)
+        self.assertEqual(metrics["per_program"]["p1"]["static_false_negative_observed"], 0)
+        self.assertEqual(metrics["per_program"]["p2"]["static_false_negative_observed"], 1)
+        self.assertIn("Per-program static decisions:", report)
+        self.assertIn("p1: candidate=1 low_priority=0 frozen=0", report)
+        self.assertIn("p2: candidate=0 low_priority=1 frozen=0", report)
+        self.assertIn("Calibration:", report)
+        self.assertIn("Hold-out:", report)
 
     def test_main_writes_decisions_and_report(self):
         from ecpor.static_filter import main
@@ -274,16 +358,22 @@ passes:
                     str(report_md),
                     "--window-size",
                     "1",
+                    "--mode",
+                    "per-program",
                 ]
             )
 
             self.assertEqual(exit_code, 0)
             self.assertIn("candidate", decisions_csv.read_text(encoding="utf-8"))
             self.assertIn("StaticCandidateRecall: 100.00%", report_md.read_text(encoding="utf-8"))
+            self.assertIn("program", decisions_csv.read_text(encoding="utf-8").splitlines()[0])
 
 
-def _decision(pair_a: str, pair_b: str, decision: str) -> dict[str, str]:
+def _decision(
+    pair_a: str, pair_b: str, decision: str, *, program: str = ""
+) -> dict[str, str]:
     return {
+        "program": program,
         "pair_a": pair_a,
         "pair_b": pair_b,
         "decision": decision,
