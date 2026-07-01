@@ -6,10 +6,11 @@ from dataclasses import dataclass
 from pathlib import Path
 import subprocess
 import time
-from typing import Sequence
+from typing import Literal, Sequence
 
 
 ToolPath = str | Path | Sequence[str | Path]
+CompileMode = Literal["llc", "clang"]
 
 
 @dataclass(frozen=True)
@@ -38,11 +39,12 @@ def measure_object_size(
     llc_path: ToolPath = "llc",
     llvm_size_path: ToolPath = "llvm-size",
     timeout_sec: float = 30.0,
+    compile_mode: CompileMode = "llc",
 ) -> ObjectSizeRecord:
     ir = Path(ir_path)
     obj = Path(object_path)
     obj.parent.mkdir(parents=True, exist_ok=True)
-    compile_result = _run_compile(ir, obj, llc_path, timeout_sec)
+    compile_result = _run_compile(ir, obj, llc_path, timeout_sec, compile_mode)
     compile_failure = _compile_failure_kind(
         compile_result.returncode,
         obj.exists(),
@@ -134,15 +136,30 @@ class _CommandResult:
 
 
 def _run_compile(
-    ir_path: Path, object_path: Path, llc_path: ToolPath, timeout_sec: float
+    ir_path: Path,
+    object_path: Path,
+    llc_path: ToolPath,
+    timeout_sec: float,
+    compile_mode: CompileMode,
 ) -> _CommandResult:
-    command = [
-        *_normalize_tool_path(llc_path),
-        str(ir_path),
-        "-filetype=obj",
-        "-o",
-        str(object_path),
-    ]
+    if compile_mode == "clang":
+        command = [
+            *_normalize_tool_path(llc_path),
+            "-x",
+            "ir",
+            "-c",
+            str(ir_path),
+            "-o",
+            str(object_path),
+        ]
+    else:
+        command = [
+            *_normalize_tool_path(llc_path),
+            str(ir_path),
+            "-filetype=obj",
+            "-o",
+            str(object_path),
+        ]
     return _run_command(command, timeout_sec)
 
 

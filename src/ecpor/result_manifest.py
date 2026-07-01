@@ -67,11 +67,30 @@ P7B_ANALYSIS_SUMMARY_KEYS = {
     "Depth2EqualText",
     "Depth2LargerText",
     "Depth2SmallerPrograms",
+    "Depth2SmallerFromSameParent",
     "Depth2ImprovesProgramDepth1Best",
     "Depth2ImprovesGlobalDepth1Best",
     "FirstRunCacheHits",
     "PipelineRuns",
     "PipelineRunFailed",
+}
+
+P8A_CODEGEN_SUMMARY_KEYS = {
+    "Programs",
+    "IRInputs",
+    "AnchorInputs",
+    "SingleSwapInputs",
+    "Depth2Inputs",
+    "ClangObjectBuildsAttempted",
+    "ClangObjectBuildFailed",
+    "ClangSizeParseFailed",
+    "DirectionComparisonCandidates",
+    "DirectionAgreementCount",
+    "DirectionAgreementRate",
+    "SmallerUnderBothCount",
+    "SmallerOnlyUnderLlcCount",
+    "SmallerOnlyUnderClangCount",
+    "DirectionDisagreementCount",
 }
 
 
@@ -277,6 +296,53 @@ def build_p7b_analysis_manifest(
     )
 
 
+def build_p8a_codegen_sensitivity_manifest(
+    *,
+    p6_object_size_csv: str | Path,
+    p7_object_size_csv: str | Path,
+    output_dir: str | Path,
+    clang_path: str | Path,
+    llvm_size_path: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    out = Path(output_dir)
+    report = out / "p8a_codegen_sensitivity_report.md"
+    return build_result_manifest(
+        stage="P8a",
+        description="Clang -c codegen sensitivity check for P6/P7b saved IR outputs.",
+        inputs={
+            "p6_object_size_csv": p6_object_size_csv,
+            "p7_object_size_csv": p7_object_size_csv,
+        },
+        outputs={
+            "output_dir": out,
+            "p8a_clang_object_size_csv": out / "p8a_clang_object_size.csv",
+            "p8a_codegen_direction_compare_csv": out
+            / "p8a_codegen_direction_compare.csv",
+            "p8a_codegen_sensitivity_report": report,
+        },
+        tools={
+            "clang": clang_path,
+            "llvm_size": llvm_size_path,
+        },
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            P8A_CODEGEN_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "runtime_benchmarks": False,
+                "new_certificates": False,
+                "llvm_opt_rerun": False,
+                "codegen_path_compared": "clang -c",
+            }
+        },
+    )
+
+
 def write_manifest(path: str | Path, manifest: Mapping[str, Any]) -> None:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -329,6 +395,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     p7b_analysis.add_argument("--repo-root", default=".")
     p7b_analysis.add_argument("--result-generated-from-commit")
 
+    p8a = subparsers.add_parser(
+        "p8a-codegen", help="Build a P8a codegen-sensitivity manifest."
+    )
+    p8a.add_argument("--out-manifest", required=True)
+    p8a.add_argument("--p6-object-size", required=True)
+    p8a.add_argument("--p7-object-size", required=True)
+    p8a.add_argument("--output-dir", required=True)
+    p8a.add_argument("--clang", required=True)
+    p8a.add_argument("--llvm-size", required=True)
+    p8a.add_argument("--repo-root", default=".")
+    p8a.add_argument("--result-generated-from-commit")
+
     args = parser.parse_args(argv)
     if args.stage == "p7a":
         manifest = build_p7a_manifest(
@@ -356,11 +434,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )
-    else:
+    elif args.stage == "p7b-analysis":
         manifest = build_p7b_analysis_manifest(
             p7_dir=args.p7_dir,
             p6_object_size_csv=args.p6_object_size,
             analysis_dir=args.analysis_dir,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    else:
+        manifest = build_p8a_codegen_sensitivity_manifest(
+            p6_object_size_csv=args.p6_object_size,
+            p7_object_size_csv=args.p7_object_size,
+            output_dir=args.output_dir,
+            clang_path=args.clang,
+            llvm_size_path=args.llvm_size,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )

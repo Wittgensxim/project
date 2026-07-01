@@ -68,6 +68,31 @@ class ObjectSizeRunnerTests(unittest.TestCase):
         self.assertEqual(record.bss_size, 8)
         self.assertEqual(record.total_size, 135)
 
+    def test_compile_mode_clang_uses_clang_ir_compile_command(self):
+        from ecpor.object_size_runner import measure_object_size
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            input_ir = tmp_path / "input.ll"
+            output_obj = tmp_path / "input.o"
+            input_ir.write_text("define void @f() { ret void }\n", encoding="utf-8")
+            fake_clang = _write_fake_clang(tmp_path)
+            fake_size = _write_fake_size(tmp_path)
+
+            record = measure_object_size(
+                program="tiny",
+                candidate_id="tiny__anchor",
+                ir_path=input_ir,
+                object_path=output_obj,
+                llc_path=[sys.executable, str(fake_clang)],
+                llvm_size_path=[sys.executable, str(fake_size)],
+                compile_mode="clang",
+            )
+
+        self.assertEqual(record.compile_exit_code, 0)
+        self.assertIsNone(record.compile_failure_kind)
+        self.assertEqual(record.text_size, 123)
+
     def test_size_parse_failure_is_explicit(self):
         from ecpor.object_size_runner import measure_object_size
 
@@ -109,6 +134,27 @@ def _write_fake_llc(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
     return fake_llc
+
+
+def _write_fake_clang(tmp_path: Path) -> Path:
+    fake_clang = tmp_path / "fake_clang.py"
+    fake_clang.write_text(
+        textwrap.dedent(
+            """
+            import pathlib
+            import sys
+
+            if "-x" not in sys.argv or sys.argv[sys.argv.index("-x") + 1] != "ir":
+                raise SystemExit(11)
+            if "-c" not in sys.argv:
+                raise SystemExit(12)
+            output = pathlib.Path(sys.argv[sys.argv.index("-o") + 1])
+            output.write_bytes(b"fake clang object")
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+    return fake_clang
 
 
 def _write_fake_size(tmp_path: Path) -> Path:

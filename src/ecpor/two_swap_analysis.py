@@ -75,6 +75,12 @@ CACHE_AUDIT_FIELDS = [
     "pass_a",
     "pass_b",
     "prefix_state_hash",
+    "env_id",
+    "execution_model",
+    "normalizer_version",
+    "nesting",
+    "region_id",
+    "extra_flags",
     "cache_hit",
     "cert_id",
     "matched_previous_program",
@@ -209,6 +215,8 @@ def build_analysis_report(
         f"Depth2EqualText: {summary['depth2_equal_text']}",
         f"Depth2LargerText: {summary['depth2_larger_text']}",
         f"Depth2SmallerPrograms: {summary['depth2_smaller_programs']}",
+        "Depth2SmallerFromSameParent: "
+        f"{summary['depth2_smaller_from_same_parent']}",
         "Depth2ImprovesProgramDepth1Best: "
         f"{summary['depth2_improves_program_depth1_best_count']}",
         "Depth2ImprovesGlobalDepth1Best: "
@@ -507,12 +515,18 @@ def _build_depth2_details(
 
 
 def _build_cache_audit(attempts: Sequence[dict[str, str]]) -> list[dict[str, str]]:
-    previous_by_key: dict[tuple[str, tuple[str, str]], dict[str, str]] = {}
+    previous_by_key: dict[tuple[str, tuple[str, str], str, str, str, str, str, str], dict[str, str]] = {}
     rows: list[dict[str, str]] = []
     for attempt in attempts:
         key = (
             attempt.get("state_hash", ""),
             _pair_key(attempt.get("pass_a", ""), attempt.get("pass_b", "")),
+            attempt.get("env_id", ""),
+            attempt.get("execution_model", ""),
+            attempt.get("normalizer_version", ""),
+            attempt.get("nesting", ""),
+            attempt.get("region_id", ""),
+            attempt.get("extra_flags", ""),
         )
         previous = previous_by_key.get(key, {})
         rows.append(
@@ -523,6 +537,12 @@ def _build_cache_audit(attempts: Sequence[dict[str, str]]) -> list[dict[str, str
                 "pass_a": attempt.get("pass_a", ""),
                 "pass_b": attempt.get("pass_b", ""),
                 "prefix_state_hash": attempt.get("state_hash", ""),
+                "env_id": attempt.get("env_id", ""),
+                "execution_model": attempt.get("execution_model", ""),
+                "normalizer_version": attempt.get("normalizer_version", ""),
+                "nesting": attempt.get("nesting", ""),
+                "region_id": attempt.get("region_id", ""),
+                "extra_flags": attempt.get("extra_flags", ""),
                 "cache_hit": attempt.get("cache_hit", ""),
                 "cert_id": attempt.get("cert_id", ""),
                 "matched_previous_program": previous.get("program", ""),
@@ -611,6 +631,9 @@ def _build_summary(
         "depth2_smaller_programs": sum(
             1 for row in program_rows if _parse_int(row["depth2_smaller_text"]) > 0
         ),
+        "depth2_smaller_from_same_parent": _max_smaller_from_same_parent(
+            depth2_detail_rows
+        ),
         "depth2_improves_program_depth1_best_count": sum(
             1
             for row in depth2_detail_rows
@@ -630,6 +653,16 @@ def _build_summary(
             1 for row in pipeline_runs if row.get("failure_kind", "")
         ),
     }
+
+
+def _max_smaller_from_same_parent(rows: Sequence[dict[str, str]]) -> int:
+    counts: Counter[tuple[str, str]] = Counter()
+    for row in rows:
+        delta = _parse_optional_float(row.get("depth2_text_delta_pct"))
+        if delta is None or delta >= 0.0:
+            continue
+        counts[(row.get("program", ""), row.get("parent_candidate_id", ""))] += 1
+    return max(counts.values(), default=0)
 
 
 def _raw_depth2_rows(

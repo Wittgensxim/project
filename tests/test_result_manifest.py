@@ -108,7 +108,50 @@ class ResultManifestTests(unittest.TestCase):
         self.assertIn("p7b_analysis_report", loaded["sha256"])
         self.assertEqual(loaded["summary"]["Depth2SmallerText"], 3)
         self.assertEqual(loaded["summary"]["DuplicateSequenceRate"], "47.62%")
+        self.assertEqual(loaded["summary"]["Depth2SmallerFromSameParent"], 3)
         self.assertNotIn("p1", loaded["summary"])
+
+    def test_builds_p8a_codegen_sensitivity_manifest(self):
+        from ecpor.result_manifest import (
+            build_p8a_codegen_sensitivity_manifest,
+            write_manifest,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            p6_object_size = root / "p6_object_size.csv"
+            p7_object_size = root / "p7_object_size.csv"
+            clang = root / "clang.exe"
+            llvm_size = root / "llvm-size.exe"
+            out_dir = root / "p8a"
+            out_dir.mkdir()
+            _write_text(p6_object_size, "program,candidate_id,source\n")
+            _write_text(p7_object_size, "program,candidate_id,source\n")
+            _write_text(clang, "clang")
+            _write_text(llvm_size, "size")
+            _write_p8a_outputs(out_dir)
+
+            manifest = build_p8a_codegen_sensitivity_manifest(
+                p6_object_size_csv=p6_object_size,
+                p7_object_size_csv=p7_object_size,
+                output_dir=out_dir,
+                clang_path=clang,
+                llvm_size_path=llvm_size,
+                repo_root=root,
+                result_generated_from_commit="fed789",
+            )
+            manifest_path = root / "p8a_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P8a")
+        self.assertEqual(loaded["result_generated_from_commit"], "fed789")
+        self.assertIn("p8a_clang_object_size_csv", loaded["outputs"])
+        self.assertIn("p8a_codegen_direction_compare_csv", loaded["outputs"])
+        self.assertIn("clang", loaded["sha256"])
+        self.assertEqual(loaded["summary"]["IRInputs"], 46)
+        self.assertEqual(loaded["summary"]["DirectionAgreementRate"], "100.00%")
+        self.assertNotIn("testsuite_stanford_queens", loaded["summary"])
 
 
 def _write_text(path: Path, text: str) -> None:
@@ -271,7 +314,41 @@ def _write_p7b_analysis_outputs(out_dir: Path) -> None:
             SelectedSeeds: 16
             Depth2SmallerText: 3
             DuplicateSequenceRate: 47.62%
+            Depth2SmallerFromSameParent: 3
             p1: seeds=1 raw_depth2=1
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_p8a_outputs(out_dir: Path) -> None:
+    _write_text(
+        out_dir / "p8a_clang_object_size.csv",
+        "program,candidate_id,source\np,tiny__anchor,anchor\n",
+    )
+    _write_text(
+        out_dir / "p8a_codegen_direction_compare.csv",
+        "program,candidate_id,direction_agree\np,tiny__swap,True\n",
+    )
+    _write_text(
+        out_dir / "p8a_codegen_sensitivity_report.md",
+        textwrap.dedent(
+            """
+            # P8a Clang-C Codegen Sensitivity Report
+
+            Programs: 8
+            IRInputs: 46
+            ClangObjectBuildFailed: 0
+            ClangSizeParseFailed: 0
+            DirectionComparisonCandidates: 38
+            DirectionAgreementCount: 38
+            DirectionAgreementRate: 100.00%
+            SmallerUnderBothCount: 4
+            SmallerOnlyUnderLlcCount: 0
+            SmallerOnlyUnderClangCount: 0
+            DirectionDisagreementCount: 0
+            testsuite_stanford_queens: detail line
             """
         ).strip()
         + "\n",

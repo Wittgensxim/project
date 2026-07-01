@@ -179,6 +179,67 @@ class TwoSwapAnalysisTests(unittest.TestCase):
         )
         self.assertIn("DuplicateSequenceRate: 33.33%", report)
         self.assertIn("Depth2SmallerPrograms: 2", report)
+        self.assertIn("Depth2SmallerFromSameParent: 1", report)
+
+    def test_cache_audit_key_includes_environment_scope_when_available(self):
+        from ecpor.two_swap_analysis import _build_cache_audit
+
+        rows = _build_cache_audit(
+            [
+                {
+                    "program": "p1",
+                    "seed_candidate_id": "seed-a",
+                    "swap_index": "0",
+                    "state_hash": "same-state",
+                    "pass_a": "a",
+                    "pass_b": "b",
+                    "cache_hit": "False",
+                    "cert_id": "cert-a",
+                    "env_id": "env-a",
+                    "execution_model": "model-a",
+                    "normalizer_version": "norm-a",
+                    "nesting": "function",
+                    "region_id": "region-a",
+                    "extra_flags": "",
+                },
+                {
+                    "program": "p2",
+                    "seed_candidate_id": "seed-b",
+                    "swap_index": "0",
+                    "state_hash": "same-state",
+                    "pass_a": "b",
+                    "pass_b": "a",
+                    "cache_hit": "True",
+                    "cert_id": "cert-b",
+                    "env_id": "env-b",
+                    "execution_model": "model-a",
+                    "normalizer_version": "norm-a",
+                    "nesting": "function",
+                    "region_id": "region-a",
+                    "extra_flags": "",
+                },
+                {
+                    "program": "p3",
+                    "seed_candidate_id": "seed-c",
+                    "swap_index": "1",
+                    "state_hash": "same-state",
+                    "pass_a": "a",
+                    "pass_b": "b",
+                    "cache_hit": "True",
+                    "cert_id": "cert-c",
+                    "env_id": "env-a",
+                    "execution_model": "model-a",
+                    "normalizer_version": "norm-a",
+                    "nesting": "function",
+                    "region_id": "region-a",
+                    "extra_flags": "",
+                },
+            ]
+        )
+
+        self.assertEqual(rows[0]["env_id"], "env-a")
+        self.assertEqual(rows[1]["matched_previous_seed_candidate_id"], "")
+        self.assertEqual(rows[2]["matched_previous_seed_candidate_id"], "seed-a")
 
 
 def _write_csv(path: Path, fieldnames: list[str], rows: list[list[str]]) -> None:
