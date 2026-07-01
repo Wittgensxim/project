@@ -2,8 +2,8 @@
   "manifest_schema_version": 1,
   "stage": "P6.5",
   "description": "Clean P6 code-size run after provenance, invariant, and candidate-source hardening.",
-  "result_generated_from_commit": "4af57cd73687b9c274ac8e678c0cd1521e32f309",
-  "ecpor_git_commit": "4af57cd73687b9c274ac8e678c0cd1521e32f309",
+  "result_generated_from_commit": "079ab662158061a8690e321cb209cc656cd5d714",
+  "ecpor_git_commit": "079ab662158061a8690e321cb209cc656cd5d714",
   "ecpor_git_dirty": false,
   "manifest_note": "This tracked manifest records a clean generated-data run. The generated data under data/outputs is intentionally not tracked.",
   "inputs": {
@@ -12,13 +12,17 @@
     "p6_output_dir": "data/outputs/code_size_p6_final",
     "p5_report": "data/outputs/bounded_local_p5_p6_final/report.md",
     "candidates_csv": "data/outputs/bounded_local_p5_p6_final/candidates.csv",
-    "pipeline_runs_csv": "data/outputs/bounded_local_p5_p6_final/pipeline_runs.csv"
+    "pipeline_runs_csv": "data/outputs/bounded_local_p5_p6_final/pipeline_runs.csv",
+    "object_size_csv": "data/outputs/code_size_p6_final/object_size.csv",
+    "code_size_report": "data/outputs/code_size_p6_final/code_size_report.md"
   },
   "sha256": {
     "p4_attempts_csv": "ceada53bcb557dfd9a4d9c8217f652b7995f158154d4df5827a1a340acffb777",
-    "p5_report": "eda966ad831669db26bca8c07d89d99ed0cc7df2a57bb01d14899eb95ec2909d",
+    "p5_report": "f113c60a37ba9bfd0100f8414e73f61d3917919d1ce29cc5974a0d6e848ead66",
     "candidates_csv": "802964f29d07283a76ac3cf4bf434cc467792c98eab00f1b3b133a44d7b6e635",
     "pipeline_runs_csv": "d0561232baeeafd2d0050025d1294fc14ef83a25828d2f9f7459ebaa81275b92",
+    "object_size_csv": "b69269f8f0cfea97ca1529de90fe666beb364c3775769ad02b84f13c0257ec22",
+    "code_size_report": "25cd888cc8757b6d6590c6d7ad99ee50fb090ca2ee96a321c5b6492af52f1c22",
     "llc": "1520eba7e1ee09cc6f38ce1d7ca6eb9fb5187f6ded3a9f70a37f264acebf384c",
     "llvm_size": "f425ef87d64380ff5f8fd055ddb52e1f0d38f3031bb2a5bbddd557d71c5bc589"
   },

@@ -10,12 +10,14 @@ data/outputs/pair_tests/
 data/outputs/lazy_validation_p4_e83c409/
 data/outputs/bounded_local_p5_p6_final/
 data/outputs/code_size_p6_final/
+data/outputs/bounded_two_swap_p7a/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
 data/outputs/lazy_validation_p4_e83c409_second.md
 data/certs/pair_tests/
 data/certs/lazy_validation_p4_e83c409/
+data/certs/bounded_two_swap_p7a/
 ```
 
 ## 可删除：临时或重复目录

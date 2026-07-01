@@ -141,6 +141,13 @@ $env:PYTHONPATH = "src"
 D:\Miniconda\envs\dlm\python.exe -m ecpor.code_size_evaluator --p5-dir data\outputs\bounded_local_p5_p6_final --out data\outputs\code_size_p6_final --llc E:\llvm\build\bin\llc.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --timeout-sec 30
 ```
 
+Run P7a bounded two-swap smoke test:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.bounded_two_swap_driver --program-preset stanford-8 --p5-dir data\outputs\bounded_local_p5_p6_final --p6-object-size data\outputs\code_size_p6_final\object_size.csv --passspec configs\passspec.yaml --out data\outputs\bounded_two_swap_p7a --cert-dir data\certs\bounded_two_swap_p7a --opt E:\llvm\build\bin\opt.exe --llc E:\llvm\build\bin\llc.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --timeout-sec 30
+```
+
 Scan soft IR features for one output:
 
 ```powershell
