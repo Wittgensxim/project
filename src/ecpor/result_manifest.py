@@ -370,7 +370,7 @@ def build_core_evidence_manifest(
     out = Path(output_dir)
     report = out / "ecpor_core_evidence_report.md"
     return build_result_manifest(
-        stage="P8a.5",
+        stage="P8a.6",
         description="Core evidence report for ECPOR pruning and objective-layer sensitivity.",
         inputs={
             "p4_attempts_csv": p4_attempts_csv,
@@ -477,7 +477,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     p8a.add_argument("--result-generated-from-commit")
 
     core = subparsers.add_parser(
-        "core-evidence", help="Build a P8a.5 core evidence manifest."
+        "core-evidence", help="Build a P8a.6 core evidence manifest."
     )
     core.add_argument("--out-manifest", required=True)
     core.add_argument("--p4-attempts", required=True)
