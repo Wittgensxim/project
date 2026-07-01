@@ -212,6 +212,53 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["summary"]["SmallerUnderBothCount"], 4)
         self.assertNotIn("queens", loaded["summary"])
 
+    def test_builds_p8c_queens_attribution_manifest(self):
+        from ecpor.result_manifest import (
+            build_queens_effect_attribution_manifest,
+            write_manifest,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            input_ir = root / "testsuite_stanford_queens.ll"
+            opt = root / "opt.exe"
+            llc = root / "llc.exe"
+            clang = root / "clang.exe"
+            llvm_size = root / "llvm-size.exe"
+            out_dir = root / "effect_attribution_queens"
+            out_dir.mkdir()
+            _write_text(input_ir, "define i32 @main() { ret i32 0 }\n")
+            _write_text(opt, "opt")
+            _write_text(llc, "llc")
+            _write_text(clang, "clang")
+            _write_text(llvm_size, "size")
+            _write_p8c_outputs(out_dir)
+
+            manifest = build_queens_effect_attribution_manifest(
+                input_ir=input_ir,
+                output_dir=out_dir,
+                opt_path=opt,
+                llc_path=llc,
+                clang_path=clang,
+                llvm_size_path=llvm_size,
+                repo_root=root,
+                result_generated_from_commit="cafe123",
+            )
+            manifest_path = root / "queens_effect_attribution_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P8c")
+        self.assertEqual(loaded["result_generated_from_commit"], "cafe123")
+        self.assertIn("states_csv", loaded["outputs"])
+        self.assertIn("feature_deltas_csv", loaded["outputs"])
+        self.assertIn("object_size_csv", loaded["outputs"])
+        self.assertIn("attribution_report", loaded["sha256"])
+        self.assertIn("clang", loaded["sha256"])
+        self.assertEqual(loaded["summary"]["BothCodegenSmaller"], True)
+        self.assertEqual(loaded["summary"]["LocalABBAHardHashEqual"], False)
+        self.assertEqual(loaded["scope_limits"]["single_program"], "testsuite_stanford_queens")
+
 
 def _write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
@@ -441,6 +488,43 @@ def _write_core_evidence_outputs(out_dir: Path) -> None:
             DirectionAgreementRate: 68.42%
             SmallerUnderBothCount: 4
             queens: detail line
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_p8c_outputs(out_dir: Path) -> None:
+    _write_text(
+        out_dir / "states.csv",
+        "state_name,pipeline,hard_hash\nAB_final,function(a,b),hash-a\n",
+    )
+    _write_text(
+        out_dir / "feature_deltas.csv",
+        "comparison,left_state,right_state,num_instructions_delta\n"
+        "final_AB_vs_BA,AB_final,BA_final,-1\n",
+    )
+    _write_text(
+        out_dir / "object_size.csv",
+        "compile_mode,state_name,text_delta,direction\n"
+        "llc,BA_final,-32,smaller\nclang,BA_final,-16,smaller\n",
+    )
+    _write_text(
+        out_dir / "attribution_report.md",
+        textwrap.dedent(
+            """
+            # P8c Queens Effect Attribution
+
+            Program: testsuite_stanford_queens
+            StateCount: 7
+            LocalABBAHardHashEqual: False
+            FinalABBAHardHashEqual: False
+            LocalInstructionDelta: -1
+            FinalInstructionDelta: -1
+            FeatureDeltaPropagation: kept
+            LlcTextDelta: -32
+            ClangTextDelta: -16
+            BothCodegenSmaller: True
             """
         ).strip()
         + "\n",

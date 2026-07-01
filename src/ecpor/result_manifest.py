@@ -102,6 +102,19 @@ CORE_EVIDENCE_SUMMARY_KEYS = {
     "DirectionDisagreementCount",
 }
 
+P8C_ATTRIBUTION_SUMMARY_KEYS = {
+    "Program",
+    "StateCount",
+    "LocalABBAHardHashEqual",
+    "FinalABBAHardHashEqual",
+    "LocalInstructionDelta",
+    "FinalInstructionDelta",
+    "FeatureDeltaPropagation",
+    "LlcTextDelta",
+    "ClangTextDelta",
+    "BothCodegenSmaller",
+}
+
 
 def build_result_manifest(
     *,
@@ -412,6 +425,56 @@ def build_core_evidence_manifest(
     )
 
 
+def build_queens_effect_attribution_manifest(
+    *,
+    input_ir: str | Path,
+    output_dir: str | Path,
+    opt_path: str | Path,
+    llc_path: str | Path,
+    clang_path: str | Path,
+    llvm_size_path: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    out = Path(output_dir)
+    report = out / "attribution_report.md"
+    return build_result_manifest(
+        stage="P8c",
+        description="Queens instcombine/simplifycfg observed effect attribution.",
+        inputs={
+            "input_ir": input_ir,
+        },
+        outputs={
+            "output_dir": out,
+            "states_csv": out / "states.csv",
+            "feature_deltas_csv": out / "feature_deltas.csv",
+            "object_size_csv": out / "object_size.csv",
+            "attribution_report": report,
+        },
+        tools={
+            "opt": opt_path,
+            "llc": llc_path,
+            "clang": clang_path,
+            "llvm_size": llvm_size_path,
+        },
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            P8C_ATTRIBUTION_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "single_program": "testsuite_stanford_queens",
+                "runtime_benchmarks": False,
+                "new_certificates": False,
+                "new_search": False,
+                "observed_attribution_not_causal_proof": True,
+            }
+        },
+    )
+
+
 def write_manifest(path: str | Path, manifest: Mapping[str, Any]) -> None:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -493,6 +556,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     core.add_argument("--repo-root", default=".")
     core.add_argument("--result-generated-from-commit")
 
+    p8c = subparsers.add_parser(
+        "p8c-attribution", help="Build a P8c Queens attribution manifest."
+    )
+    p8c.add_argument("--out-manifest", required=True)
+    p8c.add_argument("--input-ir", required=True)
+    p8c.add_argument("--output-dir", required=True)
+    p8c.add_argument("--opt", required=True)
+    p8c.add_argument("--llc", required=True)
+    p8c.add_argument("--clang", required=True)
+    p8c.add_argument("--llvm-size", required=True)
+    p8c.add_argument("--repo-root", default=".")
+    p8c.add_argument("--result-generated-from-commit")
+
     args = parser.parse_args(argv)
     if args.stage == "p7a":
         manifest = build_p7a_manifest(
@@ -538,7 +614,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )
-    else:
+    elif args.stage == "core-evidence":
         manifest = build_core_evidence_manifest(
             p4_attempts_csv=args.p4_attempts,
             p5_candidates_csv=args.p5_candidates,
@@ -550,6 +626,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             p7b_analysis_report=args.p7b_analysis_report,
             p8a_compare_csv=args.p8a_compare,
             output_dir=args.output_dir,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    else:
+        manifest = build_queens_effect_attribution_manifest(
+            input_ir=args.input_ir,
+            output_dir=args.output_dir,
+            opt_path=args.opt,
+            llc_path=args.llc,
+            clang_path=args.clang,
+            llvm_size_path=args.llvm_size,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )
