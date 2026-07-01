@@ -103,6 +103,69 @@ class CandidatePipelineTests(unittest.TestCase):
         self.assertEqual(rows[1]["source"], "single_swap")
         self.assertEqual(rows[1]["swap_index"], "0")
 
+    def test_candidate_invariants_reject_non_adjacent_or_wrong_multiset_swaps(self):
+        from ecpor.candidate_pipeline import CandidatePipeline
+        from ecpor.candidate_pipeline import validate_candidate_invariants
+
+        errors = validate_candidate_invariants(
+            [
+                CandidatePipeline(
+                    program="tiny",
+                    candidate_id="tiny__anchor",
+                    source="anchor",
+                    base_pipeline="sroa,early-cse,instcombine",
+                    candidate_pipeline="sroa,early-cse,instcombine",
+                    swap_index=None,
+                    pass_a="",
+                    pass_b="",
+                    prefix_state_hash="",
+                    validation_label="anchor",
+                    cert_id="",
+                    reason="anchor pipeline",
+                ),
+                CandidatePipeline(
+                    program="tiny",
+                    candidate_id="tiny__bad",
+                    source="single_swap",
+                    base_pipeline="sroa,early-cse,instcombine",
+                    candidate_pipeline="instcombine,early-cse,sroa",
+                    swap_index=0,
+                    pass_a="sroa",
+                    pass_b="early-cse",
+                    prefix_state_hash="h0",
+                    validation_label="certified_independent",
+                    cert_id="cert-0",
+                    reason="bad candidate",
+                ),
+            ]
+        )
+
+        self.assertTrue(any("not not_certified_independent" in error for error in errors))
+        self.assertTrue(any("not exactly one adjacent swap" in error for error in errors))
+
+    def test_generated_candidates_satisfy_invariants(self):
+        from ecpor.candidate_pipeline import build_candidate_pipelines
+        from ecpor.candidate_pipeline import validate_candidate_invariants
+
+        generation = build_candidate_pipelines(
+            programs=["tiny"],
+            anchor_passes=["sroa", "early-cse", "instcombine"],
+            attempts=[
+                _attempt(
+                    "tiny",
+                    "",
+                    "h0",
+                    "sroa",
+                    "early-cse",
+                    "cert-0",
+                    "validated",
+                    "not_certified_independent",
+                )
+            ],
+        )
+
+        self.assertEqual(validate_candidate_invariants(generation.candidates), [])
+
 
 def _attempt(
     program,

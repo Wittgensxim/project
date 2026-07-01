@@ -14,8 +14,11 @@ from .candidate_pipeline import (
     CandidatePipeline,
     build_candidate_pipelines,
     load_attempts_csv,
+    validate_candidate_invariants,
     write_candidates_csv,
 )
+from .environment import detect_environment, file_sha256, git_info
+from .normalizer import NORMALIZER_VERSION
 from .pipeline_runner import (
     PipelineRunRecord,
     run_pipeline_candidate,
@@ -31,6 +34,7 @@ class BoundedLocalRun:
     pipeline_runs: list[PipelineRunRecord]
     summary: dict[str, int]
     candidate_generation: CandidateGeneration
+    metadata: dict[str, str]
 
 
 def run_bounded_local_exploration(
@@ -40,6 +44,10 @@ def run_bounded_local_exploration(
     attempts_csv: str | Path,
     opt_path: OptPath,
     output_dir: str | Path,
+    env_id: str = "unknown",
+    llvm_version: str = "unknown",
+    normalizer_version: str = NORMALIZER_VERSION,
+    pipeline_config_path: str | Path | None = None,
     nesting: str = "function",
     extra_flags: Sequence[str] = (),
     timeout_sec: float = 30.0,
@@ -53,6 +61,9 @@ def run_bounded_local_exploration(
         anchor_passes=anchor_passes,
         attempts=attempts,
     )
+    invariant_errors = validate_candidate_invariants(generation.candidates)
+    if invariant_errors:
+        raise ValueError("candidate invariant violation: " + "; ".join(invariant_errors))
     write_candidates_csv(output_root / "candidates.csv", generation.candidates)
 
     records: list[PipelineRunRecord] = []
@@ -85,13 +96,21 @@ def run_bounded_local_exploration(
 
     write_pipeline_runs_csv(output_root / "pipeline_runs.csv", records)
     summary = summarize_bounded_local_run(attempts, generation, records)
-    report = build_bounded_local_report(summary, generation, records)
+    metadata = build_run_metadata(
+        attempts_csv=attempts_csv,
+        env_id=env_id,
+        llvm_version=llvm_version,
+        normalizer_version=normalizer_version,
+        pipeline_config_path=pipeline_config_path,
+    )
+    report = build_bounded_local_report(summary, generation, records, metadata=metadata)
     (output_root / "report.md").write_text(report, encoding="utf-8")
     return BoundedLocalRun(
         candidates=generation.candidates,
         pipeline_runs=records,
         summary=summary,
         candidate_generation=generation,
+        metadata=metadata,
     )
 
 
@@ -109,6 +128,19 @@ def summarize_bounded_local_run(
         for record in records
         if not record.same_as_anchor and not record.failure_kind
     )
+    candidate_by_id = {candidate.candidate_id: candidate for candidate in generation.candidates}
+    anchor_records = [
+        record
+        for record in records
+        if candidate_by_id.get(record.candidate_id)
+        and candidate_by_id[record.candidate_id].source == "anchor"
+    ]
+    single_swap_records = [
+        record
+        for record in records
+        if candidate_by_id.get(record.candidate_id)
+        and candidate_by_id[record.candidate_id].source == "single_swap"
+    ]
     return {
         "p4_attempted_adjacent_swaps": len(attempts),
         "p4_candidate_swaps": sum(
@@ -132,6 +164,16 @@ def summarize_bounded_local_run(
         "pipeline_run_failed": pipeline_failed,
         "same_as_anchor": same_as_anchor,
         "different_from_anchor": different_from_anchor,
+        "anchor_runs": len(anchor_records),
+        "single_swap_runs": len(single_swap_records),
+        "single_swap_same_as_anchor": sum(
+            1 for record in single_swap_records if record.same_as_anchor
+        ),
+        "single_swap_different_from_anchor": sum(
+            1
+            for record in single_swap_records
+            if not record.same_as_anchor and not record.failure_kind
+        ),
     }
 
 
@@ -139,6 +181,8 @@ def build_bounded_local_report(
     summary: dict[str, int],
     generation: CandidateGeneration,
     records: Sequence[PipelineRunRecord],
+    *,
+    metadata: dict[str, str] | None = None,
 ) -> str:
     lines = [
         "# P5 Bounded Local Reorder Report",
@@ -146,6 +190,24 @@ def build_bounded_local_report(
         "P5 explores only the anchor pipeline and one adjacent swap for each P4 not_certified_independent result.",
         "It does not select an optimum and it does not evaluate code size.",
         "",
+    ]
+    if metadata:
+        lines.extend(
+            [
+                "## Run metadata",
+                f"ecpor_git_commit: {metadata['ecpor_git_commit']}",
+                f"ecpor_git_dirty: {metadata['ecpor_git_dirty']}",
+                f"env_id: {metadata['env_id']}",
+                f"llvm_version: {metadata['llvm_version']}",
+                f"normalizer_version: {metadata['normalizer_version']}",
+                f"attempts_csv: {metadata['attempts_csv']}",
+                f"attempts_csv_sha256: {metadata['attempts_csv_sha256']}",
+                f"pipeline_config: {metadata['pipeline_config']}",
+                f"pipeline_config_sha256: {metadata['pipeline_config_sha256']}",
+                "",
+            ]
+        )
+    lines.extend([
         "## P4 adjacent validation summary",
         f"attempted_adjacent_swaps: {summary['p4_attempted_adjacent_swaps']}",
         f"candidate_swaps: {summary['p4_candidate_swaps']}",
@@ -167,9 +229,13 @@ def build_bounded_local_report(
         f"pipeline_run_failed: {summary['pipeline_run_failed']}",
         f"same_as_anchor: {summary['same_as_anchor']}",
         f"different_from_anchor: {summary['different_from_anchor']}",
+        f"anchor_runs: {summary['anchor_runs']}",
+        f"single_swap_runs: {summary['single_swap_runs']}",
+        f"single_swap_same_as_anchor: {summary['single_swap_same_as_anchor']}",
+        f"single_swap_different_from_anchor: {summary['single_swap_different_from_anchor']}",
         "",
         "## Examples",
-    ]
+    ])
     examples = _example_records(records)
     if examples:
         lines.extend(examples)
@@ -186,6 +252,31 @@ def build_bounded_local_report(
     return "\n".join(lines) + "\n"
 
 
+def build_run_metadata(
+    *,
+    attempts_csv: str | Path,
+    env_id: str,
+    llvm_version: str,
+    normalizer_version: str,
+    pipeline_config_path: str | Path | None,
+) -> dict[str, str]:
+    repo_git = git_info(Path(__file__).resolve().parents[2])
+    pipeline_path = Path(pipeline_config_path) if pipeline_config_path else None
+    return {
+        "ecpor_git_commit": repo_git.commit,
+        "ecpor_git_dirty": str(repo_git.dirty),
+        "env_id": env_id,
+        "llvm_version": llvm_version,
+        "normalizer_version": normalizer_version,
+        "attempts_csv": str(attempts_csv),
+        "attempts_csv_sha256": file_sha256(attempts_csv),
+        "pipeline_config": "" if pipeline_path is None else str(pipeline_path),
+        "pipeline_config_sha256": (
+            "" if pipeline_path is None else file_sha256(pipeline_path)
+        ),
+    }
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Run P5 bounded local one-swap exploration."
@@ -196,20 +287,41 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--out", default="data/outputs/bounded_local_p5")
     parser.add_argument("--opt", default="opt")
     parser.add_argument("--opt-arg", action="append", default=[])
+    parser.add_argument("--env-id")
+    parser.add_argument("--llvm-version")
+    parser.add_argument("--normalizer-version", default=NORMALIZER_VERSION)
     parser.add_argument("--timeout-sec", type=float, default=30.0)
     args = parser.parse_args(argv)
 
     pipeline = load_pipeline_config(args.pipeline)
     opt_path: OptPath = [args.opt, *args.opt_arg] if args.opt_arg else args.opt
+    env_id = args.env_id
+    llvm_version = args.llvm_version
+    if env_id is None or llvm_version is None:
+        detected = _detect_environment_for_opt(args.opt)
+        env_id = env_id or detected.env_id
+        llvm_version = llvm_version or detected.llvm_version
     run = run_bounded_local_exploration(
         programs=STANFORD_8_PROGRAMS,
         anchor_passes=list(pipeline["passes"]),
         attempts_csv=args.attempts_csv,
         opt_path=opt_path,
         output_dir=args.out,
+        env_id=env_id,
+        llvm_version=llvm_version,
+        normalizer_version=args.normalizer_version,
+        pipeline_config_path=args.pipeline,
         timeout_sec=args.timeout_sec,
     )
-    print(build_bounded_local_report(run.summary, run.candidate_generation, run.pipeline_runs), end="")
+    print(
+        build_bounded_local_report(
+            run.summary,
+            run.candidate_generation,
+            run.pipeline_runs,
+            metadata=run.metadata,
+        ),
+        end="",
+    )
     return 0
 
 
@@ -226,6 +338,13 @@ def _example_records(records: Sequence[PipelineRunRecord]) -> list[str]:
             f"num_basic_blocks={record.num_basic_blocks}"
         )
     return lines
+
+
+def _detect_environment_for_opt(opt: str) -> object:
+    opt_path = Path(opt)
+    if opt_path.exists():
+        return detect_environment(opt_path.parent)
+    return detect_environment()
 
 
 if __name__ == "__main__":

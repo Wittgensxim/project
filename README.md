@@ -21,6 +21,7 @@ This project currently uses:
 ```text
 E:/llvm/build/bin/clang.exe
 E:/llvm/build/bin/opt.exe
+E:/llvm/build/bin/llc.exe
 E:/llvm/build/bin/llvm-size.exe
 E:/llvm/build/bin/llvm-config.exe
 ```
@@ -131,6 +132,13 @@ Run P5 bounded local one-swap exploration from a P4 attempts CSV:
 ```powershell
 $env:PYTHONPATH = "src"
 D:\Miniconda\envs\dlm\python.exe -m ecpor.bounded_local_driver --program-preset stanford-8 --pipeline configs\pipeline_scalar.yaml --attempts-csv data\outputs\lazy_validation_p4_e83c409_first.csv --out data\outputs\bounded_local_p5_final --opt E:\llvm\build\bin\opt.exe --timeout-sec 30
+```
+
+Run P6 code-size evaluation for P5 outputs:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.code_size_evaluator --p5-dir data\outputs\bounded_local_p5_p6_final --out data\outputs\code_size_p6_final --llc E:\llvm\build\bin\llc.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --timeout-sec 30
 ```
 
 Scan soft IR features for one output:

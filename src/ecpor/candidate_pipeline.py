@@ -156,6 +156,43 @@ def write_candidates_csv(
             writer.writerow(_candidate_to_row(candidate))
 
 
+def validate_candidate_invariants(
+    candidates: Sequence[CandidatePipeline],
+) -> list[str]:
+    errors: list[str] = []
+    for candidate in candidates:
+        base = _split_pipeline(candidate.base_pipeline)
+        trial = _split_pipeline(candidate.candidate_pipeline)
+        label = f"{candidate.program}/{candidate.candidate_id}"
+        if Counter(base) != Counter(trial):
+            errors.append(f"{label}: candidate pass multiset differs from anchor")
+        if candidate.source == "anchor":
+            if base != trial:
+                errors.append(f"{label}: anchor candidate differs from base pipeline")
+            if candidate.validation_label != "anchor":
+                errors.append(f"{label}: anchor validation label is not anchor")
+            continue
+        if candidate.source != "single_swap":
+            errors.append(f"{label}: unsupported candidate source {candidate.source}")
+            continue
+        if candidate.validation_label != "not_certified_independent":
+            errors.append(
+                f"{label}: single-swap candidate is not not_certified_independent"
+            )
+        if not _is_exact_adjacent_swap(base, trial, candidate.swap_index):
+            errors.append(f"{label}: not exactly one adjacent swap")
+        if candidate.swap_index is None:
+            continue
+        if candidate.swap_index < 0 or candidate.swap_index + 1 >= len(base):
+            errors.append(f"{label}: swap_index out of range")
+            continue
+        if base[candidate.swap_index] != candidate.pass_a:
+            errors.append(f"{label}: pass_a does not match base pipeline")
+        if base[candidate.swap_index + 1] != candidate.pass_b:
+            errors.append(f"{label}: pass_b does not match base pipeline")
+    return errors
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Build P5 bounded local candidates from P4 attempts."
@@ -224,6 +261,27 @@ def _adjacent_index(
         if passes[index] == pass_a and passes[index + 1] == pass_b:
             return index
     return None
+
+
+def _split_pipeline(value: str) -> list[str]:
+    return [part.strip() for part in value.split(",") if part.strip()]
+
+
+def _is_exact_adjacent_swap(
+    base: Sequence[str], trial: Sequence[str], swap_index: int | None
+) -> bool:
+    if swap_index is None:
+        return False
+    if len(base) != len(trial):
+        return False
+    if swap_index < 0 or swap_index + 1 >= len(base):
+        return False
+    expected = list(base)
+    expected[swap_index], expected[swap_index + 1] = (
+        expected[swap_index + 1],
+        expected[swap_index],
+    )
+    return expected == list(trial)
 
 
 def _candidate_to_row(candidate: CandidatePipeline) -> dict[str, str]:

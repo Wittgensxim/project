@@ -17,7 +17,12 @@ class BoundedLocalDriverTests(unittest.TestCase):
             input_ir = _write_input_ir(tmp_path)
             fake_opt = _write_fake_pipeline_opt(tmp_path)
             attempts_csv = tmp_path / "attempts.csv"
+            pipeline_config = tmp_path / "pipeline.yaml"
             _write_attempts_csv(attempts_csv)
+            pipeline_config.write_text(
+                "passes:\n  - sroa\n  - early-cse\n  - instcombine\n",
+                encoding="utf-8",
+            )
 
             result = run_bounded_local_exploration(
                 programs=[("tiny", input_ir)],
@@ -25,6 +30,9 @@ class BoundedLocalDriverTests(unittest.TestCase):
                 attempts_csv=attempts_csv,
                 opt_path=[sys.executable, str(fake_opt)],
                 output_dir=tmp_path / "p5",
+                env_id="env-test",
+                llvm_version="llvm-test",
+                pipeline_config_path=pipeline_config,
             )
 
             candidates_path = tmp_path / "p5" / "candidates.csv"
@@ -40,6 +48,14 @@ class BoundedLocalDriverTests(unittest.TestCase):
             self.assertEqual(result.summary["pipeline_run_failed"], 0)
             self.assertEqual(result.summary["same_as_anchor"], 1)
             self.assertEqual(result.summary["different_from_anchor"], 1)
+            self.assertEqual(result.summary["anchor_runs"], 1)
+            self.assertEqual(result.summary["single_swap_runs"], 1)
+            self.assertEqual(result.summary["single_swap_same_as_anchor"], 0)
+            self.assertEqual(result.summary["single_swap_different_from_anchor"], 1)
+            self.assertEqual(result.metadata["env_id"], "env-test")
+            self.assertEqual(result.metadata["llvm_version"], "llvm-test")
+            self.assertEqual(len(result.metadata["attempts_csv_sha256"]), 64)
+            self.assertEqual(len(result.metadata["pipeline_config_sha256"]), 64)
 
             with candidates_path.open(newline="", encoding="utf-8") as handle:
                 candidate_rows = list(csv.DictReader(handle))
@@ -50,9 +66,15 @@ class BoundedLocalDriverTests(unittest.TestCase):
         self.assertEqual([row["source"] for row in candidate_rows], ["anchor", "single_swap"])
         self.assertEqual(len(run_rows), 2)
         self.assertIn("# P5 Bounded Local Reorder Report", report)
+        self.assertIn("ecpor_git_commit:", report)
+        self.assertIn("attempts_csv_sha256:", report)
+        self.assertIn("pipeline_config_sha256:", report)
         self.assertIn("P4 adjacent validation summary", report)
         self.assertIn("single_swap_candidates: 1", report)
-        self.assertIn("different_from_anchor: 1", report)
+        self.assertIn("anchor_runs: 1", report)
+        self.assertIn("single_swap_runs: 1", report)
+        self.assertIn("single_swap_same_as_anchor: 0", report)
+        self.assertIn("single_swap_different_from_anchor: 1", report)
 
 
 def _write_attempts_csv(path: Path) -> None:
