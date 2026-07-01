@@ -124,6 +124,7 @@ def write_object_size_csv(path: str | Path, rows: Sequence[dict[str, str]]) -> N
 def summarize_object_size_rows(rows: Sequence[dict[str, str]]) -> dict[str, Any]:
     programs = {row["program"] for row in rows}
     anchor_rows = [row for row in rows if row["source"] == "anchor"]
+    candidate_rows = [row for row in rows if _is_candidate_source(row.get("source", ""))]
     single_swap_rows = [row for row in rows if row["source"] == "single_swap"]
     build_failed = sum(1 for row in rows if row["compile_failure_kind"])
     parse_failed = sum(
@@ -131,17 +132,17 @@ def summarize_object_size_rows(rows: Sequence[dict[str, str]]) -> dict[str, Any]
     )
     computed = [
         int(row["text_delta"])
-        for row in single_swap_rows
+        for row in candidate_rows
         if row["text_delta"] not in {"", None}
     ]
     delta_pcts = [
         float(row["text_delta_pct"])
-        for row in single_swap_rows
+        for row in candidate_rows
         if row["text_delta_pct"] not in {"", None}
     ]
     ir_different_rows = [
         row
-        for row in single_swap_rows
+        for row in candidate_rows
         if row.get("p5_same_as_anchor", "").lower() == "false"
         and row.get("text_delta", "") != ""
     ]
@@ -158,12 +159,14 @@ def summarize_object_size_rows(rows: Sequence[dict[str, str]]) -> dict[str, Any]
         "object_builds_attempted": len(rows),
         "anchor_object_builds": len(anchor_rows),
         "single_swap_object_builds": len(single_swap_rows),
+        "candidate_object_builds": len(candidate_rows),
         "object_build_failed": build_failed,
         "size_parse_failed": parse_failed,
         "anchor_sizes_available": sum(1 for row in anchor_rows if row["text_size"]),
         "single_swap_sizes_available": sum(
             1 for row in single_swap_rows if row["text_size"]
         ),
+        "candidate_sizes_available": sum(1 for row in candidate_rows if row["text_size"]),
         "code_size_delta_computed": len(computed),
         "smaller_text": sum(1 for delta in computed if delta < 0),
         "equal_text": sum(1 for delta in computed if delta == 0),
@@ -325,7 +328,7 @@ def validate_object_size_invariants(
                     f"({total_size} != {expected_total})"
                 )
 
-        if source == "single_swap":
+        if _is_candidate_source(source):
             anchor = anchor_by_program.get(program)
             if (
                 anchor is None
@@ -334,11 +337,11 @@ def validate_object_size_invariants(
             ):
                 errors.append(f"{candidate_id}: missing program anchor")
             if _parse_optional_int(row.get("anchor_text_size")) is None:
-                errors.append(f"{candidate_id}: single_swap anchor_text_size missing")
+                errors.append(f"{candidate_id}: {source} anchor_text_size missing")
             if _parse_optional_int(row.get("text_delta")) is None:
-                errors.append(f"{candidate_id}: single_swap text_delta missing")
+                errors.append(f"{candidate_id}: {source} text_delta missing")
             if row.get("p5_same_as_anchor") not in {"True", "False"}:
-                errors.append(f"{candidate_id}: single_swap p5_same_as_anchor missing")
+                errors.append(f"{candidate_id}: {source} p5_same_as_anchor missing")
 
         if source == "anchor":
             for field in ("text_delta", "total_delta"):
@@ -528,6 +531,10 @@ def _delta(value: int | None, anchor: int | None) -> int | None:
     if value is None or anchor is None:
         return None
     return value - anchor
+
+
+def _is_candidate_source(source: str) -> bool:
+    return source in {"single_swap", "two_swap"}
 
 
 def _delta_pct(value: int | None, anchor: int | None) -> float | None:

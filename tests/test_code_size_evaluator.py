@@ -169,6 +169,22 @@ class CodeSizeEvaluatorTests(unittest.TestCase):
         self.assertEqual(summary["single_swap_p5_same_as_anchor"], 1)
         self.assertEqual(summary["single_swap_p5_different_from_anchor"], 2)
 
+    def test_treats_two_swap_rows_as_code_size_candidates(self):
+        from ecpor.code_size_evaluator import summarize_object_size_rows
+
+        rows = [
+            _summary_row("tiny", "tiny__anchor", "anchor", "True", "100", "0"),
+            _summary_row("tiny", "tiny__depth2", "two_swap", "False", "90", "-10"),
+        ]
+
+        summary = summarize_object_size_rows(rows)
+
+        self.assertEqual(summary["candidate_object_builds"], 1)
+        self.assertEqual(summary["candidate_sizes_available"], 1)
+        self.assertEqual(summary["code_size_delta_computed"], 1)
+        self.assertEqual(summary["smaller_text"], 1)
+        self.assertEqual(summary["single_swap_p5_different_from_anchor"], 1)
+
 
 def _write_candidates_csv(path: Path) -> None:
     with path.open("w", newline="", encoding="utf-8") as handle:
