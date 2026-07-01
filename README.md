@@ -183,6 +183,20 @@ $env:PYTHONPATH = "src"
 D:\Miniconda\envs\dlm\python.exe -m ecpor.result_manifest p7a --out-manifest docs\results\p7b_bounded_two_swap_manifest.json --p5-candidates data\outputs\bounded_local_p5_p6_final\candidates.csv --p5-pipeline-runs data\outputs\bounded_local_p5_p6_final\pipeline_runs.csv --p6-object-size data\outputs\code_size_p6_final\object_size.csv --passspec configs\passspec.yaml --output-dir data\outputs\bounded_two_swap_p7b --cert-dir data\certs\bounded_two_swap_p7b --opt E:\llvm\build\bin\opt.exe --llc E:\llvm\build\bin\llc.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --stage-name P7b --description "P7b per-program top-3 seed bounded two-swap controlled experiment."
 ```
 
+Analyze P7b two-swap result distributions:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.two_swap_analysis --p7-dir data\outputs\bounded_two_swap_p7b --p6-object-size data\outputs\code_size_p6_final\object_size.csv --out data\outputs\bounded_two_swap_p7b_analysis
+```
+
+Generate a tracked P7b.5 analysis manifest:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.result_manifest p7b-analysis --out-manifest docs\results\p7b_analysis_manifest.json --p7-dir data\outputs\bounded_two_swap_p7b --p6-object-size data\outputs\code_size_p6_final\object_size.csv --analysis-dir data\outputs\bounded_two_swap_p7b_analysis --repo-root . --result-generated-from-commit 49a0a8fbe9b9755ec2519248b9531581eb7ed041
+```
+
 Scan soft IR features for one output:
 
 ```powershell
