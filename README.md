@@ -162,6 +162,27 @@ $env:PYTHONPATH = "src"
 D:\Miniconda\envs\dlm\python.exe -m ecpor.result_manifest p7a --out-manifest docs\results\p7a_cache_reuse_manifest.json --p5-candidates data\outputs\bounded_local_p5_p6_final\candidates.csv --p5-pipeline-runs data\outputs\bounded_local_p5_p6_final\pipeline_runs.csv --p6-object-size data\outputs\code_size_p6_final\object_size.csv --passspec configs\passspec.yaml --output-dir data\outputs\bounded_two_swap_p7a_second --cert-dir data\certs\bounded_two_swap_p7a --opt E:\llvm\build\bin\opt.exe --llc E:\llvm\build\bin\llc.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --stage-name P7a-cache --description "P7a second-run cache reuse check with the first P7a certificate directory."
 ```
 
+Run P7b per-program top-3 seed bounded two-swap experiment:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.bounded_two_swap_driver --program-preset stanford-8 --seed-mode top-k-per-program --max-seeds-per-program 3 --max-unique-depth2-per-program 5 --max-total-depth2 40 --p5-dir data\outputs\bounded_local_p5_p6_final --p6-object-size data\outputs\code_size_p6_final\object_size.csv --passspec configs\passspec.yaml --out data\outputs\bounded_two_swap_p7b --cert-dir data\certs\bounded_two_swap_p7b --opt E:\llvm\build\bin\opt.exe --llc E:\llvm\build\bin\llc.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --timeout-sec 30 --stage-name P7b
+```
+
+Run P7b second-run cache reuse check:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.bounded_two_swap_driver --program-preset stanford-8 --seed-mode top-k-per-program --max-seeds-per-program 3 --max-unique-depth2-per-program 5 --max-total-depth2 40 --p5-dir data\outputs\bounded_local_p5_p6_final --p6-object-size data\outputs\code_size_p6_final\object_size.csv --passspec configs\passspec.yaml --out data\outputs\bounded_two_swap_p7b_second --cert-dir data\certs\bounded_two_swap_p7b --opt E:\llvm\build\bin\opt.exe --llc E:\llvm\build\bin\llc.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --timeout-sec 30 --stage-name P7b-cache
+```
+
+Generate a tracked P7b result manifest:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.result_manifest p7a --out-manifest docs\results\p7b_bounded_two_swap_manifest.json --p5-candidates data\outputs\bounded_local_p5_p6_final\candidates.csv --p5-pipeline-runs data\outputs\bounded_local_p5_p6_final\pipeline_runs.csv --p6-object-size data\outputs\code_size_p6_final\object_size.csv --passspec configs\passspec.yaml --output-dir data\outputs\bounded_two_swap_p7b --cert-dir data\certs\bounded_two_swap_p7b --opt E:\llvm\build\bin\opt.exe --llc E:\llvm\build\bin\llc.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --stage-name P7b --description "P7b per-program top-3 seed bounded two-swap controlled experiment."
+```
+
 Scan soft IR features for one output:
 
 ```powershell
