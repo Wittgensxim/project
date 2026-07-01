@@ -18,6 +18,25 @@ class ObjectSizeRunnerTests(unittest.TestCase):
 
         self.assertEqual(parsed, (123, 4, 8, 135))
 
+    def test_parser_handles_crlf_warning_lines_and_hex_numbers(self):
+        from ecpor.object_size_runner import parse_llvm_size_output
+
+        parsed = parse_llvm_size_output(
+            "warning: ignored section\r\n"
+            "   text    data     bss     dec     hex filename\r\n"
+            "   0x10     0x4       0    0x14      14 tiny.o\r\n"
+        )
+
+        self.assertEqual(parsed, (16, 4, 0, 20))
+
+    def test_parser_returns_none_for_empty_or_header_only_output(self):
+        from ecpor.object_size_runner import parse_llvm_size_output
+
+        self.assertIsNone(parse_llvm_size_output(""))
+        self.assertIsNone(
+            parse_llvm_size_output("text data bss dec hex filename\n")
+        )
+
     def test_compile_and_measure_object_size(self):
         from ecpor.object_size_runner import measure_object_size
 

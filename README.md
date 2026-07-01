@@ -131,7 +131,7 @@ Run P5 bounded local one-swap exploration from a P4 attempts CSV:
 
 ```powershell
 $env:PYTHONPATH = "src"
-D:\Miniconda\envs\dlm\python.exe -m ecpor.bounded_local_driver --program-preset stanford-8 --pipeline configs\pipeline_scalar.yaml --attempts-csv data\outputs\lazy_validation_p4_e83c409_first.csv --out data\outputs\bounded_local_p5_final --opt E:\llvm\build\bin\opt.exe --timeout-sec 30
+D:\Miniconda\envs\dlm\python.exe -m ecpor.bounded_local_driver --program-preset stanford-8 --pipeline configs\pipeline_scalar.yaml --attempts-csv data\outputs\lazy_validation_p4_e83c409_first.csv --out data\outputs\bounded_local_p5_p6_final --opt E:\llvm\build\bin\opt.exe --timeout-sec 30
 ```
 
 Run P6 code-size evaluation for P5 outputs:

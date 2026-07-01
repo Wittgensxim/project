@@ -109,7 +109,7 @@ D:\Miniconda\envs\dlm\python.exe -m ecpor.bounded_local_driver --program-preset 
 P5 关键结果：
 
 ```text
-ecpor_git_commit: final P6 commit
+ecpor_git_commit: 715924286f5825d19346e0392670aa6e0b9c1abc
 ecpor_git_dirty: False
 attempts_csv_sha256: ceada53bcb557dfd9a4d9c8217f652b7995f158154d4df5827a1a340acffb777
 pipeline_config_sha256: 798fafb5e73bd26036dec30fd6d9592ec4ebf0b51a17bd5d73f81dc3acb8f2cf
