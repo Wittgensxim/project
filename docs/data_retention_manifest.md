@@ -45,6 +45,7 @@ ecpor_validation_funnel.csv
 ```text
 states.csv
 feature_deltas.csv
+opcode_delta.csv
 object_size.csv
 attribution_report.md
 state_outputs/

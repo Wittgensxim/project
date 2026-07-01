@@ -17,8 +17,8 @@
 ## 最新状态
 
 - 当前分支：`feature/phase-ordering-footprint`
-- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening、P6.5 result manifest 与 candidate-source invariant、P7a bounded two-swap smoke test、P7a report/manifest/cache 收尾、P7b per-program top-3 seed bounded two-swap controlled experiment、P7b.5 two-swap result interpretation and distribution analysis、P8a clang-c codegen sensitivity、P8a.5 core evidence report、P8a.6 core evidence 语义收尾、P8c Queens effect attribution。
-- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `90 passed in 11.53s`。
+- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening、P6.5 result manifest 与 candidate-source invariant、P7a bounded two-swap smoke test、P7a report/manifest/cache 收尾、P7b per-program top-3 seed bounded two-swap controlled experiment、P7b.5 two-swap result interpretation and distribution analysis、P8a clang-c codegen sensitivity、P8a.5 core evidence report、P8a.6 core evidence 语义收尾、P8c Queens effect attribution、P8c.1 opcode-level attribution。
+- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `90 passed in 11.22s`。
 - 最新 P4 真实实验：8 个 Stanford 输入 × 7 个 anchor-adjacent pair，共 `56` 次 lazy validation；第一轮 `48` 个 candidate 动态测试、`8` 个 low_priority skip、`32` 个 certified、`16` 个 not-certified、`run_failed = 0`、`CertificateReproductionRate = 100.00%`。
 - 最新 P4 cache 验证：第二轮同一批输入 `cache_hits = 48`、`dynamic_tests = 0`、`SecondRunCacheHitRate = 100.00%`。
 - 最新 state-indexing safety 验证：input-state certificate 对 input hash 命中，对 `sroa` 后不同 prefix hash 不命中。
@@ -51,6 +51,8 @@
 - 最新 P8c feature 结论：`LocalABBAHardHashEqual = False`、`FinalABBAHardHashEqual = False`、`LocalInstructionDelta = -1`、`FinalInstructionDelta = -1`、`FeatureDeltaPropagation = kept`；说明 Queens 的 `simplifycfg,instcombine` 顺序差异在局部 pair 后已经出现，并在 suffix 后保持。
 - 最新 P8c object-size 结论：`BA_final` 相对 `AB_final` 在 `llc` 下 `.text = 695 vs 727`，`LlcTextDelta = -32`、`-4.401651%`；在 `clang -c` 下 `.text = 940 vs 956`，`ClangTextDelta = -16`、`-1.673640%`；`BothCodegenSmaller = True`。
 - 最新 P8c manifest：`docs/results/queens_effect_attribution_manifest.json`，记录 input IR、P8c 输出 hash、`opt.exe` / `llc.exe` / `clang.exe` / `llvm-size.exe` hash、`ecpor_git_dirty = false` 和 single-program observed-attribution scope。
+- 最新 P8c.1 opcode-level attribution：`data/outputs/effect_attribution_queens/opcode_delta.csv` 显示 `local_AB_vs_BA` 与 `final_AB_vs_BA` 的非零 opcode delta 都是 `num_icmp_delta=-1;num_select_delta=-1;num_add_delta=1`；说明净少 1 条 instruction 来自 icmp/select 减少与 add 增加的组合变化。
+- 最新 P8c.1 manifest：`docs/results/queens_effect_attribution_manifest.json` 已更新到 clean commit `70fd929761117597d3adaf932e9baad8fccfb9bd`，并新增 `opcode_delta_csv` hash 与 `FinalOpcodeDeltaNonZero` summary。
 - 最新 data 清理：新增 `docs/data_retention_manifest.md`；以后 `data/` 只保留必须保留的文件；删除 `*_work`、旧 P5 commit 输出和重复 P4 final 目录；保留 `data/inputs/`、P4 e83c409、P5/P6 final、pair_tests。清理后 `data/outputs` 约 `21.57 MB`，`data/certs` 约 `0.62 MB`。
 - 重要语义边界：static filter 只做 candidate generation / low priority 排序；lazy validation 只在当前 state 上查询或生成 certificate；input-state certificate 不得复用于 prefix-state。
 - 下一步建议：不要马上 depth=3；进入 P8b benchmark expansion，先用新 8 个小程序验证 pair matrix / static filter / depth1 code-size 现象是否能泛化。
@@ -86,6 +88,7 @@
 | 2026-07-02 | P8a.5 core evidence report | [2026-07-02-25-p8a5-core-evidence-report.md](progress/2026-07-02-25-p8a5-core-evidence-report.md) |
 | 2026-07-02 | P8a.6 core evidence 语义收尾 | [2026-07-02-26-p8a6-core-evidence-semantics.md](progress/2026-07-02-26-p8a6-core-evidence-semantics.md) |
 | 2026-07-02 | P8c Queens effect attribution | [2026-07-02-27-p8c-queens-effect-attribution.md](progress/2026-07-02-27-p8c-queens-effect-attribution.md) |
+| 2026-07-02 | P8c.1 opcode-level attribution | [2026-07-02-28-p8c1-opcode-attribution.md](progress/2026-07-02-28-p8c1-opcode-attribution.md) |
 
 ## 旧文档拆分说明
 
