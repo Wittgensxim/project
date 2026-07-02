@@ -4,6 +4,8 @@ ECPOR 是一个 evidence-carrying LLVM phase-ordering reduction 原型，不是�
 
 当前主入口报告见 [docs/ecpor_mvp_report.md](docs/ecpor_mvp_report.md)；P9-6 阶段报告见 [docs/ecpor_stage_report.md](docs/ecpor_stage_report.md)；阶段进度索引见 [docs/project_progress.md](docs/project_progress.md)。
 
+P10 已把 `configs/passspec.yaml` 升级为兼容旧 list schema 与新 provenance metadata 的 PassSpec v2：静态过滤行为不变，但经验性 repair hint 现在带有 `source`、`confidence`、`support` 与 `created_in_stage`。审计结果见 [docs/results/passspec_audit_manifest.json](docs/results/passspec_audit_manifest.json)。
+
 ## 当前 MVP 范围
 
 当前 MVP 只覆盖 LLVM IR scalar pass 的相邻顺序约简：
@@ -50,7 +52,7 @@ P9-5 不改变 `v0.1.1` MVP 语义。`v0.1.1` 仍然定义为 Stanford-8 + Misc8
 | depth1 both-smaller programs | 2 |
 | Diverse8 both-smaller programs | 0 |
 
-解释：Diverse8 增加了覆盖面，但没有新增 depth1 both-smaller program。因此当前阶段不建议继续搜索；更合适的下一步是写阶段报告/论文草稿，或做 P10 PassSpec provenance v2。
+解释：Diverse8 增加了覆盖面，但没有新增 depth1 both-smaller program。因此当前阶段不建议继续搜索；P10 已完成 PassSpec provenance v2，后续更合适的是写 PassSpec trust report / paper-facing methods note。
 
 ## Evidence Level
 
@@ -162,4 +164,4 @@ AttributionCases=2
 
 ## 下一步
 
-P9-6 之后优先做 P10 PassSpec provenance v2，把 `passspec.yaml` 从手工 hint 表升级为带来源、置信度和 empirical support 的 metadata 表。当前不建议继续 two-swap、depth=3、beam/searcher、runtime benchmark 或 Alive2。
+P10 之后优先做 P10.5 PassSpec trust report / paper-facing methods note，把 5 条 empirical repair hint 的来源、support 与仍为 legacy 的 59 条 hint 解释清楚。当前不建议继续 two-swap、depth=3、beam/searcher、runtime benchmark 或 Alive2。

@@ -47,6 +47,7 @@ data/outputs/effect_attribution_ffbench/
 data/outputs/core_evidence_report_misc8/
 data/outputs/final_mvp_summary/
 data/outputs/combined_depth1_summary/
+data/outputs/passspec_audit/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
@@ -233,6 +234,23 @@ combined_depth1_report.md
 
 ```text
 docs/results/combined_depth1_summary_manifest.json
+```
+
+P10 当前保留 PassSpec provenance audit：
+
+```text
+data/outputs/passspec_audit/
+```
+
+原因：P10 不新增实验、不新增 certificate、不新增 search，只把 `configs/passspec.yaml` 中的经验性 repair hint 升级为带 provenance 的 metadata，并生成可审计摘要。目录中保留：
+```text
+passspec_hint_summary.csv
+passspec_audit_report.md
+```
+
+对应 tracked manifest：
+```text
+docs/results/passspec_audit_manifest.json
 ```
 
 ## 可删除：临时或重复目录

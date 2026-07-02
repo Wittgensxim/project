@@ -1,0 +1,42 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P10",
+  "description": "PassSpec provenance v2 audit without LLVM reruns.",
+  "result_generated_from_commit": "9291115ab1f764c6a0b7bbced0d64b69ce594ec8",
+  "ecpor_git_commit": "9291115ab1f764c6a0b7bbced0d64b69ce594ec8",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "passspec": "configs/passspec.yaml"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/passspec_audit",
+    "passspec_hint_summary_csv": "data/outputs/passspec_audit/passspec_hint_summary.csv",
+    "passspec_audit_report": "data/outputs/passspec_audit/passspec_audit_report.md"
+  },
+  "sha256": {
+    "passspec": "b72a7f3b7db06f5039725efdda5cb87e8cfeb15914c849b7d1684300a76c9c28",
+    "passspec_hint_summary_csv": "6f6ab1eef2b21886eb29dca0e6c777438b3b89479cc1f98876e925165a8a547d",
+    "passspec_audit_report": "949bb1206cc1b2d38c08322d5342808b9c40957c23104b34d78fa6face0d41ff"
+  },
+  "tools": {},
+  "summary": {
+    "UnknownConfidenceHints": 59,
+    "RequiresAnyHints": 10,
+    "ManualHints": 0,
+    "LegacyHintsWithoutExplicitProvenance": 59,
+    "TotalHints": 64,
+    "TotalPasses": 8,
+    "HintsWithSupportCases": 5,
+    "MayConsumeHints": 30,
+    "MayProduceHints": 24,
+    "EmpiricalRepairHints": 5
+  },
+  "scope_limits": {
+    "metadata_only": true,
+    "static_filter_behavior_change": false,
+    "new_experiments": false,
+    "new_certificates": false,
+    "new_search": false,
+    "runtime_benchmarks": false
+  }
+}

@@ -16,9 +16,9 @@
 
 ## 最新状态
 
-- 当前分支：`p9-6-stage-report`
-- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening、P6.5 result manifest 与 candidate-source invariant、P7a bounded two-swap smoke test、P7a report/manifest/cache 收尾、P7b per-program top-3 seed bounded two-swap controlled experiment、P7b.5 two-swap result interpretation and distribution analysis、P8a clang-c codegen sensitivity、P8a.5 core evidence report、P8a.6 core evidence 语义收尾、P8c Queens effect attribution、P8c.1 opcode-level attribution、P8c.2 attribution summary in core evidence、P8b-0 benchmark ingestion、P8b-1 Misc8 full matrix 与 static filter pre 评估、P8b-2 static filter false-negative repair、P8b-3-lite Misc8 depth1 chain、P8b-3.5 Misc8 depth1 analysis 与 ffbench attribution、P9-1 MVP summary report、P9-2 result_manifest.py 轻量拆分、P9-3 README / MVP 主报告、P9-3.5 MVP 版本固化、P9-3.6 MVP 发布 smoke check、P9-4a diverse8 depth1-only benchmark ingestion、P9-4b diverse8 full matrix 与 static filter pre 评估、P9-4c diverse8 depth1 chain 与分析、P9-5 combined 24-program depth1 summary、P9-6 stage report / paper draft。
-- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `117 passed`；P9-6 阶段报告 manifest `docs/results/stage_report_manifest.json` 记录 `ecpor_git_dirty = false`、`summary_only = true`、`new_experiments = false`、`new_certificates = false`、`new_search = false`、`runtime_benchmarks = false`、`two_swap_search = false`。
+- 当前分支：`p10-passspec-provenance`
+- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening、P6.5 result manifest 与 candidate-source invariant、P7a bounded two-swap smoke test、P7a report/manifest/cache 收尾、P7b per-program top-3 seed bounded two-swap controlled experiment、P7b.5 two-swap result interpretation and distribution analysis、P8a clang-c codegen sensitivity、P8a.5 core evidence report、P8a.6 core evidence 语义收尾、P8c Queens effect attribution、P8c.1 opcode-level attribution、P8c.2 attribution summary in core evidence、P8b-0 benchmark ingestion、P8b-1 Misc8 full matrix 与 static filter pre 评估、P8b-2 static filter false-negative repair、P8b-3-lite Misc8 depth1 chain、P8b-3.5 Misc8 depth1 analysis 与 ffbench attribution、P9-1 MVP summary report、P9-2 result_manifest.py 轻量拆分、P9-3 README / MVP 主报告、P9-3.5 MVP 版本固化、P9-3.6 MVP 发布 smoke check、P9-4a diverse8 depth1-only benchmark ingestion、P9-4b diverse8 full matrix 与 static filter pre 评估、P9-4c diverse8 depth1 chain 与分析、P9-5 combined 24-program depth1 summary、P9-6 stage report / paper draft、P10 PassSpec provenance v2 与 audit。
+- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `124 passed`；P10 audit manifest `docs/results/passspec_audit_manifest.json` 记录 `ecpor_git_dirty = false`、`metadata_only = true`、`static_filter_behavior_change = false`、`new_experiments = false`、`new_certificates = false`、`new_search = false`、`runtime_benchmarks = false`。
 - 最新 P4 真实实验：8 个 Stanford 输入 × 7 个 anchor-adjacent pair，共 `56` 次 lazy validation；第一轮 `48` 个 candidate 动态测试、`8` 个 low_priority skip、`32` 个 certified、`16` 个 not-certified、`run_failed = 0`、`CertificateReproductionRate = 100.00%`。
 - 最新 P4 cache 验证：第二轮同一批输入 `cache_hits = 48`、`dynamic_tests = 0`、`SecondRunCacheHitRate = 100.00%`。
 - 最新 state-indexing safety 验证：input-state certificate 对 input hash 命中，对 `sroa` 后不同 prefix hash 不命中。
@@ -93,7 +93,9 @@
 - 重要语义边界：static filter 只做 candidate generation / low priority 排序；lazy validation 只在当前 state 上查询或生成 certificate；input-state certificate 不得复用于 prefix-state。
 - 最新 P9-5 combined depth1 summary：新增 `src/ecpor/combined_depth1_summary.py` 与 `docs/results/combined_depth1_summary_manifest.json`，输出 `data/outputs/combined_depth1_summary/`；该阶段不新增实验、不新增 certificate、不新增搜索，只汇总 Stanford-8、Misc8、Diverse8 的 depth1-only 证据。核心结论为 `24` 程序、`672/672` reproduced、`HardFalseIndependent = 0`、`TotalOneSwapCandidates = 39`、`TotalBothSmallerPrograms = 2`、`Diverse8BothSmallerPrograms = 0`。
 - 最新 P9-6 stage report：新增 `docs/ecpor_stage_report.md` 和 `docs/results/stage_report_manifest.json`，把研究问题、核心思想、证据等级、方法链路、24-program depth1 结果、两个 attribution case、限制与下一步整理成可展示的阶段报告。该阶段只做文档收束，不新增实验、不新增 certificate、不新增 search。
-- 下一步建议：进入 P10 PassSpec provenance v2，把 `passspec.yaml` 从手工 hint 表升级为带来源、置信度和 empirical support 的 metadata 表；当前不建议继续 two-swap、depth=3、beam/searcher、runtime benchmark 或 Alive2。
+- 最新 P10 PassSpec provenance v2：新增 `src/ecpor/passspec_schema.py` 和 `src/ecpor/passspec_audit.py`，`static_filter.py` 通过 normalized hint name 读取旧 list schema、新 mapping schema 与混合 schema，分类行为保持不变；`configs/passspec.yaml` 只给 5 条经验性 repair hint 增加 `source/confidence/support/created_in_stage/note` 元数据。
+- 最新 P10 audit：`data/outputs/passspec_audit/passspec_audit_report.md` 记录 `TotalPasses = 8`、`TotalHints = 64`、`EmpiricalRepairHints = 5`、`HintsWithSupportCases = 5`、`LegacyHintsWithoutExplicitProvenance = 59`；`docs/results/passspec_audit_manifest.json` 记录 `result_generated_from_commit = 9291115ab1f764c6a0b7bbced0d64b69ce594ec8` 和 `ecpor_git_dirty = false`。
+- 下一步建议：不要继续 two-swap、depth=3、beam/searcher、runtime benchmark 或 Alive2；优先做 P10.5 PassSpec trust report / paper-facing methods note，把 5 条 empirical repair hint 的来源、support 与仍为 legacy 的 59 条 hint 解释清楚。
 
 ## 进度文件索引
 
@@ -143,6 +145,7 @@
 | 2026-07-03 | P9-4c diverse8 depth1 chain 与分析 | [2026-07-03-42-p9-4c-diverse8-depth1-chain.md](progress/2026-07-03-42-p9-4c-diverse8-depth1-chain.md) |
 | 2026-07-03 | P9-5 combined 24-program depth1 summary | [2026-07-03-43-p9-5-combined-depth1-summary.md](progress/2026-07-03-43-p9-5-combined-depth1-summary.md) |
 | 2026-07-03 | P9-6 stage report / paper draft | [2026-07-03-44-p9-6-stage-report.md](progress/2026-07-03-44-p9-6-stage-report.md) |
+| 2026-07-03 | P10 PassSpec provenance v2 与 audit | [2026-07-03-45-p10-passspec-provenance.md](progress/2026-07-03-45-p10-passspec-provenance.md) |
 
 ## 旧文档拆分说明
 
