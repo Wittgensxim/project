@@ -48,6 +48,7 @@ data/outputs/core_evidence_report_misc8/
 data/outputs/final_mvp_summary/
 data/outputs/combined_depth1_summary/
 data/outputs/passspec_audit/
+data/outputs/pass_registry_snapshot/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
@@ -260,6 +261,28 @@ docs/results/passspec_trust_report_manifest.json
 ```
 
 原因：P10.5 是 report-only / metadata-only 的方法说明阶段，不运行 LLVM、不生成 certificate、不新增 search，也不需要保留新的 `data/outputs`。
+
+P11 当前保留 pass registry snapshot：
+
+```text
+data/outputs/pass_registry_snapshot/
+```
+
+原因：P11 是 metadata-only 的 LLVM 工具链 registry 快照阶段。目录中保留：
+
+```text
+opt_print_passes_raw.txt
+pass_registry_snapshot.json
+pass_registry_report.md
+```
+
+对应 tracked manifest：
+
+```text
+docs/results/pass_registry_snapshot_manifest.json
+```
+
+这些文件只记录 `opt --print-passes` 的 raw snapshot、MVP 8 pass presence check 和 hash；不包含 certificate、不包含 search 输出、不包含 runtime benchmark。
 
 ## 可删除：临时或重复目录
 

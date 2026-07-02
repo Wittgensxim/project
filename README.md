@@ -8,6 +8,8 @@ P10 已把 `configs/passspec.yaml` 升级为兼容旧 list schema 与新 provena
 
 P10.5 已把 provenance audit 整理成 paper-facing methods note：[docs/passspec_trust_report.md](docs/passspec_trust_report.md)。它列出 5 条 empirical repair hint 的来源和 support，同时明确 59 条 legacy hint 仍未显式 provenance，static filter 仍只做 candidate generation，不做 hard pruning。
 
+P11 已把当前 LLVM 工具链的 pass registry 固化为 metadata-only snapshot：[docs/results/pass_registry_snapshot_manifest.json](docs/results/pass_registry_snapshot_manifest.json)。它调用 `E:\llvm\build\bin\opt.exe --print-passes`，保存 raw output / JSON / report，并确认 MVP 8 个 pass 全部 present：`sroa`、`early-cse`、`instcombine`、`simplifycfg`、`reassociate`、`gvn`、`dce`、`adce`。P11 不推断 pass 语义，也不改变 PassSpec 或 static filter 行为。
+
 ## 当前 MVP 范围
 
 当前 MVP 只覆盖 LLVM IR scalar pass 的相邻顺序约简：
@@ -54,7 +56,7 @@ P9-5 不改变 `v0.1.1` MVP 语义。`v0.1.1` 仍然定义为 Stanford-8 + Misc8
 | depth1 both-smaller programs | 2 |
 | Diverse8 both-smaller programs | 0 |
 
-解释：Diverse8 增加了覆盖面，但没有新增 depth1 both-smaller program。因此当前阶段不建议继续搜索；P10/P10.5 已完成 PassSpec provenance 与 trust report，后续更合适的是做 P11 pass registry snapshot。
+解释：Diverse8 增加了覆盖面，但没有新增 depth1 both-smaller program。因此当前阶段不建议继续搜索；P10/P10.5 已完成 PassSpec provenance 与 trust report，P11 已完成 pass registry snapshot，后续更合适的是做 P11.5 PassSpec registry cross-check。
 
 ## Evidence Level
 
@@ -98,7 +100,7 @@ D:\Miniconda\envs\dlm\python.exe -m pytest -q
 期望测试结果：
 
 ```text
-107 passed
+132 passed
 ```
 
 外部 clone 后可以直接阅读这些已跟踪文件来理解冻结结果：
@@ -158,6 +160,7 @@ AttributionCases=2
 | `data/inputs/` | 保留的 LLVM IR 输入 |
 | `data/outputs/final_mvp_summary/` | P9-1 MVP summary 输出 |
 | `data/outputs/combined_depth1_summary/` | P9-5 post-MVP 24-program depth1 summary 输出 |
+| `data/outputs/pass_registry_snapshot/` | P11 LLVM pass registry snapshot 输出 |
 | `docs/ecpor_stage_report.md` | P9-6 阶段报告 / 论文草稿入口 |
 | `docs/passspec_trust_report.md` | P10.5 PassSpec trust report / methods note |
 | `docs/results/` | 可提交 manifest |
@@ -167,4 +170,4 @@ AttributionCases=2
 
 ## 下一步
 
-P10.5 之后优先做 P11 pass registry snapshot：调用 `opt --print-passes`，保存当前 LLVM 工具链 registry 快照，并检查 MVP 8 pass 是否可见。当前不建议继续 two-swap、depth=3、beam/searcher、runtime benchmark 或 Alive2。
+P11 之后优先做 P11.5 PassSpec registry cross-check：只检查 `configs/passspec.yaml`、`configs/pipeline_scalar.yaml` 与 P11 registry snapshot 的 pass set 是否一致。当前不建议自动推断 pass 语义、修改 PassSpec，或继续 two-swap、depth=3、beam/searcher、runtime benchmark、Alive2、PassInstrumentation。
