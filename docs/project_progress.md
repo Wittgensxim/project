@@ -17,7 +17,7 @@
 ## 最新状态
 
 - 当前分支：`feature/phase-ordering-footprint`
-- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening、P6.5 result manifest 与 candidate-source invariant、P7a bounded two-swap smoke test、P7a report/manifest/cache 收尾、P7b per-program top-3 seed bounded two-swap controlled experiment、P7b.5 two-swap result interpretation and distribution analysis、P8a clang-c codegen sensitivity、P8a.5 core evidence report、P8a.6 core evidence 语义收尾、P8c Queens effect attribution、P8c.1 opcode-level attribution、P8c.2 attribution summary in core evidence、P8b-0 benchmark ingestion、P8b-1 Misc8 full matrix 与 static filter pre 评估、P8b-2 static filter false-negative repair、P8b-3-lite Misc8 depth1 chain、P8b-3.5 Misc8 depth1 analysis 与 ffbench attribution、P9-1 MVP summary report、P9-2 result_manifest.py 轻量拆分。
+- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening、P6.5 result manifest 与 candidate-source invariant、P7a bounded two-swap smoke test、P7a report/manifest/cache 收尾、P7b per-program top-3 seed bounded two-swap controlled experiment、P7b.5 two-swap result interpretation and distribution analysis、P8a clang-c codegen sensitivity、P8a.5 core evidence report、P8a.6 core evidence 语义收尾、P8c Queens effect attribution、P8c.1 opcode-level attribution、P8c.2 attribution summary in core evidence、P8b-0 benchmark ingestion、P8b-1 Misc8 full matrix 与 static filter pre 评估、P8b-2 static filter false-negative repair、P8b-3-lite Misc8 depth1 chain、P8b-3.5 Misc8 depth1 analysis 与 ffbench attribution、P9-1 MVP summary report、P9-2 result_manifest.py 轻量拆分、P9-3 README / MVP 主报告。
 - 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `107 passed`。
 - 最新 P4 真实实验：8 个 Stanford 输入 × 7 个 anchor-adjacent pair，共 `56` 次 lazy validation；第一轮 `48` 个 candidate 动态测试、`8` 个 low_priority skip、`32` 个 certified、`16` 个 not-certified、`run_failed = 0`、`CertificateReproductionRate = 100.00%`。
 - 最新 P4 cache 验证：第二轮同一批输入 `cache_hits = 48`、`dynamic_tests = 0`、`SecondRunCacheHitRate = 100.00%`。
@@ -79,9 +79,10 @@
 - 最新 P9-1 objective summary：Stanford-8 为 `DirectionComparisonCandidates = 38`、`DirectionAgreementRate = 68.42%`、`BothSmallerCases = 4`、`BothSmallerPrograms = 1`；Misc8 为 `DirectionComparisonCandidates = 16`、`DirectionAgreementRate = 93.75%`、`BothSmallerCases = 1`、`BothSmallerPrograms = 1`。
 - 最新 P9-1 manifest：`docs/results/mvp_summary_manifest.json`，记录 `result_generated_from_commit = 63406df2d6c66300d57a09480b9fc9571fc5ef55`、`ecpor_git_dirty = false`、`new_experiments = false`、`new_certificates = false`、`llvm_pipeline_rerun = false`。
 - 最新 P9-2 工程收敛：`src/ecpor/result_manifest.py` 从约 1874 行拆成 `manifest_common.py`、`manifest_builders.py`、`manifest_cli.py` 和 16 行兼容入口；旧导入 `from ecpor.result_manifest import ...` 与 `python -m ecpor.result_manifest ...` 继续可用；P9-1 汇总重跑结果不变。
+- 最新 P9-3 文档入口：`README.md` 已改为五分钟项目入口，新增 [docs/ecpor_mvp_report.md](ecpor_mvp_report.md) 作为 MVP 主报告；两者都明确 P9-1 总结果、evidence level、Mermaid 主流程、最小复现命令、当前支持范围和 unsupported scope。
 - 最新 data 清理：新增 `docs/data_retention_manifest.md`；以后 `data/` 只保留必须保留的文件；删除 `*_work`、旧 P5 commit 输出和重复 P4 final 目录；保留 `data/inputs/`、P4 e83c409、P5/P6 final、pair_tests、P8b-1 pre full matrix 和 P8b-2 static repair 对照。清理后 `data/outputs` 约 `39.75 MB`，`data/certs` 约 `1.42 MB`。
 - 重要语义边界：static filter 只做 candidate generation / low priority 排序；lazy validation 只在当前 state 上查询或生成 certificate；input-state certificate 不得复用于 prefix-state。
-- 下一步建议：进入 P9-3，整理 README / 项目主报告，把 P9-1 MVP 总表作为主入口；暂不新增实验，若后续继续扩 benchmark，再做 diverse8 且仍保持 depth1-only。
+- 下一步建议：先审阅 P9-3 README / MVP 主报告；若后续继续扩 benchmark，再进入 P9-4 optional diverse8，且仍保持 depth1-only。
 
 ## 进度文件索引
 
@@ -123,6 +124,7 @@
 | 2026-07-02 | P8b-3.5 Misc8 depth1 结果解释与 ffbench 归因 | [2026-07-02-34-p8b35-misc8-depth1-analysis.md](progress/2026-07-02-34-p8b35-misc8-depth1-analysis.md) |
 | 2026-07-02 | P9-1 MVP 总结表 | [2026-07-02-35-p9-1-mvp-summary.md](progress/2026-07-02-35-p9-1-mvp-summary.md) |
 | 2026-07-02 | P9-2 result_manifest.py 轻量拆分 | [2026-07-02-36-p9-2-result-manifest-split.md](progress/2026-07-02-36-p9-2-result-manifest-split.md) |
+| 2026-07-02 | P9-3 README 与 MVP 主报告 | [2026-07-02-37-p9-3-readme-mvp-report.md](progress/2026-07-02-37-p9-3-readme-mvp-report.md) |
 
 ## 旧文档拆分说明
 
