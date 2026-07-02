@@ -244,6 +244,14 @@ PASSSPEC_AUDIT_SUMMARY_KEYS = {
 
 PASSSPEC_TRUST_REPORT_SUMMARY_KEYS = PASSSPEC_AUDIT_SUMMARY_KEYS
 
+PASS_REGISTRY_SNAPSHOT_SUMMARY_KEYS = {
+    "LLVMVersion",
+    "ExpectedPasses",
+    "PresentExpectedPasses",
+    "MissingExpectedPasses",
+    "ParseConfidence",
+}
+
 
 
 def build_p7a_manifest(
@@ -803,6 +811,52 @@ def build_passspec_trust_report_manifest(
             "scope_limits": {
                 "report_only": True,
                 "metadata_only": True,
+                "static_filter_behavior_change": False,
+                "passspec_behavior_change": False,
+                "new_experiments": False,
+                "new_certificates": False,
+                "new_search": False,
+                "runtime_benchmarks": False,
+            }
+        },
+    )
+
+
+def build_pass_registry_snapshot_manifest(
+    *,
+    opt_path: str | Path,
+    pipeline_config_path: str | Path,
+    output_dir: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    out = Path(output_dir)
+    report = out / "pass_registry_report.md"
+    return build_result_manifest(
+        stage="P11",
+        description="LLVM opt pass registry snapshot with MVP pass presence check.",
+        inputs={
+            "pipeline_config": pipeline_config_path,
+        },
+        outputs={
+            "output_dir": out,
+            "opt_print_passes_raw": out / "opt_print_passes_raw.txt",
+            "pass_registry_snapshot_json": out / "pass_registry_snapshot.json",
+            "pass_registry_report": report,
+        },
+        tools={
+            "opt": opt_path,
+        },
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            PASS_REGISTRY_SNAPSHOT_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "metadata_only": True,
+                "registry_snapshot_only": True,
                 "static_filter_behavior_change": False,
                 "passspec_behavior_change": False,
                 "new_experiments": False,

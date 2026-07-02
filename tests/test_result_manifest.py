@@ -40,7 +40,54 @@ class ResultManifestTests(unittest.TestCase):
             result_manifest.build_passspec_trust_report_manifest,
             manifest_builders.build_passspec_trust_report_manifest,
         )
+        self.assertIs(
+            result_manifest.build_pass_registry_snapshot_manifest,
+            manifest_builders.build_pass_registry_snapshot_manifest,
+        )
         self.assertIs(result_manifest.main, manifest_cli.main)
+
+    def test_builds_pass_registry_snapshot_manifest(self):
+        from ecpor.result_manifest import (
+            build_pass_registry_snapshot_manifest,
+            write_manifest,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            opt = root / "opt.exe"
+            pipeline = root / "pipeline_scalar.yaml"
+            out_dir = root / "pass_registry_snapshot"
+            out_dir.mkdir()
+            _write_text(opt, "opt")
+            _write_text(pipeline, "passes:\n  - sroa\n  - dce\n")
+            _write_pass_registry_outputs(out_dir)
+
+            manifest = build_pass_registry_snapshot_manifest(
+                opt_path=opt,
+                pipeline_config_path=pipeline,
+                output_dir=out_dir,
+                repo_root=root,
+                result_generated_from_commit="bead123",
+            )
+            manifest_path = root / "pass_registry_snapshot_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P11")
+        self.assertEqual(loaded["result_generated_from_commit"], "bead123")
+        self.assertIn("opt_print_passes_raw", loaded["outputs"])
+        self.assertIn("pass_registry_snapshot_json", loaded["sha256"])
+        self.assertIn("opt", loaded["sha256"])
+        self.assertEqual(loaded["summary"]["ExpectedPasses"], 2)
+        self.assertEqual(loaded["summary"]["MissingExpectedPasses"], 0)
+        self.assertEqual(loaded["scope_limits"]["metadata_only"], True)
+        self.assertEqual(loaded["scope_limits"]["registry_snapshot_only"], True)
+        self.assertEqual(loaded["scope_limits"]["static_filter_behavior_change"], False)
+        self.assertEqual(loaded["scope_limits"]["passspec_behavior_change"], False)
+        self.assertEqual(loaded["scope_limits"]["new_experiments"], False)
+        self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
+        self.assertEqual(loaded["scope_limits"]["new_search"], False)
+        self.assertEqual(loaded["scope_limits"]["runtime_benchmarks"], False)
 
     def test_builds_p7a_manifest_from_outputs_and_hashes_files(self):
         from ecpor.result_manifest import build_p7a_manifest, write_manifest
@@ -1550,6 +1597,37 @@ def _write_p8b35_misc8_outputs(out_dir: Path) -> None:
 
             BothSmallerPrograms: 1
             AttributionCases: 1
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_pass_registry_outputs(out_dir: Path) -> None:
+    _write_text(out_dir / "opt_print_passes_raw.txt", "Passes:\n  sroa\n  dce\n")
+    _write_text(
+        out_dir / "pass_registry_snapshot.json",
+        json.dumps(
+            {
+                "llvm_version": "test-llvm",
+                "expected_passes": ["sroa", "dce"],
+                "missing_expected_passes": [],
+            },
+            indent=2,
+        )
+        + "\n",
+    )
+    _write_text(
+        out_dir / "pass_registry_report.md",
+        textwrap.dedent(
+            """
+            # LLVM Pass Registry Snapshot
+
+            LLVMVersion: test-llvm
+            ExpectedPasses: 2
+            PresentExpectedPasses: 2
+            MissingExpectedPasses: 0
+            ParseConfidence: raw_snapshot_with_presence_check
             """
         ).strip()
         + "\n",

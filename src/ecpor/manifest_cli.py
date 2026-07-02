@@ -12,6 +12,7 @@ from .manifest_builders import (
     build_depth1_analysis_manifest,
     build_effect_attribution_manifest,
     build_passspec_audit_manifest,
+    build_pass_registry_snapshot_manifest,
     build_passspec_trust_report_manifest,
     build_p6_5_manifest,
     build_p7a_manifest,
@@ -322,6 +323,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     passspec_trust.add_argument("--repo-root", default=".")
     passspec_trust.add_argument("--result-generated-from-commit")
 
+    pass_registry = subparsers.add_parser(
+        "pass-registry-snapshot",
+        help="Build a P11 LLVM pass registry snapshot manifest.",
+    )
+    pass_registry.add_argument("--out-manifest", required=True)
+    pass_registry.add_argument("--opt", required=True)
+    pass_registry.add_argument("--pipeline-config", required=True)
+    pass_registry.add_argument("--output-dir", required=True)
+    pass_registry.add_argument("--repo-root", default=".")
+    pass_registry.add_argument("--result-generated-from-commit")
+
     p8c = subparsers.add_parser(
         "p8c-attribution", help="Build a P8c Queens attribution manifest."
     )
@@ -559,6 +571,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             passspec_path=args.passspec,
             audit_manifest_path=args.audit_manifest,
             trust_report_path=args.trust_report,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "pass-registry-snapshot":
+        manifest = build_pass_registry_snapshot_manifest(
+            opt_path=args.opt,
+            pipeline_config_path=args.pipeline_config,
+            output_dir=args.output_dir,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )
