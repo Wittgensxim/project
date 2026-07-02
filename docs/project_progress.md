@@ -17,8 +17,8 @@
 ## 最新状态
 
 - 当前分支：`feature/phase-ordering-footprint`
-- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening、P6.5 result manifest 与 candidate-source invariant、P7a bounded two-swap smoke test、P7a report/manifest/cache 收尾、P7b per-program top-3 seed bounded two-swap controlled experiment、P7b.5 two-swap result interpretation and distribution analysis、P8a clang-c codegen sensitivity、P8a.5 core evidence report、P8a.6 core evidence 语义收尾、P8c Queens effect attribution、P8c.1 opcode-level attribution、P8c.2 attribution summary in core evidence、P8b-0 benchmark ingestion、P8b-1 Misc8 full matrix 与 static filter pre 评估、P8b-2 static filter false-negative repair、P8b-3-lite Misc8 depth1 chain、P8b-3.5 Misc8 depth1 analysis 与 ffbench attribution。
-- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `105 passed`。
+- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening、P6.5 result manifest 与 candidate-source invariant、P7a bounded two-swap smoke test、P7a report/manifest/cache 收尾、P7b per-program top-3 seed bounded two-swap controlled experiment、P7b.5 two-swap result interpretation and distribution analysis、P8a clang-c codegen sensitivity、P8a.5 core evidence report、P8a.6 core evidence 语义收尾、P8c Queens effect attribution、P8c.1 opcode-level attribution、P8c.2 attribution summary in core evidence、P8b-0 benchmark ingestion、P8b-1 Misc8 full matrix 与 static filter pre 评估、P8b-2 static filter false-negative repair、P8b-3-lite Misc8 depth1 chain、P8b-3.5 Misc8 depth1 analysis 与 ffbench attribution、P9-1 MVP summary report。
+- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `106 passed`。
 - 最新 P4 真实实验：8 个 Stanford 输入 × 7 个 anchor-adjacent pair，共 `56` 次 lazy validation；第一轮 `48` 个 candidate 动态测试、`8` 个 low_priority skip、`32` 个 certified、`16` 个 not-certified、`run_failed = 0`、`CertificateReproductionRate = 100.00%`。
 - 最新 P4 cache 验证：第二轮同一批输入 `cache_hits = 48`、`dynamic_tests = 0`、`SecondRunCacheHitRate = 100.00%`。
 - 最新 state-indexing safety 验证：input-state certificate 对 input hash 命中，对 `sroa` 后不同 prefix hash 不命中。
@@ -75,9 +75,12 @@
 - 最新 P8b-3.5 ffbench attribution：`testsuite_misc_ffbench` 的 `instcombine,simplifycfg` case 中 `LocalABBAHardHashEqual = False`、`FinalABBAHardHashEqual = False`、`LocalInstructionDelta = 0`、`FinalInstructionDelta = 0`、`LlcTextDelta = -16`、`ClangTextDelta = -3`、`BothCodegenSmaller = True`、`FinalOpcodeDeltaNonZero = num_select_delta=-1;num_or_delta=1`。
 - 最新 P8b-3.5 evidence supplement：`data/outputs/core_evidence_report_misc8/` 汇总 `AttemptedSwaps = 56`、`CertifiedIndependentEvents = 32`、`SingleSwapCandidates = 16`、`ObjectSizeEvaluatedCandidates = 16`、`BothSmallerPrograms = 1`、`AttributionCases = 1`、`AttributionObservedButNotCausalProof = True`。
 - 最新 P8b-3.5 manifests：`docs/results/p8b_misc8_depth1_analysis_manifest.json`、`docs/results/ffbench_effect_attribution_manifest.json`、`docs/results/core_evidence_misc8_manifest.json`，均记录 `result_generated_from_commit = fc662c18b7d0bf8c78f1e8609ecb5a94e12bd3e3` 与 `ecpor_git_dirty = false`。
+- 最新 P9-1 MVP summary：新增 `src/ecpor/mvp_summary.py`，输出 `data/outputs/final_mvp_summary/`；总表显示 Stanford-8 + Misc8 共 `16` 个程序、`448` 个 pair certificates、`448/448` reproduced、`TotalHardFalseIndependent = 0`、`TotalAdjacentAttempts = 112`、`TotalCertifiedEvents = 64`、`TotalNotCertifiedEvents = 32`、`TotalOneSwapCandidates = 32`、`TotalBothSmallerPrograms = 2`、`AttributionCases = 2`。
+- 最新 P9-1 objective summary：Stanford-8 为 `DirectionComparisonCandidates = 38`、`DirectionAgreementRate = 68.42%`、`BothSmallerCases = 4`、`BothSmallerPrograms = 1`；Misc8 为 `DirectionComparisonCandidates = 16`、`DirectionAgreementRate = 93.75%`、`BothSmallerCases = 1`、`BothSmallerPrograms = 1`。
+- 最新 P9-1 manifest：`docs/results/mvp_summary_manifest.json`，记录 `result_generated_from_commit = 914200773400dba501f19c69f33571b8df23da54`、`ecpor_git_dirty = false`、`new_experiments = false`、`new_certificates = false`、`llvm_pipeline_rerun = false`。
 - 最新 data 清理：新增 `docs/data_retention_manifest.md`；以后 `data/` 只保留必须保留的文件；删除 `*_work`、旧 P5 commit 输出和重复 P4 final 目录；保留 `data/inputs/`、P4 e83c409、P5/P6 final、pair_tests、P8b-1 pre full matrix 和 P8b-2 static repair 对照。清理后 `data/outputs` 约 `39.75 MB`，`data/certs` 约 `1.42 MB`。
 - 重要语义边界：static filter 只做 candidate generation / low priority 排序；lazy validation 只在当前 state 上查询或生成 certificate；input-state certificate 不得复用于 prefix-state。
-- 下一步建议：进入 P8b-4，扩展 benchmark ingestion 到 16 或 24 个稳定 C benchmark，但仍保持 depth1-only；只有 both-smaller programs 明显增加后再讨论 bounded two-swap。
+- 下一步建议：继续 P9 收敛路线，优先轻量拆分 `result_manifest.py` 或整理 README/项目报告；暂不新增实验，若后续继续扩 benchmark，再做 diverse8 且仍保持 depth1-only。
 
 ## 进度文件索引
 
@@ -117,6 +120,7 @@
 | 2026-07-02 | P8b-2 static filter false-negative repair | [2026-07-02-32-p8b2-static-filter-repair.md](progress/2026-07-02-32-p8b2-static-filter-repair.md) |
 | 2026-07-02 | P8b-3-lite Misc8 depth1 chain | [2026-07-02-33-p8b3-lite-misc8-depth1.md](progress/2026-07-02-33-p8b3-lite-misc8-depth1.md) |
 | 2026-07-02 | P8b-3.5 Misc8 depth1 结果解释与 ffbench 归因 | [2026-07-02-34-p8b35-misc8-depth1-analysis.md](progress/2026-07-02-34-p8b35-misc8-depth1-analysis.md) |
+| 2026-07-02 | P9-1 MVP 总结表 | [2026-07-02-35-p9-1-mvp-summary.md](progress/2026-07-02-35-p9-1-mvp-summary.md) |
 
 ## 旧文档拆分说明
 

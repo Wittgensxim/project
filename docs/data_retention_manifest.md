@@ -34,6 +34,7 @@ data/outputs/codegen_sensitivity_p8b_misc8/
 data/outputs/depth1_analysis_p8b_misc8/
 data/outputs/effect_attribution_ffbench/
 data/outputs/core_evidence_report_misc8/
+data/outputs/final_mvp_summary/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
@@ -131,6 +132,28 @@ data/outputs/core_evidence_report_misc8/
 docs/results/p8b_misc8_depth1_analysis_manifest.json
 docs/results/ffbench_effect_attribution_manifest.json
 docs/results/core_evidence_misc8_manifest.json
+```
+
+P9-1 当前保留 MVP 总结表：
+
+```text
+data/outputs/final_mvp_summary/
+```
+
+原因：P9-1 是当前阶段的主结果入口，不新增实验，只汇总 Stanford-8 与 Misc8 已有证据。目录中保留：
+
+```text
+benchmark_set_summary.csv
+reduction_summary.csv
+objective_summary.csv
+attribution_case_summary.csv
+mvp_summary_report.md
+```
+
+对应 tracked manifest：
+
+```text
+docs/results/mvp_summary_manifest.json
 ```
 
 ## 可删除：临时或重复目录

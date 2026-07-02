@@ -1,0 +1,78 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P9-1",
+  "description": "Final MVP summary across Stanford-8 and Misc8 existing evidence.",
+  "result_generated_from_commit": "914200773400dba501f19c69f33571b8df23da54",
+  "ecpor_git_commit": "914200773400dba501f19c69f33571b8df23da54",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "Stanford_8_pair_summary_csv": "data/outputs/cert_summary.csv",
+    "Stanford_8_static_filter_report": "data/outputs/static_filter_report_per_program.md",
+    "Stanford_8_lazy_validation_report": "data/outputs/lazy_validation_p4_e83c409_first.md",
+    "Stanford_8_p5_candidates_csv": "data/outputs/bounded_local_p5_p6_final/candidates.csv",
+    "Stanford_8_p6_object_size_csv": "data/outputs/code_size_p6_final/object_size.csv",
+    "Stanford_8_codegen_compare_csv": "data/outputs/codegen_sensitivity_p8a/p8a_codegen_direction_compare.csv",
+    "Stanford_8_attribution_summary_csv": "data/outputs/core_evidence_report/ecpor_attribution_summary.csv",
+    "Misc8_pair_summary_csv": "data/outputs/cert_summary_p8b_misc8_pre.csv",
+    "Misc8_static_filter_report": "data/outputs/static_filter_report_p8b_misc8_post.md",
+    "Misc8_lazy_validation_report": "data/outputs/lazy_validation_p8b_misc8/report.md",
+    "Misc8_p5_candidates_csv": "data/outputs/bounded_local_p8b_misc8/candidates.csv",
+    "Misc8_p6_object_size_csv": "data/outputs/code_size_p8b_misc8/object_size.csv",
+    "Misc8_codegen_compare_csv": "data/outputs/codegen_sensitivity_p8b_misc8/p8a_codegen_direction_compare.csv",
+    "Misc8_attribution_summary_csv": "data/outputs/core_evidence_report_misc8/misc8_attribution_summary.csv"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/final_mvp_summary",
+    "benchmark_set_summary_csv": "data/outputs/final_mvp_summary/benchmark_set_summary.csv",
+    "reduction_summary_csv": "data/outputs/final_mvp_summary/reduction_summary.csv",
+    "objective_summary_csv": "data/outputs/final_mvp_summary/objective_summary.csv",
+    "attribution_case_summary_csv": "data/outputs/final_mvp_summary/attribution_case_summary.csv",
+    "mvp_summary_report": "data/outputs/final_mvp_summary/mvp_summary_report.md"
+  },
+  "sha256": {
+    "Stanford_8_pair_summary_csv": "2e79d756c7b1cd198520d906f11513dcbc8638188d26ae57403eae672e373308",
+    "Stanford_8_static_filter_report": "6596d0166b06f9d96c621bebe9454c327a67fa2c769c30ed025a95897b2e9fcb",
+    "Stanford_8_lazy_validation_report": "405292511ac0649cfa0b94639c69d723c5a7d6915ee1cc8beda2ad3a6d967b8c",
+    "Stanford_8_p5_candidates_csv": "802964f29d07283a76ac3cf4bf434cc467792c98eab00f1b3b133a44d7b6e635",
+    "Stanford_8_p6_object_size_csv": "b69269f8f0cfea97ca1529de90fe666beb364c3775769ad02b84f13c0257ec22",
+    "Stanford_8_codegen_compare_csv": "f252aab4b7f440888f41b1d9445e80c2d4ce888dc5146fa64cd5ddd63c68a7df",
+    "Stanford_8_attribution_summary_csv": "5af8e99744406154e1f6dee3a84c46e5fa5ad09da8829a24ad02bf3c92661605",
+    "Misc8_pair_summary_csv": "a55372e29c1f53d4769592b68396c3421a3fc378d4fdbb236f2ffc7540e69f0e",
+    "Misc8_static_filter_report": "f78432bdd5aaec5a7be0a3f7432571ffac1029d0280a92e444da84a7be8b9b69",
+    "Misc8_lazy_validation_report": "405292511ac0649cfa0b94639c69d723c5a7d6915ee1cc8beda2ad3a6d967b8c",
+    "Misc8_p5_candidates_csv": "f858d815ef12718df5f7b3459f7d624e46c1f08ea7b0097172c1cd4efdcb9e07",
+    "Misc8_p6_object_size_csv": "3c71e9687bce1a54cb58ce1d632983af3f856e61e5efd6900f5dbd167e913fa3",
+    "Misc8_codegen_compare_csv": "b8e642320a607d6d1a6c422ccfcb95c422c0ecac4bd937ddd61b0be347ffc2e7",
+    "Misc8_attribution_summary_csv": "b4d1ad06ce93ca6ee5282b5d3caaec1681c270b147d980eb2eb744fe803e58f9",
+    "benchmark_set_summary_csv": "8c09cf558ba6c84c217e957ff45c335914d7953ff004b0ac2796dec8108f4ba1",
+    "reduction_summary_csv": "4f09633a26ed18486cc5c19168ca3625c5487f9cbddd92c203ad7439a0685efe",
+    "objective_summary_csv": "1e307f8036d894b0e67cc1b11d8b90cee274a25d933c617db01dd307d2923da2",
+    "attribution_case_summary_csv": "df92a2fc78eab18148d4bca5083df732e605dad5b6999d6ec8b0d2aa6c4d3f8d",
+    "mvp_summary_report": "fb9cf7f5476161491c84ba3027a15244356dda9af6d70171ecd38cc473fa896a"
+  },
+  "summary": {
+    "BenchmarkSets": 2,
+    "TotalPrograms": 16,
+    "TotalPairMatrixCertificates": 448,
+    "TotalReproducedCertificates": 448,
+    "TotalHardFalseIndependent": 0,
+    "TotalAdjacentAttempts": 112,
+    "TotalCertifiedEvents": 64,
+    "TotalNotCertifiedEvents": 32,
+    "TotalOneSwapCandidates": 32,
+    "TotalBothSmallerPrograms": 2,
+    "AttributionCases": 2,
+    "NoNewExperiments": true
+  },
+  "scope_limits": {
+    "new_experiments": false,
+    "new_certificates": false,
+    "new_search": false,
+    "runtime_benchmarks": false,
+    "llvm_pipeline_rerun": false,
+    "benchmark_sets": [
+      "Stanford-8",
+      "Misc8"
+    ]
+  }
+}
