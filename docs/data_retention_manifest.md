@@ -253,6 +253,14 @@ passspec_audit_report.md
 docs/results/passspec_audit_manifest.json
 ```
 
+P10.5 没有新增 `data/` 目录产物。该阶段只新增：
+```text
+docs/passspec_trust_report.md
+docs/results/passspec_trust_report_manifest.json
+```
+
+原因：P10.5 是 report-only / metadata-only 的方法说明阶段，不运行 LLVM、不生成 certificate、不新增 search，也不需要保留新的 `data/outputs`。
+
 ## 可删除：临时或重复目录
 
 ```text

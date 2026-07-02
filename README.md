@@ -6,6 +6,8 @@ ECPOR 是一个 evidence-carrying LLVM phase-ordering reduction 原型，不是�
 
 P10 已把 `configs/passspec.yaml` 升级为兼容旧 list schema 与新 provenance metadata 的 PassSpec v2：静态过滤行为不变，但经验性 repair hint 现在带有 `source`、`confidence`、`support` 与 `created_in_stage`。审计结果见 [docs/results/passspec_audit_manifest.json](docs/results/passspec_audit_manifest.json)。
 
+P10.5 已把 provenance audit 整理成 paper-facing methods note：[docs/passspec_trust_report.md](docs/passspec_trust_report.md)。它列出 5 条 empirical repair hint 的来源和 support，同时明确 59 条 legacy hint 仍未显式 provenance，static filter 仍只做 candidate generation，不做 hard pruning。
+
 ## 当前 MVP 范围
 
 当前 MVP 只覆盖 LLVM IR scalar pass 的相邻顺序约简：
@@ -52,7 +54,7 @@ P9-5 不改变 `v0.1.1` MVP 语义。`v0.1.1` 仍然定义为 Stanford-8 + Misc8
 | depth1 both-smaller programs | 2 |
 | Diverse8 both-smaller programs | 0 |
 
-解释：Diverse8 增加了覆盖面，但没有新增 depth1 both-smaller program。因此当前阶段不建议继续搜索；P10 已完成 PassSpec provenance v2，后续更合适的是写 PassSpec trust report / paper-facing methods note。
+解释：Diverse8 增加了覆盖面，但没有新增 depth1 both-smaller program。因此当前阶段不建议继续搜索；P10/P10.5 已完成 PassSpec provenance 与 trust report，后续更合适的是做 P11 pass registry snapshot。
 
 ## Evidence Level
 
@@ -157,6 +159,7 @@ AttributionCases=2
 | `data/outputs/final_mvp_summary/` | P9-1 MVP summary 输出 |
 | `data/outputs/combined_depth1_summary/` | P9-5 post-MVP 24-program depth1 summary 输出 |
 | `docs/ecpor_stage_report.md` | P9-6 阶段报告 / 论文草稿入口 |
+| `docs/passspec_trust_report.md` | P10.5 PassSpec trust report / methods note |
 | `docs/results/` | 可提交 manifest |
 | `docs/progress/` | 按顺序拆分的中文进度记录 |
 | `docs/data_retention_manifest.md` | `data/` 保留规则 |
@@ -164,4 +167,4 @@ AttributionCases=2
 
 ## 下一步
 
-P10 之后优先做 P10.5 PassSpec trust report / paper-facing methods note，把 5 条 empirical repair hint 的来源、support 与仍为 legacy 的 59 条 hint 解释清楚。当前不建议继续 two-swap、depth=3、beam/searcher、runtime benchmark 或 Alive2。
+P10.5 之后优先做 P11 pass registry snapshot：调用 `opt --print-passes`，保存当前 LLVM 工具链 registry 快照，并检查 MVP 8 pass 是否可见。当前不建议继续 two-swap、depth=3、beam/searcher、runtime benchmark 或 Alive2。

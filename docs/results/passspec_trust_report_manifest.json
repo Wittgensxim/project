@@ -1,0 +1,43 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P10.5",
+  "description": "PassSpec trust report for paper-facing methods notes.",
+  "result_generated_from_commit": "df2aa6c002fb6212c954e1949b42384c4ef737ed",
+  "ecpor_git_commit": "df2aa6c002fb6212c954e1949b42384c4ef737ed",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "passspec": "configs/passspec.yaml",
+    "passspec_audit_manifest": "docs/results/passspec_audit_manifest.json"
+  },
+  "outputs": {
+    "passspec_trust_report": "docs/passspec_trust_report.md"
+  },
+  "sha256": {
+    "passspec": "b72a7f3b7db06f5039725efdda5cb87e8cfeb15914c849b7d1684300a76c9c28",
+    "passspec_audit_manifest": "fb8b8a9836020c18113559623b24f272e49e7268d118078abf89dd79671c6eaa",
+    "passspec_trust_report": "713f688eb7a8f1cc252a0cfb726ee572c32b8f3561d4a9d7337ddd6e7b9e9357"
+  },
+  "tools": {},
+  "summary": {
+    "HintsWithSupportCases": 5,
+    "EmpiricalRepairHints": 5,
+    "UnknownConfidenceHints": 59,
+    "TotalPasses": 8,
+    "ManualHints": 0,
+    "MayConsumeHints": 30,
+    "MayProduceHints": 24,
+    "LegacyHintsWithoutExplicitProvenance": 59,
+    "RequiresAnyHints": 10,
+    "TotalHints": 64
+  },
+  "scope_limits": {
+    "report_only": true,
+    "metadata_only": true,
+    "static_filter_behavior_change": false,
+    "passspec_behavior_change": false,
+    "new_experiments": false,
+    "new_certificates": false,
+    "new_search": false,
+    "runtime_benchmarks": false
+  }
+}
