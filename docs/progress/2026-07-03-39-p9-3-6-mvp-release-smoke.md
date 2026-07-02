@@ -172,6 +172,19 @@ D:\Miniconda\envs\dlm\python.exe -m pytest -q
 108 passed in 13.85s
 ```
 
+最终提交后复跑：
+
+```text
+108 passed in 14.12s
+```
+
+缺少 retained `data/outputs` 的负路径验证：
+
+```text
+exit_code=2
+error: missing MVP summary input files: Stanford_8_pair_summary_csv=...
+```
+
 正式 `mvp_summary` 在 retained-result workspace 中重跑，核心值保持：
 
 ```text
