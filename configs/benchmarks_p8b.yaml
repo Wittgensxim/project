@@ -1,0 +1,57 @@
+stage: P8b-0
+source: llvm-test-suite
+source_roots:
+  - "E:/llvm-test-suite/SingleSource/Benchmarks/Misc"
+  - "E:/llvm-test-suite/SingleSource/Regression/C"
+  - "E:/llvm-test-suite/SingleSource/UnitTests"
+instruction_limit: 5000
+scalar_pipeline: "function(sroa,early-cse,instcombine,simplifycfg,reassociate,gvn,dce,adce)"
+programs:
+  - id: testsuite_misc_aarch64_init_cpu_features
+    source: "E:/llvm-test-suite/SingleSource/Benchmarks/Misc/aarch64-init-cpu-features.c"
+    ir: data/inputs/testsuite_misc_aarch64_init_cpu_features.ll
+    num_functions: 1
+    num_instructions: 38
+    num_basic_blocks: 1
+  - id: testsuite_misc_evalloop
+    source: "E:/llvm-test-suite/SingleSource/Benchmarks/Misc/evalloop.c"
+    ir: data/inputs/testsuite_misc_evalloop.ll
+    num_functions: 3
+    num_instructions: 550
+    num_basic_blocks: 3
+  - id: testsuite_misc_ffbench
+    source: "E:/llvm-test-suite/SingleSource/Benchmarks/Misc/ffbench.c"
+    ir: data/inputs/testsuite_misc_ffbench.ll
+    num_functions: 2
+    num_instructions: 762
+    num_basic_blocks: 2
+  - id: testsuite_misc_flops_1
+    source: "E:/llvm-test-suite/SingleSource/Benchmarks/Misc/flops-1.c"
+    ir: data/inputs/testsuite_misc_flops_1.ll
+    num_functions: 1
+    num_instructions: 138
+    num_basic_blocks: 1
+  - id: testsuite_misc_flops_2
+    source: "E:/llvm-test-suite/SingleSource/Benchmarks/Misc/flops-2.c"
+    ir: data/inputs/testsuite_misc_flops_2.ll
+    num_functions: 1
+    num_instructions: 148
+    num_basic_blocks: 1
+  - id: testsuite_misc_flops_3
+    source: "E:/llvm-test-suite/SingleSource/Benchmarks/Misc/flops-3.c"
+    ir: data/inputs/testsuite_misc_flops_3.ll
+    num_functions: 1
+    num_instructions: 142
+    num_basic_blocks: 1
+  - id: testsuite_misc_flops_4
+    source: "E:/llvm-test-suite/SingleSource/Benchmarks/Misc/flops-4.c"
+    ir: data/inputs/testsuite_misc_flops_4.ll
+    num_functions: 1
+    num_instructions: 169
+    num_basic_blocks: 1
+  - id: testsuite_misc_flops_5
+    source: "E:/llvm-test-suite/SingleSource/Benchmarks/Misc/flops-5.c"
+    ir: data/inputs/testsuite_misc_flops_5.ll
+    num_functions: 1
+    num_instructions: 182
+    num_basic_blocks: 1
