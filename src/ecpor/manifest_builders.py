@@ -229,6 +229,19 @@ MISC8_CORE_EVIDENCE_SUMMARY_KEYS = {
     "AttributionObservedButNotCausalProof",
 }
 
+PASSSPEC_AUDIT_SUMMARY_KEYS = {
+    "TotalPasses",
+    "TotalHints",
+    "RequiresAnyHints",
+    "MayConsumeHints",
+    "MayProduceHints",
+    "ManualHints",
+    "EmpiricalRepairHints",
+    "LegacyHintsWithoutExplicitProvenance",
+    "UnknownConfidenceHints",
+    "HintsWithSupportCases",
+}
+
 
 
 def build_p7a_manifest(
@@ -715,6 +728,46 @@ def build_p8b_static_filter_repair_manifest(
                 "sroa,dce on testsuite_misc_flops_2",
                 "sroa,adce on testsuite_misc_flops_2",
             ],
+        },
+    )
+
+
+def build_passspec_audit_manifest(
+    *,
+    passspec_path: str | Path,
+    output_dir: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    out = Path(output_dir)
+    report = out / "passspec_audit_report.md"
+    return build_result_manifest(
+        stage="P10",
+        description="PassSpec provenance v2 audit without LLVM reruns.",
+        inputs={
+            "passspec": passspec_path,
+        },
+        outputs={
+            "output_dir": out,
+            "passspec_hint_summary_csv": out / "passspec_hint_summary.csv",
+            "passspec_audit_report": report,
+        },
+        tools={},
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            PASSSPEC_AUDIT_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "metadata_only": True,
+                "static_filter_behavior_change": False,
+                "new_experiments": False,
+                "new_certificates": False,
+                "new_search": False,
+                "runtime_benchmarks": False,
+            }
         },
     )
 

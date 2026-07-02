@@ -99,6 +99,59 @@ class StaticFilterTests(unittest.TestCase):
         self.assertEqual(frozen["decision"], "frozen")
         self.assertIn("level_mismatch", frozen["reason"])
 
+    def test_load_passspec_accepts_provenance_mapping_without_behavior_change(self):
+        from ecpor.static_filter import classify_pair, load_passspec
+
+        with tempfile.TemporaryDirectory() as tmp:
+            passspec_path = Path(tmp) / "passspec.yaml"
+            passspec_path.write_text(
+                """
+passes:
+  a:
+    level: function
+    requires_any:
+      instruction:
+        source: source_static_hint
+        confidence: medium
+    may_consume: []
+    may_produce:
+      x:
+        source: manual_domain_knowledge
+        confidence: medium
+    tags:
+      - scalar
+  b:
+    level: function
+    requires_any:
+      - instruction
+    may_consume:
+      x:
+        source: manual_domain_knowledge
+        confidence: medium
+    may_produce: []
+    tags:
+      - scalar
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            passspec = load_passspec(passspec_path)
+
+        self.assertEqual(passspec["a"]["requires_any"], ["instruction"])
+        self.assertEqual(passspec["a"]["may_produce"], ["x"])
+        self.assertIn("_hint_provenance", passspec["a"])
+        decision = classify_pair(
+            "a",
+            "b",
+            passspec,
+            program_features={"num_instructions": 1},
+            distance=1,
+            window_size=1,
+        )
+
+        self.assertEqual(decision["decision"], "candidate")
+        self.assertEqual(decision["reason"], "producer_consumer")
+
     def test_build_static_filter_decisions_outputs_candidate_hints_only(self):
         from ecpor.static_filter import build_static_filter_decisions
 

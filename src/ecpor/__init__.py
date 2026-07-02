@@ -17,6 +17,8 @@ __all__ = [
     "pair_test",
     "pipeline_runner",
     "pipeline_dedup",
+    "passspec_audit",
+    "passspec_schema",
     "code_size_evaluator",
     "result_manifest",
     "runner",

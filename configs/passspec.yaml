@@ -11,12 +11,41 @@ passes:
       - scalar_value
       - simplified_load_store
       - load_store
-      - scalar_cfg_opportunity
+      - scalar_cfg_opportunity:
+          source: empirical_false_negative_repair
+          confidence: medium
+          created_in_stage: P3
+          support:
+            - program: testsuite_stanford_bubblesort
+              pair: sroa,simplifycfg
+              observed_label: not_certified_independent
+            - program: testsuite_stanford_intmm
+              pair: sroa,simplifycfg
+              observed_label: not_certified_independent
+          note: P3 static-filter repair for scalar producer to CFG simplification.
       - instcombine_opportunity
       - early_cse_opportunity
-      # P8b-1 empirical false-negative repair:
-      # sroa can expose cleanup opportunities consumed by dce/adce.
-      - dce_opportunity
+      - dce_opportunity:
+          source: empirical_false_negative_repair
+          confidence: medium
+          created_in_stage: P8b-2
+          support:
+            - program: testsuite_misc_ffbench
+              pair: sroa,adce
+              observed_label: not_certified_independent
+            - program: testsuite_misc_flops_1
+              pair: sroa,dce
+              observed_label: not_certified_independent
+            - program: testsuite_misc_flops_1
+              pair: sroa,adce
+              observed_label: not_certified_independent
+            - program: testsuite_misc_flops_2
+              pair: sroa,dce
+              observed_label: not_certified_independent
+            - program: testsuite_misc_flops_2
+              pair: sroa,adce
+              observed_label: not_certified_independent
+          note: P8b-2 repair; sroa can expose cleanup opportunities consumed by dce/adce.
     tags:
       - scalar
       - memory
@@ -35,7 +64,15 @@ passes:
     may_produce:
       - dead_instruction
       - simplified_expr
-      - scalar_cfg_opportunity
+      - scalar_cfg_opportunity:
+          source: empirical_false_negative_repair
+          confidence: medium
+          created_in_stage: P3.5
+          support:
+            - program: testsuite_stanford_queens
+              pair: early-cse,simplifycfg
+              observed_label: not_certified_independent
+          note: P3.5 hold-out repair for CSE/load simplification feeding CFG cleanup.
     tags:
       - scalar
       - memory
@@ -70,7 +107,21 @@ passes:
       - phi
       - unreachable
       - cfg
-      - scalar_cfg_opportunity
+      - scalar_cfg_opportunity:
+          source: empirical_false_negative_repair
+          confidence: medium
+          created_in_stage: P3
+          support:
+            - program: testsuite_stanford_bubblesort
+              pair: sroa,simplifycfg
+              observed_label: not_certified_independent
+            - program: testsuite_stanford_intmm
+              pair: sroa,simplifycfg
+              observed_label: not_certified_independent
+            - program: testsuite_stanford_bubblesort
+              pair: simplifycfg,gvn
+              observed_label: not_certified_independent
+          note: P3/P3.5 repairs for scalar producers exposing CFG simplification opportunities.
     may_produce:
       - simplified_cfg
       - instcombine_opportunity
@@ -104,7 +155,15 @@ passes:
       - dead_instruction
       - simplified_expr
       - dce_opportunity
-      - scalar_cfg_opportunity
+      - scalar_cfg_opportunity:
+          source: empirical_false_negative_repair
+          confidence: medium
+          created_in_stage: P3
+          support:
+            - program: testsuite_stanford_bubblesort
+              pair: simplifycfg,gvn
+              observed_label: not_certified_independent
+          note: P3 repair for value numbering feeding simplifycfg through scalar CFG opportunity.
     tags:
       - scalar
       - memory

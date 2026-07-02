@@ -20,6 +20,7 @@ from .batch_certificates import (
     load_benchmark_config_programs,
 )
 from .feature_scan import scan_ir_file
+from .passspec_schema import load_normalized_passspec
 from .summary_report import load_summary_csv
 
 
@@ -51,14 +52,7 @@ def load_pipeline_config(path: str | Path) -> dict[str, Any]:
 
 
 def load_passspec(path: str | Path) -> PassSpec:
-    data = _load_yaml_mapping(path)
-    passes = data.get("passes", {})
-    if not isinstance(passes, dict):
-        raise ValueError(f"passspec must contain a mapping 'passes': {path}")
-    return {
-        str(name): _normalize_pass_info(name, info)
-        for name, info in passes.items()
-    }
+    return load_normalized_passspec(path)
 
 
 def enumerate_unordered_pairs(passes: Sequence[str]) -> list[tuple[str, str]]:

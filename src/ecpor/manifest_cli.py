@@ -11,6 +11,7 @@ from .manifest_builders import (
     build_core_evidence_misc8_manifest,
     build_depth1_analysis_manifest,
     build_effect_attribution_manifest,
+    build_passspec_audit_manifest,
     build_p6_5_manifest,
     build_p7a_manifest,
     build_p7b_analysis_manifest,
@@ -300,6 +301,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     misc8_core.add_argument("--repo-root", default=".")
     misc8_core.add_argument("--result-generated-from-commit")
 
+    passspec_audit = subparsers.add_parser(
+        "passspec-audit", help="Build a P10 PassSpec provenance audit manifest."
+    )
+    passspec_audit.add_argument("--out-manifest", required=True)
+    passspec_audit.add_argument("--passspec", required=True)
+    passspec_audit.add_argument("--output-dir", required=True)
+    passspec_audit.add_argument("--repo-root", default=".")
+    passspec_audit.add_argument("--result-generated-from-commit")
+
     p8c = subparsers.add_parser(
         "p8c-attribution", help="Build a P8c Queens attribution manifest."
     )
@@ -525,7 +535,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )
-    else:
+    elif args.stage == "passspec-audit":
+        manifest = build_passspec_audit_manifest(
+            passspec_path=args.passspec,
+            output_dir=args.output_dir,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "p8c-attribution":
         manifest = build_queens_effect_attribution_manifest(
             input_ir=args.input_ir,
             output_dir=args.output_dir,
@@ -536,6 +553,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )
+    else:
+        raise ValueError(f"unsupported manifest stage: {args.stage}")
     write_manifest(args.out_manifest, manifest)
     return 0
 

@@ -32,6 +32,10 @@ class ResultManifestTests(unittest.TestCase):
             result_manifest.build_combined_depth1_summary_manifest,
             manifest_builders.build_combined_depth1_summary_manifest,
         )
+        self.assertIs(
+            result_manifest.build_passspec_audit_manifest,
+            manifest_builders.build_passspec_audit_manifest,
+        )
         self.assertIs(result_manifest.main, manifest_cli.main)
 
     def test_builds_p7a_manifest_from_outputs_and_hashes_files(self):
@@ -513,6 +517,68 @@ class ResultManifestTests(unittest.TestCase):
             "sroa.may_produce += dce_opportunity",
         )
         self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
+
+    def test_builds_passspec_audit_manifest(self):
+        from ecpor.result_manifest import build_passspec_audit_manifest, write_manifest
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            passspec = root / "passspec.yaml"
+            output_dir = root / "passspec_audit"
+            output_dir.mkdir()
+            _write_text(
+                passspec,
+                "passes:\n  sroa:\n    may_produce:\n      - scalar_value\n",
+            )
+            _write_text(
+                output_dir / "passspec_hint_summary.csv",
+                "pass,category,hint,source,confidence\n"
+                "sroa,may_produce,scalar_value,unknown_legacy,unknown\n",
+            )
+            _write_text(
+                output_dir / "passspec_audit_report.md",
+                textwrap.dedent(
+                    """
+                    # PassSpec Provenance Audit
+
+                    TotalPasses: 1
+                    TotalHints: 1
+                    RequiresAnyHints: 0
+                    MayConsumeHints: 0
+                    MayProduceHints: 1
+                    ManualHints: 0
+                    EmpiricalRepairHints: 0
+                    LegacyHintsWithoutExplicitProvenance: 1
+                    UnknownConfidenceHints: 1
+                    HintsWithSupportCases: 0
+                    """
+                ).strip()
+                + "\n",
+            )
+
+            manifest = build_passspec_audit_manifest(
+                passspec_path=passspec,
+                output_dir=output_dir,
+                repo_root=root,
+                result_generated_from_commit="audit123",
+            )
+            manifest_path = root / "passspec_audit_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P10")
+        self.assertEqual(loaded["result_generated_from_commit"], "audit123")
+        self.assertIn("passspec", loaded["inputs"])
+        self.assertIn("passspec_hint_summary_csv", loaded["outputs"])
+        self.assertIn("passspec_audit_report", loaded["outputs"])
+        self.assertIn("passspec", loaded["sha256"])
+        self.assertIn("passspec_audit_report", loaded["sha256"])
+        self.assertEqual(loaded["summary"]["TotalHints"], 1)
+        self.assertEqual(loaded["scope_limits"]["metadata_only"], True)
+        self.assertEqual(loaded["scope_limits"]["new_experiments"], False)
+        self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
+        self.assertEqual(loaded["scope_limits"]["new_search"], False)
+        self.assertEqual(loaded["scope_limits"]["static_filter_behavior_change"], False)
 
     def test_builds_p8b_lite_manifests_for_depth1_chain(self):
         from ecpor.result_manifest import (
