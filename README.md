@@ -253,6 +253,28 @@ $env:PYTHONPATH = "src"
 D:\Miniconda\envs\dlm\python.exe -m ecpor.result_manifest benchmark-ingest --out-manifest docs\results\benchmark_ingest_p8b_manifest.json --source-root E:\llvm-test-suite --config configs\benchmarks_p8b.yaml --output-dir data\outputs\benchmark_ingest_p8b --clang E:\llvm\build\bin\clang.exe --opt E:\llvm\build\bin\opt.exe --llc E:\llvm\build\bin\llc.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --repo-root . --result-generated-from-commit e342c6dcd0f0ed84e83f30747e2b9df4c74cbe99
 ```
 
+Run P8b-1 Misc8 by full 28 unordered pass-pair matrix:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.batch_certificates --preset p8b-misc8x28 --opt E:\llvm\build\bin\opt.exe --out data\outputs\pair_tests_p8b_misc8 --cert-dir data\certs\pair_tests_p8b_misc8 --summary data\outputs\cert_summary_p8b_misc8_pre.csv --env-id 3c3dab32ea1756773748a56d639e6bb201042576bb0653fd466e109d1946298e --llvm-version 23.0.0git --timeout-sec 30
+```
+
+Generate P8b-1 summary and static-filter pre-tuning reports:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.summary_report data\outputs\cert_summary_p8b_misc8_pre.csv --out data\outputs\cert_summary_report_p8b_misc8_pre.txt
+D:\Miniconda\envs\dlm\python.exe -m ecpor.static_filter --program-preset p8b-misc8 --mode per-program --observed-summary data\outputs\cert_summary_p8b_misc8_pre.csv --out-csv data\outputs\static_filter_decisions_p8b_misc8_pre.csv --out-report data\outputs\static_filter_report_p8b_misc8_pre.md --window-size 7
+```
+
+Generate a tracked P8b-1 result manifest:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.result_manifest p8b-matrix --out-manifest docs\results\p8b_misc8_matrix_manifest.json --benchmark-config configs\benchmarks_p8b.yaml --pipeline-config configs\pipeline_scalar.yaml --passspec configs\passspec.yaml --output-dir data\outputs\pair_tests_p8b_misc8 --cert-dir data\certs\pair_tests_p8b_misc8 --summary-csv data\outputs\cert_summary_p8b_misc8_pre.csv --summary-report data\outputs\cert_summary_report_p8b_misc8_pre.txt --static-decisions data\outputs\static_filter_decisions_p8b_misc8_pre.csv --static-report data\outputs\static_filter_report_p8b_misc8_pre.md --opt E:\llvm\build\bin\opt.exe --repo-root . --result-generated-from-commit ed4cff79a13e0cb455a4c917fa10a3b9243fdf45
+```
+
 Scan soft IR features for one output:
 
 ```powershell

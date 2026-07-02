@@ -19,11 +19,17 @@ data/outputs/codegen_sensitivity_p8a/
 data/outputs/core_evidence_report/
 data/outputs/effect_attribution_queens/
 data/outputs/benchmark_ingest_p8b/
+data/outputs/pair_tests_p8b_misc8/
+data/outputs/cert_summary_p8b_misc8_pre.csv
+data/outputs/cert_summary_report_p8b_misc8_pre.txt
+data/outputs/static_filter_decisions_p8b_misc8_pre.csv
+data/outputs/static_filter_report_p8b_misc8_pre.md
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
 data/outputs/lazy_validation_p4_e83c409_second.md
 data/certs/pair_tests/
+data/certs/pair_tests_p8b_misc8/
 data/certs/lazy_validation_p4_e83c409/
 data/certs/bounded_two_swap_p7a/
 data/certs/bounded_two_swap_p7b/
@@ -65,6 +71,19 @@ report.md
 
 原因：P8b-0 的 accepted `.ll` 已作为 `data/inputs/testsuite_misc_*.ll` 跟踪；`ingest_summary.csv` 和 `report.md` 记录筛选成功/失败原因。scratch IR、scalar IR 和 object 文件默认不保留。
 
+P8b-1 当前保留 pre-tuning full matrix 必要文件：
+
+```text
+data/outputs/pair_tests_p8b_misc8/
+data/certs/pair_tests_p8b_misc8/
+data/outputs/cert_summary_p8b_misc8_pre.csv
+data/outputs/cert_summary_report_p8b_misc8_pre.txt
+data/outputs/static_filter_decisions_p8b_misc8_pre.csv
+data/outputs/static_filter_report_p8b_misc8_pre.md
+```
+
+原因：P8b-1 在 Misc8 × 28 full matrix 上发现 `StaticFalseNegativeObserved = 5`，这些 pre-tuning 输出必须保留，后续 passspec 修正需要与它做 post 对照。`data/outputs/pair_tests_p8b_misc8/repro/` 已删除；它只是 certificate reproduction 的临时输出，可由证书再生成。
+
 ## 可删除：临时或重复目录
 
 ```text
@@ -79,6 +98,7 @@ data/outputs/state_index_safety_work/
 data/outputs/state_index_safety_final/
 data/outputs/state_index_safety_e83c409/
 data/outputs/negative/
+data/outputs/pair_tests_p8b_misc8/repro/
 data/certs/lazy_validation_p4_work/
 data/certs/lazy_validation_p4_final/
 data/certs/state_index_safety_work/
