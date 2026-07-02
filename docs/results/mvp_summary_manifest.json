@@ -2,8 +2,8 @@
   "manifest_schema_version": 1,
   "stage": "P9-1",
   "description": "Final MVP summary across Stanford-8 and Misc8 existing evidence.",
-  "result_generated_from_commit": "b65f1b39fc3f554402d84c55d6a18c5df922cbc7",
-  "ecpor_git_commit": "b65f1b39fc3f554402d84c55d6a18c5df922cbc7",
+  "result_generated_from_commit": "010f4444f83b09f572282d41ed645adb448d5b6d",
+  "ecpor_git_commit": "010f4444f83b09f572282d41ed645adb448d5b6d",
   "ecpor_git_dirty": false,
   "inputs": {
     "Stanford_8_pair_summary_csv": "data/outputs/cert_summary.csv",
