@@ -14,6 +14,9 @@ passes:
       - scalar_cfg_opportunity
       - instcombine_opportunity
       - early_cse_opportunity
+      # P8b-1 empirical false-negative repair:
+      # sroa can expose cleanup opportunities consumed by dce/adce.
+      - dce_opportunity
     tags:
       - scalar
       - memory

@@ -136,6 +136,13 @@ P8B_MATRIX_STATIC_SUMMARY_KEYS = {
     "StaticCandidateReduction",
 }
 
+P8B_STATIC_REPAIR_KEYS = {
+    "StaticCandidateRecall",
+    "MacroStaticCandidateRecall",
+    "StaticFalseNegativeObserved",
+    "StaticCandidateReduction",
+}
+
 
 def build_result_manifest(
     *,
@@ -579,6 +586,77 @@ def build_p8b_matrix_manifest(
     )
 
 
+def build_p8b_static_filter_repair_manifest(
+    *,
+    observed_summary_csv: str | Path,
+    passspec_path: str | Path,
+    pre_static_decisions_csv: str | Path,
+    pre_static_report: str | Path,
+    post_static_decisions_csv: str | Path,
+    post_static_report: str | Path,
+    repair_report: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    pre_summary = _prefixed_report_summary(
+        pre_static_report,
+        prefix="Pre",
+        keys=P8B_STATIC_REPAIR_KEYS,
+    )
+    post_summary = _prefixed_report_summary(
+        post_static_report,
+        prefix="Post",
+        keys=P8B_STATIC_REPAIR_KEYS,
+    )
+    summary: dict[str, Any] = {
+        **pre_summary,
+        **post_summary,
+        "StaticFalseNegativeDelta": _static_false_negative_delta(
+            pre_summary,
+            post_summary,
+        ),
+        "PassSpecRepair": "sroa.may_produce += dce_opportunity",
+    }
+    return build_result_manifest(
+        stage="P8b-2",
+        description="P8b Misc8 static-filter false-negative repair.",
+        inputs={
+            "observed_summary_csv": observed_summary_csv,
+            "passspec": passspec_path,
+            "pre_static_decisions_csv": pre_static_decisions_csv,
+            "pre_static_report": pre_static_report,
+        },
+        outputs={
+            "post_static_decisions_csv": post_static_decisions_csv,
+            "post_static_report": post_static_report,
+            "repair_report": repair_report,
+        },
+        tools={},
+        summary=summary,
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "benchmark_set": "P8b-Misc8",
+                "new_certificates": False,
+                "certificate_matrix_rerun": False,
+                "new_search": False,
+                "runtime_benchmarks": False,
+                "code_size_evaluation": False,
+                "passspec_tuning": True,
+                "repair_source": "empirical_false_negative_repair_p8b1",
+            },
+            "repair_evidence": [
+                "sroa,adce on testsuite_misc_ffbench",
+                "sroa,dce on testsuite_misc_flops_1",
+                "sroa,adce on testsuite_misc_flops_1",
+                "sroa,dce on testsuite_misc_flops_2",
+                "sroa,adce on testsuite_misc_flops_2",
+            ],
+        },
+    )
+
+
 def build_queens_effect_attribution_manifest(
     *,
     input_ir: str | Path,
@@ -746,6 +824,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     p8b_matrix.add_argument("--repo-root", default=".")
     p8b_matrix.add_argument("--result-generated-from-commit")
 
+    p8b_repair = subparsers.add_parser(
+        "p8b-static-repair",
+        help="Build a P8b-2 static-filter repair manifest.",
+    )
+    p8b_repair.add_argument("--out-manifest", required=True)
+    p8b_repair.add_argument("--observed-summary", required=True)
+    p8b_repair.add_argument("--passspec", required=True)
+    p8b_repair.add_argument("--pre-static-decisions", required=True)
+    p8b_repair.add_argument("--pre-static-report", required=True)
+    p8b_repair.add_argument("--post-static-decisions", required=True)
+    p8b_repair.add_argument("--post-static-report", required=True)
+    p8b_repair.add_argument("--repair-report", required=True)
+    p8b_repair.add_argument("--repo-root", default=".")
+    p8b_repair.add_argument("--result-generated-from-commit")
+
     p8c = subparsers.add_parser(
         "p8c-attribution", help="Build a P8c Queens attribution manifest."
     )
@@ -847,6 +940,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             static_decisions_csv=args.static_decisions,
             static_report=args.static_report,
             opt_path=args.opt,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "p8b-static-repair":
+        manifest = build_p8b_static_filter_repair_manifest(
+            observed_summary_csv=args.observed_summary,
+            passspec_path=args.passspec,
+            pre_static_decisions_csv=args.pre_static_decisions,
+            pre_static_report=args.pre_static_report,
+            post_static_decisions_csv=args.post_static_decisions,
+            post_static_report=args.post_static_report,
+            repair_report=args.repair_report,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )
@@ -1045,6 +1150,27 @@ def _certificate_matrix_summary(path: str | Path) -> dict[str, Any]:
             and row.get(key, "").strip() != "none"
         ),
     }
+
+
+def _prefixed_report_summary(
+    path: str | Path,
+    *,
+    prefix: str,
+    keys: set[str],
+) -> dict[str, Any]:
+    raw = _filter_keys(_parse_key_value_report(path), keys)
+    return {f"{prefix}{key}": value for key, value in raw.items()}
+
+
+def _static_false_negative_delta(
+    pre_summary: Mapping[str, Any],
+    post_summary: Mapping[str, Any],
+) -> int | None:
+    pre = pre_summary.get("PreStaticFalseNegativeObserved")
+    post = post_summary.get("PostStaticFalseNegativeObserved")
+    if not isinstance(pre, int) or not isinstance(post, int):
+        return None
+    return pre - post
 
 
 def _load_csv(path: str | Path) -> list[dict[str, str]]:

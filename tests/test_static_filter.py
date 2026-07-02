@@ -228,10 +228,30 @@ class StaticFilterTests(unittest.TestCase):
             distance=2,
             window_size=7,
         )
+        sroa_dce = classify_pair(
+            "sroa",
+            "dce",
+            passspec,
+            program_features=features,
+            distance=6,
+            window_size=7,
+        )
+        sroa_adce = classify_pair(
+            "sroa",
+            "adce",
+            passspec,
+            program_features=features,
+            distance=7,
+            window_size=7,
+        )
 
         self.assertEqual(sroa_simplifycfg["decision"], "candidate")
         self.assertEqual(simplifycfg_gvn["decision"], "candidate")
         self.assertEqual(early_cse_simplifycfg["decision"], "candidate")
+        self.assertEqual(sroa_dce["decision"], "candidate")
+        self.assertEqual(sroa_dce["reason"], "producer_consumer")
+        self.assertEqual(sroa_adce["decision"], "candidate")
+        self.assertEqual(sroa_adce["reason"], "producer_consumer")
 
     def test_evaluate_static_filter_reports_recall_reduction_and_false_negatives(self):
         from ecpor.static_filter import evaluate_static_filter, build_static_filter_report

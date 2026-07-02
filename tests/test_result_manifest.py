@@ -404,6 +404,79 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["summary"]["StaticFalseNegativeObserved"], 0)
         self.assertEqual(loaded["scope_limits"]["passspec_tuning"], False)
 
+    def test_builds_p8b_static_filter_repair_manifest(self):
+        from ecpor.result_manifest import (
+            build_p8b_static_filter_repair_manifest,
+            write_manifest,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            observed_summary = root / "cert_summary_p8b_misc8_pre.csv"
+            passspec = root / "passspec.yaml"
+            pre_decisions = root / "static_filter_decisions_p8b_misc8_pre.csv"
+            pre_report = root / "static_filter_report_p8b_misc8_pre.md"
+            post_decisions = root / "static_filter_decisions_p8b_misc8_post.csv"
+            post_report = root / "static_filter_report_p8b_misc8_post.md"
+            repair_report = root / "static_filter_repair_report_p8b_misc8.md"
+            _write_text(observed_summary, "program,pair_a,pair_b,label\n")
+            _write_text(
+                passspec,
+                "passes:\n  sroa:\n    may_produce:\n      - dce_opportunity\n",
+            )
+            _write_text(pre_decisions, "program,pair_a,pair_b,decision\n")
+            _write_text(post_decisions, "program,pair_a,pair_b,decision\n")
+            _write_static_filter_report(
+                pre_report,
+                recall="93.42%",
+                macro_recall="94.39%",
+                false_negatives=5,
+                reduction="17.86%",
+            )
+            _write_static_filter_report(
+                post_report,
+                recall="100.00%",
+                macro_recall="100.00%",
+                false_negatives=0,
+                reduction="14.29%",
+            )
+            _write_text(
+                repair_report,
+                "PassSpecRepair: sroa.may_produce += dce_opportunity\n",
+            )
+
+            manifest = build_p8b_static_filter_repair_manifest(
+                observed_summary_csv=observed_summary,
+                passspec_path=passspec,
+                pre_static_decisions_csv=pre_decisions,
+                pre_static_report=pre_report,
+                post_static_decisions_csv=post_decisions,
+                post_static_report=post_report,
+                repair_report=repair_report,
+                repo_root=root,
+                result_generated_from_commit="bead123",
+            )
+            manifest_path = root / "p8b_static_repair_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P8b-2")
+        self.assertEqual(loaded["result_generated_from_commit"], "bead123")
+        self.assertIn("observed_summary_csv", loaded["inputs"])
+        self.assertIn("post_static_report", loaded["outputs"])
+        self.assertIn("repair_report", loaded["outputs"])
+        self.assertIn("passspec", loaded["sha256"])
+        self.assertIn("post_static_report", loaded["sha256"])
+        self.assertEqual(loaded["summary"]["PreStaticFalseNegativeObserved"], 5)
+        self.assertEqual(loaded["summary"]["PostStaticFalseNegativeObserved"], 0)
+        self.assertEqual(loaded["summary"]["StaticFalseNegativeDelta"], 5)
+        self.assertEqual(loaded["summary"]["PostStaticCandidateRecall"], "100.00%")
+        self.assertEqual(
+            loaded["summary"]["PassSpecRepair"],
+            "sroa.may_produce += dce_opportunity",
+        )
+        self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
+
 
 def _write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
@@ -793,6 +866,28 @@ def _write_p8b_matrix_outputs(
             MacroStaticCandidateRecall: 100.00%
             StaticFalseNegativeObserved: 0
             StaticCandidateReduction: 50.00%
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_static_filter_report(
+    path: Path,
+    *,
+    recall: str,
+    macro_recall: str,
+    false_negatives: int,
+    reduction: str,
+) -> None:
+    _write_text(
+        path,
+        textwrap.dedent(
+            f"""
+            StaticCandidateRecall: {recall}
+            MacroStaticCandidateRecall: {macro_recall}
+            StaticFalseNegativeObserved: {false_negatives}
+            StaticCandidateReduction: {reduction}
             """
         ).strip()
         + "\n",
