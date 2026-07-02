@@ -31,6 +31,9 @@ data/outputs/lazy_validation_p8b_misc8/
 data/outputs/bounded_local_p8b_misc8/
 data/outputs/code_size_p8b_misc8/
 data/outputs/codegen_sensitivity_p8b_misc8/
+data/outputs/depth1_analysis_p8b_misc8/
+data/outputs/effect_attribution_ffbench/
+data/outputs/core_evidence_report_misc8/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
@@ -113,6 +116,22 @@ data/outputs/codegen_sensitivity_p8b_misc8/
 ```
 
 原因：P8b-3-lite 是 Misc8 上的 P4/P5/P6/P8a depth1 链路验证，证明该 benchmark set 在不进入 two-swap 的情况下可复现 certificate、生成 one-swap candidate、计算 `llc` code-size 并进行 `clang -c` sensitivity 对照。当前 only both-smaller case 与后续 attribution 直接相关，因此保留 final 输出和 lazy-validation certificates；中间 object 输出仍可按阶段清理，但本轮先作为 final 证据保留。
+
+P8b-3.5 当前保留 Misc8 depth1 解释与 ffbench 归因证据：
+
+```text
+data/outputs/depth1_analysis_p8b_misc8/
+data/outputs/effect_attribution_ffbench/
+data/outputs/core_evidence_report_misc8/
+```
+
+原因：P8b-3.5 不新增搜索、不新增 certificate、不运行 runtime，只把 P8b-3-lite 的 depth1 结果解释清楚。`depth1_analysis_p8b_misc8/` 记录 16 个 single-swap candidate 中只有 1 个 both-smaller program；`effect_attribution_ffbench/` 记录唯一 both-smaller case 的 state、feature、opcode 和 object-size 归因；`core_evidence_report_misc8/` 将 validation、candidate propagation、objective layer 与 attribution 汇总为可引用证据。三个目录均有 tracked manifest 对应：
+
+```text
+docs/results/p8b_misc8_depth1_analysis_manifest.json
+docs/results/ffbench_effect_attribution_manifest.json
+docs/results/core_evidence_misc8_manifest.json
+```
 
 ## 可删除：临时或重复目录
 

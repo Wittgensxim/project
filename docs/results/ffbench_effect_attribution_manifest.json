@@ -1,0 +1,59 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P8b-3.5b",
+  "description": "ffbench observed effect attribution.",
+  "result_generated_from_commit": "fc662c18b7d0bf8c78f1e8609ecb5a94e12bd3e3",
+  "ecpor_git_commit": "fc662c18b7d0bf8c78f1e8609ecb5a94e12bd3e3",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "input_ir": "data/inputs/testsuite_misc_ffbench.ll"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/effect_attribution_ffbench",
+    "states_csv": "data/outputs/effect_attribution_ffbench/states.csv",
+    "feature_deltas_csv": "data/outputs/effect_attribution_ffbench/feature_deltas.csv",
+    "opcode_delta_csv": "data/outputs/effect_attribution_ffbench/opcode_delta.csv",
+    "object_size_csv": "data/outputs/effect_attribution_ffbench/object_size.csv",
+    "attribution_report": "data/outputs/effect_attribution_ffbench/attribution_report.md"
+  },
+  "sha256": {
+    "input_ir": "769657ae4fff1a73ae6f2d9c2ed53709a6f2e82b565c7e170868e6133b9fbdea",
+    "states_csv": "81a064131ae7a4ba9a2ba4285d32fb5352dd51382b81081ec66101a43a5f4307",
+    "feature_deltas_csv": "bd1724ecf3f1bab5ccaa9b55bdadfc9a172204b71d2b59f7283a0ff30f6a70bc",
+    "opcode_delta_csv": "8abbd10ddf8a1fda33b0e4885d01190c33df7789fc9e11945fac6046280ff9f9",
+    "object_size_csv": "eeb3a030dbd4530fae7c6aa405dfc6c07d931d9756ad28fb32594dfe4b5c7696",
+    "attribution_report": "b6f397b1716aed2cd8ed64bebc6292f45e03c58c30f2abca4d4061297687b916",
+    "opt": "f4a10cdc53c8f1288bb4051318af63ca8b07aae0f0b8ffb13b788fc98ace2543",
+    "llc": "1520eba7e1ee09cc6f38ce1d7ca6eb9fb5187f6ded3a9f70a37f264acebf384c",
+    "clang": "7813948a1b853beb1806fd1bb28b09917bcbd9e35d67b43345af02c100b93551",
+    "llvm_size": "f425ef87d64380ff5f8fd055ddb52e1f0d38f3031bb2a5bbddd557d71c5bc589"
+  },
+  "tools": {
+    "opt_path": "E:\\llvm\\build\\bin\\opt.exe",
+    "llc_path": "E:\\llvm\\build\\bin\\llc.exe",
+    "clang_path": "E:\\llvm\\build\\bin\\clang.exe",
+    "llvm_size_path": "E:\\llvm\\build\\bin\\llvm-size.exe"
+  },
+  "summary": {
+    "FeatureDeltaPropagation": "kept",
+    "Pair": "instcombine,simplifycfg",
+    "FinalInstructionDelta": 0,
+    "FinalOpcodeDeltaNonZero": "num_select_delta=-1;num_or_delta=1",
+    "LlcTextDelta": -16,
+    "LocalABBAHardHashEqual": false,
+    "ClangTextDelta": -3,
+    "StateCount": 7,
+    "Program": "testsuite_misc_ffbench",
+    "LocalInstructionDelta": 0,
+    "FinalABBAHardHashEqual": false,
+    "BothCodegenSmaller": true
+  },
+  "scope_limits": {
+    "single_program": "testsuite_misc_ffbench",
+    "pair": "instcombine,simplifycfg",
+    "runtime_benchmarks": false,
+    "new_certificates": false,
+    "new_search": false,
+    "observed_attribution_not_causal_proof": true
+  }
+}

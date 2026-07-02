@@ -1,0 +1,65 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P8b-3.5c",
+  "description": "Misc8 core evidence supplement for depth-1 pruning and objective-layer behavior.",
+  "result_generated_from_commit": "fc662c18b7d0bf8c78f1e8609ecb5a94e12bd3e3",
+  "ecpor_git_commit": "fc662c18b7d0bf8c78f1e8609ecb5a94e12bd3e3",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "p4_attempts_csv": "data/outputs/lazy_validation_p8b_misc8/attempts.csv",
+    "p5_candidates_csv": "data/outputs/bounded_local_p8b_misc8/candidates.csv",
+    "p6_object_size_csv": "data/outputs/code_size_p8b_misc8/object_size.csv",
+    "p8a_compare_csv": "data/outputs/codegen_sensitivity_p8b_misc8/p8a_codegen_direction_compare.csv",
+    "depth1_analysis_report": "data/outputs/depth1_analysis_p8b_misc8/depth1_analysis_report.md",
+    "attribution_report": "data/outputs/effect_attribution_ffbench/attribution_report.md",
+    "attribution_feature_deltas_csv": "data/outputs/effect_attribution_ffbench/feature_deltas.csv",
+    "attribution_opcode_delta_csv": "data/outputs/effect_attribution_ffbench/opcode_delta.csv",
+    "attribution_object_size_csv": "data/outputs/effect_attribution_ffbench/object_size.csv"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/core_evidence_report_misc8",
+    "misc8_validation_funnel_csv": "data/outputs/core_evidence_report_misc8/misc8_validation_funnel.csv",
+    "misc8_candidate_propagation_funnel_csv": "data/outputs/core_evidence_report_misc8/misc8_candidate_propagation_funnel.csv",
+    "misc8_objective_layer_summary_csv": "data/outputs/core_evidence_report_misc8/misc8_objective_layer_summary.csv",
+    "misc8_attribution_summary_csv": "data/outputs/core_evidence_report_misc8/misc8_attribution_summary.csv",
+    "ecpor_misc8_depth1_evidence_report": "data/outputs/core_evidence_report_misc8/ecpor_misc8_depth1_evidence_report.md"
+  },
+  "sha256": {
+    "p4_attempts_csv": "a9b86ce5e329532cd8817ecf0d66f84c04adf0b321ddd7979948fb80c7b4d2e7",
+    "p5_candidates_csv": "f858d815ef12718df5f7b3459f7d624e46c1f08ea7b0097172c1cd4efdcb9e07",
+    "p6_object_size_csv": "3c71e9687bce1a54cb58ce1d632983af3f856e61e5efd6900f5dbd167e913fa3",
+    "p8a_compare_csv": "b8e642320a607d6d1a6c422ccfcb95c422c0ecac4bd937ddd61b0be347ffc2e7",
+    "depth1_analysis_report": "8285899f3ff644909620a34f227161bc794bd955273b6af315c9e6f87646e255",
+    "attribution_report": "b6f397b1716aed2cd8ed64bebc6292f45e03c58c30f2abca4d4061297687b916",
+    "attribution_feature_deltas_csv": "bd1724ecf3f1bab5ccaa9b55bdadfc9a172204b71d2b59f7283a0ff30f6a70bc",
+    "attribution_opcode_delta_csv": "8abbd10ddf8a1fda33b0e4885d01190c33df7789fc9e11945fac6046280ff9f9",
+    "attribution_object_size_csv": "eeb3a030dbd4530fae7c6aa405dfc6c07d931d9756ad28fb32594dfe4b5c7696",
+    "misc8_validation_funnel_csv": "6e8588ae342a8f6d812f1ed3f91ed32d2721b78c0c216eb918fff74787b7c79f",
+    "misc8_candidate_propagation_funnel_csv": "c23f1741309d605df6c6ac0a9c7e9e3598fa6a42cf15fc657bef1363bcdff6b4",
+    "misc8_objective_layer_summary_csv": "2d36b1776c07ca7c44760a5885f71607ffdef59c1f57a78c2e9b3b19ad6dad9b",
+    "misc8_attribution_summary_csv": "b4d1ad06ce93ca6ee5282b5d3caaec1681c270b147d980eb2eb744fe803e58f9",
+    "ecpor_misc8_depth1_evidence_report": "3b7ad20eb7dc81050c0e4a01a2ff18a37dea4880fd40f27321f43a90390afdaf"
+  },
+  "tools": {},
+  "summary": {
+    "AttemptedSwaps": 56,
+    "ObjectSizeEvaluatedCandidates": 16,
+    "DirectionAgreementRate": "93.75%",
+    "AttributionObservedButNotCausalProof": true,
+    "AttributionCases": 1,
+    "SingleSwapCandidates": 16,
+    "CertifiedIndependentEvents": 32,
+    "BothSmallerPrograms": 1,
+    "BothSmaller": 1,
+    "DirectionComparisonCandidates": 16
+  },
+  "scope_limits": {
+    "benchmark_set": "P8b-Misc8",
+    "depth": 1,
+    "supplement_only": true,
+    "two_swap_search": false,
+    "new_search": false,
+    "new_certificates": false,
+    "runtime_benchmarks": false
+  }
+}
