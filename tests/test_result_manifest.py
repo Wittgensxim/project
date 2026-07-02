@@ -561,6 +561,94 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded_codegen["summary"]["Depth2Inputs"], 0)
         self.assertNotIn("p7_object_size_csv", loaded_codegen["inputs"])
 
+    def test_builds_p8b35_analysis_attribution_and_misc8_manifests(self):
+        from ecpor.result_manifest import (
+            build_core_evidence_misc8_manifest,
+            build_depth1_analysis_manifest,
+            build_effect_attribution_manifest,
+            write_manifest,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            p4_attempts = root / "attempts.csv"
+            p5_candidates = root / "candidates.csv"
+            p5_pipeline_runs = root / "pipeline_runs.csv"
+            p6_object_size = root / "object_size.csv"
+            p8a_compare = root / "compare.csv"
+            opt = root / "opt.exe"
+            llc = root / "llc.exe"
+            clang = root / "clang.exe"
+            llvm_size = root / "llvm-size.exe"
+            depth1_dir = root / "depth1_analysis_p8b_misc8"
+            attribution_dir = root / "effect_attribution_ffbench"
+            misc8_dir = root / "core_evidence_report_misc8"
+            for path in [depth1_dir, attribution_dir, misc8_dir]:
+                path.mkdir()
+            for path in [p4_attempts, p5_candidates, p5_pipeline_runs, p6_object_size, p8a_compare]:
+                _write_text(path, "name\nrow\n")
+            for tool in [opt, llc, clang, llvm_size]:
+                _write_text(tool, tool.name)
+            _write_p8b35_depth1_outputs(depth1_dir)
+            _write_p8b35_attribution_outputs(attribution_dir)
+            _write_p8b35_misc8_outputs(misc8_dir)
+
+            depth1_manifest = build_depth1_analysis_manifest(
+                p4_attempts_csv=p4_attempts,
+                p5_candidates_csv=p5_candidates,
+                p5_pipeline_runs_csv=p5_pipeline_runs,
+                p6_object_size_csv=p6_object_size,
+                p8a_compare_csv=p8a_compare,
+                output_dir=depth1_dir,
+                repo_root=root,
+                result_generated_from_commit="depth123",
+            )
+            attribution_manifest = build_effect_attribution_manifest(
+                input_ir=root / "testsuite_misc_ffbench.ll",
+                output_dir=attribution_dir,
+                opt_path=opt,
+                llc_path=llc,
+                clang_path=clang,
+                llvm_size_path=llvm_size,
+                program="testsuite_misc_ffbench",
+                pass_a="instcombine",
+                pass_b="simplifycfg",
+                stage="P8b-3.5b",
+                description="ffbench observed effect attribution.",
+                repo_root=root,
+                result_generated_from_commit="attr123",
+            )
+            misc8_manifest = build_core_evidence_misc8_manifest(
+                p4_attempts_csv=p4_attempts,
+                p5_candidates_csv=p5_candidates,
+                p6_object_size_csv=p6_object_size,
+                p8a_compare_csv=p8a_compare,
+                depth1_analysis_report=depth1_dir / "depth1_analysis_report.md",
+                output_dir=misc8_dir,
+                attribution_report=attribution_dir / "attribution_report.md",
+                attribution_feature_deltas_csv=attribution_dir / "feature_deltas.csv",
+                attribution_opcode_delta_csv=attribution_dir / "opcode_delta.csv",
+                attribution_object_size_csv=attribution_dir / "object_size.csv",
+                repo_root=root,
+                result_generated_from_commit="misc123",
+            )
+            manifest_path = root / "misc8_manifest.json"
+            write_manifest(manifest_path, misc8_manifest)
+            loaded_misc8 = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(depth1_manifest["stage"], "P8b-3.5a")
+        self.assertEqual(depth1_manifest["summary"]["Depth1BothSmallerPrograms"], 1)
+        self.assertEqual(depth1_manifest["scope_limits"]["two_swap_search"], False)
+        self.assertEqual(attribution_manifest["stage"], "P8b-3.5b")
+        self.assertEqual(attribution_manifest["summary"]["Program"], "testsuite_misc_ffbench")
+        self.assertEqual(
+            attribution_manifest["scope_limits"]["single_program"],
+            "testsuite_misc_ffbench",
+        )
+        self.assertEqual(loaded_misc8["stage"], "P8b-3.5c")
+        self.assertEqual(loaded_misc8["summary"]["BothSmallerPrograms"], 1)
+        self.assertIn("misc8_attribution_summary_csv", loaded_misc8["outputs"])
+
 
 def _write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
@@ -1126,6 +1214,102 @@ def _write_p8b_lite_codegen_outputs(out_dir: Path) -> None:
             SmallerOnlyUnderLlcCount: 0
             SmallerOnlyUnderClangCount: 0
             DirectionDisagreementCount: 0
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_p8b35_depth1_outputs(out_dir: Path) -> None:
+    _write_text(
+        out_dir / "depth1_program_summary.csv",
+        "program,both_smaller_cases\nffbench,1\n",
+    )
+    _write_text(
+        out_dir / "depth1_pair_summary.csv",
+        "pair,both_smaller_cases\ninstcombine,simplifycfg,1\n",
+    )
+    _write_text(
+        out_dir / "depth1_both_smaller_cases.csv",
+        "program,pair,candidate_id\nffbench,\"instcombine,simplifycfg\",ffbench__swap\n",
+    )
+    _write_text(
+        out_dir / "depth1_analysis_report.md",
+        textwrap.dedent(
+            """
+            # Misc8 Depth1 Analysis Report
+
+            Programs: 8
+            SingleSwapCandidates: 16
+            Depth1BothSmallerPrograms: 1
+            BothSmallerCases: 1
+            IRDifferentButTextEqualRate: 93.75%
+            DirectionAgreementRate: 93.75%
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_p8b35_attribution_outputs(out_dir: Path) -> None:
+    _write_text(out_dir / "states.csv", "program,state_name\nffbench,BA_final\n")
+    _write_text(
+        out_dir / "feature_deltas.csv",
+        "comparison,num_instructions_delta\nfinal_AB_vs_BA,-1\n",
+    )
+    _write_text(
+        out_dir / "opcode_delta.csv",
+        "comparison,num_add_delta\nfinal_AB_vs_BA,-1\n",
+    )
+    _write_text(
+        out_dir / "object_size.csv",
+        "program,state_name,compile_mode,text_delta_pct,direction\n"
+        "testsuite_misc_ffbench,BA_final,llc,-1.000000,smaller\n"
+        "testsuite_misc_ffbench,BA_final,clang,-0.100000,smaller\n",
+    )
+    _write_text(
+        out_dir / "attribution_report.md",
+        textwrap.dedent(
+            """
+            # Effect Attribution: testsuite_misc_ffbench
+
+            Program: testsuite_misc_ffbench
+            Pair: instcombine,simplifycfg
+            LocalInstructionDelta: -1
+            FinalInstructionDelta: -1
+            BothCodegenSmaller: True
+            FinalOpcodeDeltaNonZero: num_add_delta=-1
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_p8b35_misc8_outputs(out_dir: Path) -> None:
+    _write_text(
+        out_dir / "misc8_validation_funnel.csv",
+        "attempted_swaps,certified_independent_events\n56,32\n",
+    )
+    _write_text(
+        out_dir / "misc8_candidate_propagation_funnel.csv",
+        "single_swap_candidates,object_size_evaluated_candidates\n16,16\n",
+    )
+    _write_text(
+        out_dir / "misc8_objective_layer_summary.csv",
+        "both_smaller,direction_agreement_rate\n1,93.75%\n",
+    )
+    _write_text(
+        out_dir / "misc8_attribution_summary.csv",
+        "program,pair\nffbench,\"instcombine,simplifycfg\"\n",
+    )
+    _write_text(
+        out_dir / "ecpor_misc8_depth1_evidence_report.md",
+        textwrap.dedent(
+            """
+            # ECPOR Misc8 Depth1 Evidence Supplement
+
+            BothSmallerPrograms: 1
+            AttributionCases: 1
             """
         ).strip()
         + "\n",

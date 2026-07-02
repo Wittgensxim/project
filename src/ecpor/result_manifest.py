@@ -106,6 +106,7 @@ CORE_EVIDENCE_SUMMARY_KEYS = {
 
 P8C_ATTRIBUTION_SUMMARY_KEYS = {
     "Program",
+    "Pair",
     "StateCount",
     "LocalABBAHardHashEqual",
     "FinalABBAHardHashEqual",
@@ -191,6 +192,37 @@ P8B_CODE_SIZE_SUMMARY_KEYS = {
     "SingleSwapP5DifferentFromAnchor",
     "IRDifferentButTextEqualCount",
     "IRDifferentButTextEqualRate",
+}
+
+P8B_DEPTH1_ANALYSIS_SUMMARY_KEYS = {
+    "Programs",
+    "SingleSwapCandidates",
+    "ObjectEvaluated",
+    "SmallerText",
+    "EqualText",
+    "LargerText",
+    "IRDifferentButTextEqualCount",
+    "IRDifferentButTextEqualRate",
+    "DirectionComparisonCandidates",
+    "DirectionAgreementRate",
+    "BothSmallerCases",
+    "Depth1BothSmallerPrograms",
+    "DirectionDisagreementCount",
+    "ReferenceIRDifferentButTextEqualRate",
+    "ReferenceDepth1BothSmallerPrograms",
+}
+
+MISC8_CORE_EVIDENCE_SUMMARY_KEYS = {
+    "AttemptedSwaps",
+    "CertifiedIndependentEvents",
+    "SingleSwapCandidates",
+    "ObjectSizeEvaluatedCandidates",
+    "DirectionComparisonCandidates",
+    "DirectionAgreementRate",
+    "BothSmaller",
+    "BothSmallerPrograms",
+    "AttributionCases",
+    "AttributionObservedButNotCausalProof",
 }
 
 
@@ -901,7 +933,57 @@ def build_p8b_codegen_sensitivity_manifest(
     )
 
 
-def build_queens_effect_attribution_manifest(
+def build_depth1_analysis_manifest(
+    *,
+    p4_attempts_csv: str | Path,
+    p5_candidates_csv: str | Path,
+    p5_pipeline_runs_csv: str | Path,
+    p6_object_size_csv: str | Path,
+    p8a_compare_csv: str | Path,
+    output_dir: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    out = Path(output_dir)
+    report = out / "depth1_analysis_report.md"
+    return build_result_manifest(
+        stage="P8b-3.5a",
+        description="Misc8 depth-1 result analysis from existing P4-P8a outputs.",
+        inputs={
+            "p4_attempts_csv": p4_attempts_csv,
+            "p5_candidates_csv": p5_candidates_csv,
+            "p5_pipeline_runs_csv": p5_pipeline_runs_csv,
+            "p6_object_size_csv": p6_object_size_csv,
+            "p8a_compare_csv": p8a_compare_csv,
+        },
+        outputs={
+            "output_dir": out,
+            "depth1_program_summary_csv": out / "depth1_program_summary.csv",
+            "depth1_pair_summary_csv": out / "depth1_pair_summary.csv",
+            "depth1_both_smaller_cases_csv": out / "depth1_both_smaller_cases.csv",
+            "depth1_analysis_report": report,
+        },
+        tools={},
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            P8B_DEPTH1_ANALYSIS_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "benchmark_set": "P8b-Misc8",
+                "depth": 1,
+                "two_swap_search": False,
+                "new_search": False,
+                "new_certificates": False,
+                "runtime_benchmarks": False,
+            }
+        },
+    )
+
+
+def build_effect_attribution_manifest(
     *,
     input_ir: str | Path,
     output_dir: str | Path,
@@ -909,14 +991,19 @@ def build_queens_effect_attribution_manifest(
     llc_path: str | Path,
     clang_path: str | Path,
     llvm_size_path: str | Path,
+    program: str,
+    pass_a: str,
+    pass_b: str,
     repo_root: str | Path = ".",
     result_generated_from_commit: str | None = None,
+    stage: str = "P8c",
+    description: str = "Observed effect attribution for one adjacent pass-pair case.",
 ) -> dict[str, Any]:
     out = Path(output_dir)
     report = out / "attribution_report.md"
     return build_result_manifest(
-        stage="P8c",
-        description="Queens instcombine/simplifycfg observed effect attribution.",
+        stage=stage,
+        description=description,
         inputs={
             "input_ir": input_ir,
         },
@@ -942,13 +1029,106 @@ def build_queens_effect_attribution_manifest(
         result_generated_from_commit=result_generated_from_commit,
         extra={
             "scope_limits": {
-                "single_program": "testsuite_stanford_queens",
+                "single_program": program,
+                "pair": f"{pass_a},{pass_b}",
                 "runtime_benchmarks": False,
                 "new_certificates": False,
                 "new_search": False,
                 "observed_attribution_not_causal_proof": True,
             }
         },
+    )
+
+
+def build_core_evidence_misc8_manifest(
+    *,
+    p4_attempts_csv: str | Path,
+    p5_candidates_csv: str | Path,
+    p6_object_size_csv: str | Path,
+    p8a_compare_csv: str | Path,
+    depth1_analysis_report: str | Path,
+    output_dir: str | Path,
+    attribution_report: str | Path | None = None,
+    attribution_feature_deltas_csv: str | Path | None = None,
+    attribution_opcode_delta_csv: str | Path | None = None,
+    attribution_object_size_csv: str | Path | None = None,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    out = Path(output_dir)
+    report = out / "ecpor_misc8_depth1_evidence_report.md"
+    return build_result_manifest(
+        stage="P8b-3.5c",
+        description="Misc8 core evidence supplement for depth-1 pruning and objective-layer behavior.",
+        inputs={
+            "p4_attempts_csv": p4_attempts_csv,
+            "p5_candidates_csv": p5_candidates_csv,
+            "p6_object_size_csv": p6_object_size_csv,
+            "p8a_compare_csv": p8a_compare_csv,
+            "depth1_analysis_report": depth1_analysis_report,
+            **_optional_paths(
+                attribution_report=attribution_report,
+                attribution_feature_deltas_csv=attribution_feature_deltas_csv,
+                attribution_opcode_delta_csv=attribution_opcode_delta_csv,
+                attribution_object_size_csv=attribution_object_size_csv,
+            ),
+        },
+        outputs={
+            "output_dir": out,
+            "misc8_validation_funnel_csv": out / "misc8_validation_funnel.csv",
+            "misc8_candidate_propagation_funnel_csv": out
+            / "misc8_candidate_propagation_funnel.csv",
+            "misc8_objective_layer_summary_csv": out
+            / "misc8_objective_layer_summary.csv",
+            "misc8_attribution_summary_csv": out / "misc8_attribution_summary.csv",
+            "ecpor_misc8_depth1_evidence_report": report,
+        },
+        tools={},
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            MISC8_CORE_EVIDENCE_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "benchmark_set": "P8b-Misc8",
+                "depth": 1,
+                "supplement_only": True,
+                "two_swap_search": False,
+                "new_search": False,
+                "new_certificates": False,
+                "runtime_benchmarks": False,
+            }
+        },
+    )
+
+
+def build_queens_effect_attribution_manifest(
+    *,
+    input_ir: str | Path,
+    output_dir: str | Path,
+    opt_path: str | Path,
+    llc_path: str | Path,
+    clang_path: str | Path,
+    llvm_size_path: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    return build_effect_attribution_manifest(
+        stage="P8c",
+        description="Queens instcombine/simplifycfg observed effect attribution.",
+        input_ir=input_ir,
+        output_dir=output_dir,
+        opt_path=opt_path,
+        llc_path=llc_path,
+        clang_path=clang_path,
+        llvm_size_path=llvm_size_path,
+        program="testsuite_stanford_queens",
+        pass_a="simplifycfg",
+        pass_b="instcombine",
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
     )
 
 
@@ -1135,6 +1315,58 @@ def main(argv: Sequence[str] | None = None) -> int:
     p8b_codegen.add_argument("--repo-root", default=".")
     p8b_codegen.add_argument("--result-generated-from-commit")
 
+    depth1 = subparsers.add_parser(
+        "depth1-analysis", help="Build a P8b-3.5a depth1-analysis manifest."
+    )
+    depth1.add_argument("--out-manifest", required=True)
+    depth1.add_argument("--p4-attempts", required=True)
+    depth1.add_argument("--p5-candidates", required=True)
+    depth1.add_argument("--p5-pipeline-runs", required=True)
+    depth1.add_argument("--p6-object-size", required=True)
+    depth1.add_argument("--p8a-compare", required=True)
+    depth1.add_argument("--output-dir", required=True)
+    depth1.add_argument("--repo-root", default=".")
+    depth1.add_argument("--result-generated-from-commit")
+
+    effect = subparsers.add_parser(
+        "effect-attribution", help="Build a generic effect-attribution manifest."
+    )
+    effect.add_argument("--out-manifest", required=True)
+    effect.add_argument("--input-ir", required=True)
+    effect.add_argument("--output-dir", required=True)
+    effect.add_argument("--opt", required=True)
+    effect.add_argument("--llc", required=True)
+    effect.add_argument("--clang", required=True)
+    effect.add_argument("--llvm-size", required=True)
+    effect.add_argument("--program", required=True)
+    effect.add_argument("--pass-a", required=True)
+    effect.add_argument("--pass-b", required=True)
+    effect.add_argument("--stage-name", default="P8b-3.5b")
+    effect.add_argument(
+        "--description",
+        default="Observed effect attribution for one adjacent pass-pair case.",
+    )
+    effect.add_argument("--repo-root", default=".")
+    effect.add_argument("--result-generated-from-commit")
+
+    misc8_core = subparsers.add_parser(
+        "core-evidence-misc8",
+        help="Build a P8b-3.5c Misc8 core-evidence supplement manifest.",
+    )
+    misc8_core.add_argument("--out-manifest", required=True)
+    misc8_core.add_argument("--p4-attempts", required=True)
+    misc8_core.add_argument("--p5-candidates", required=True)
+    misc8_core.add_argument("--p6-object-size", required=True)
+    misc8_core.add_argument("--p8a-compare", required=True)
+    misc8_core.add_argument("--depth1-analysis-report", required=True)
+    misc8_core.add_argument("--output-dir", required=True)
+    misc8_core.add_argument("--attribution-report")
+    misc8_core.add_argument("--attribution-feature-deltas")
+    misc8_core.add_argument("--attribution-opcode-delta")
+    misc8_core.add_argument("--attribution-object-size")
+    misc8_core.add_argument("--repo-root", default=".")
+    misc8_core.add_argument("--result-generated-from-commit")
+
     p8c = subparsers.add_parser(
         "p8c-attribution", help="Build a P8c Queens attribution manifest."
     )
@@ -1288,6 +1520,48 @@ def main(argv: Sequence[str] | None = None) -> int:
             output_dir=args.output_dir,
             clang_path=args.clang,
             llvm_size_path=args.llvm_size,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "depth1-analysis":
+        manifest = build_depth1_analysis_manifest(
+            p4_attempts_csv=args.p4_attempts,
+            p5_candidates_csv=args.p5_candidates,
+            p5_pipeline_runs_csv=args.p5_pipeline_runs,
+            p6_object_size_csv=args.p6_object_size,
+            p8a_compare_csv=args.p8a_compare,
+            output_dir=args.output_dir,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "effect-attribution":
+        manifest = build_effect_attribution_manifest(
+            input_ir=args.input_ir,
+            output_dir=args.output_dir,
+            opt_path=args.opt,
+            llc_path=args.llc,
+            clang_path=args.clang,
+            llvm_size_path=args.llvm_size,
+            program=args.program,
+            pass_a=args.pass_a,
+            pass_b=args.pass_b,
+            stage=args.stage_name,
+            description=args.description,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "core-evidence-misc8":
+        manifest = build_core_evidence_misc8_manifest(
+            p4_attempts_csv=args.p4_attempts,
+            p5_candidates_csv=args.p5_candidates,
+            p6_object_size_csv=args.p6_object_size,
+            p8a_compare_csv=args.p8a_compare,
+            depth1_analysis_report=args.depth1_analysis_report,
+            output_dir=args.output_dir,
+            attribution_report=args.attribution_report,
+            attribution_feature_deltas_csv=args.attribution_feature_deltas,
+            attribution_opcode_delta_csv=args.attribution_opcode_delta,
+            attribution_object_size_csv=args.attribution_object_size,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )

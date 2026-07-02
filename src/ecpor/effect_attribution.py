@@ -189,7 +189,15 @@ def run_effect_attribution(
         llvm_size_path=llvm_size_path,
         timeout_sec=timeout_sec,
     )
-    summary = _summary(state_rows, delta_rows, opcode_delta_rows, object_rows)
+    summary = _summary(
+        program=program,
+        pass_a=pass_a,
+        pass_b=pass_b,
+        state_rows=state_rows,
+        delta_rows=delta_rows,
+        opcode_delta_rows=opcode_delta_rows,
+        object_rows=object_rows,
+    )
 
     _write_csv(output_root / "states.csv", state_rows, STATE_FIELDS)
     _write_csv(output_root / "feature_deltas.csv", delta_rows, DELTA_FIELDS)
@@ -232,12 +240,13 @@ def build_attribution_report(
     local_opcode = _row_by_key(opcode_delta_rows, "comparison", "local_AB_vs_BA")
     final_opcode = _row_by_key(opcode_delta_rows, "comparison", "final_AB_vs_BA")
     lines = [
-        "# P8c Queens Effect Attribution",
+        f"# Effect Attribution: {summary['Program']}",
         "",
-        "本报告只解释当前最稳定的 Queens instcombine/simplifycfg case。",
-        "它不新增搜索、不生成 certificate，也不声明跨程序定理。",
+        "This report explains one already-selected adjacent pass-pair case.",
+        "It does not add search, does not generate certificates, and does not claim a cross-program theorem.",
         "",
         f"Program: {summary['Program']}",
+        f"Pair: {summary['Pair']}",
         f"StateCount: {summary['StateCount']}",
         f"LocalABBAHardHashEqual: {summary['LocalABBAHardHashEqual']}",
         f"FinalABBAHardHashEqual: {summary['FinalABBAHardHashEqual']}",
@@ -309,10 +318,9 @@ def build_attribution_report(
             "",
             "## Observed Attribution Hypothesis",
             "",
-            "在 Queens 的 prefix state 上，交换 simplifycfg 与 instcombine 已经产生局部 IR 差异；",
-            "该差异在 suffix 后仍然可见，并且 BA_final 在 llc 与 clang-c 下都对应更小的 .text。",
-            "这支持一个观察性假设：该顺序改变了 CFG/scalar cleanup 机会，进而影响目标层 code size。",
-            "当前证据只覆盖这个 program 和这个 materialized state，不能外推为全局因果定理。",
+            f"For {summary['Program']} at this prefix state, swapping {summary['Pair']} produces the local IR delta shown above.",
+            "The delta remains observable after the suffix, and BA_final is checked under both llc and clang-c object-size paths.",
+            "This supports an observed attribution hypothesis for this materialized state only, not a global causal theorem.",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -489,6 +497,10 @@ def _object_size_row(
 
 
 def _summary(
+    *,
+    program: str,
+    pass_a: str,
+    pass_b: str,
     state_rows: Sequence[dict[str, str]],
     delta_rows: Sequence[dict[str, str]],
     opcode_delta_rows: Sequence[dict[str, str]],
@@ -503,7 +515,8 @@ def _summary(
     local_instruction_delta = _parse_optional_int(local.get("num_instructions_delta"))
     final_instruction_delta = _parse_optional_int(final.get("num_instructions_delta"))
     return {
-        "Program": PROGRAM,
+        "Program": program,
+        "Pair": f"{pass_a},{pass_b}",
         "StateCount": len(state_rows),
         "LocalABBAHardHashEqual": _same_hash(
             state_by_name.get("AB_local", {}), state_by_name.get("BA_local", {})
@@ -634,23 +647,37 @@ def _write_csv(
         writer.writerows(rows)
 
 
+def _parse_pass_list(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Run P8c Queens effect attribution."
+        description="Run effect attribution for one adjacent pass-pair case."
     )
+    parser.add_argument("--program", default=PROGRAM)
     parser.add_argument(
         "--input-ir", default="data/inputs/testsuite_stanford_queens.ll"
     )
     parser.add_argument("--out", default="data/outputs/effect_attribution_queens")
+    parser.add_argument("--prefix", default=",".join(DEFAULT_PREFIX))
+    parser.add_argument("--pass-a", default=DEFAULT_PASS_A)
+    parser.add_argument("--pass-b", default=DEFAULT_PASS_B)
+    parser.add_argument("--suffix", default=",".join(DEFAULT_SUFFIX))
     parser.add_argument("--opt", default="E:/llvm/build/bin/opt.exe")
     parser.add_argument("--llc", default="E:/llvm/build/bin/llc.exe")
     parser.add_argument("--clang", default="E:/llvm/build/bin/clang.exe")
     parser.add_argument("--llvm-size", default="E:/llvm/build/bin/llvm-size.exe")
     parser.add_argument("--timeout-sec", type=float, default=30.0)
     args = parser.parse_args(argv)
-    result = run_queens_effect_attribution(
+    result = run_effect_attribution(
+        program=args.program,
         input_ir=args.input_ir,
         output_dir=args.out,
+        prefix=_parse_pass_list(args.prefix),
+        pass_a=args.pass_a,
+        pass_b=args.pass_b,
+        suffix=_parse_pass_list(args.suffix),
         opt_path=args.opt,
         llc_path=args.llc,
         clang_path=args.clang,

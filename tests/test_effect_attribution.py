@@ -9,6 +9,42 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 
 class EffectAttributionTests(unittest.TestCase):
+    def test_runs_parameterized_ffbench_attribution(self):
+        from ecpor.effect_attribution import run_effect_attribution
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            input_ir = root / "ffbench.ll"
+            output_dir = root / "ffbench_attribution"
+            input_ir.write_text("define i32 @main() {\n  ret i32 0\n}\n", encoding="utf-8")
+            fake_opt = _write_fake_opt(root)
+            fake_llc = _write_fake_compiler(root, "fake_llc.py")
+            fake_clang = _write_fake_compiler(root, "fake_clang.py")
+            fake_size = _write_fake_size(root)
+
+            result = run_effect_attribution(
+                program="testsuite_misc_ffbench",
+                input_ir=input_ir,
+                output_dir=output_dir,
+                prefix=["sroa", "early-cse"],
+                pass_a="instcombine",
+                pass_b="simplifycfg",
+                suffix=["reassociate", "gvn", "dce", "adce"],
+                opt_path=[sys.executable, str(fake_opt)],
+                llc_path=[sys.executable, str(fake_llc)],
+                clang_path=[sys.executable, str(fake_clang)],
+                llvm_size_path=[sys.executable, str(fake_size)],
+                timeout_sec=5.0,
+            )
+            report = (output_dir / "attribution_report.md").read_text(encoding="utf-8")
+
+        self.assertEqual(result.summary["Program"], "testsuite_misc_ffbench")
+        self.assertEqual(result.summary["Pair"], "instcombine,simplifycfg")
+        self.assertTrue(result.summary["BothCodegenSmaller"])
+        self.assertIn("# Effect Attribution: testsuite_misc_ffbench", report)
+        self.assertIn("Pair: instcombine,simplifycfg", report)
+        self.assertNotIn("Queens", report)
+
     def test_runs_queens_attribution_and_writes_required_outputs(self):
         from ecpor.effect_attribution import run_queens_effect_attribution
 
