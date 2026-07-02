@@ -380,25 +380,38 @@ def build_core_evidence_manifest(
     p7b_analysis_report: str | Path,
     p8a_compare_csv: str | Path,
     output_dir: str | Path,
+    p8c_attribution_report: str | Path | None = None,
+    p8c_feature_deltas_csv: str | Path | None = None,
+    p8c_opcode_delta_csv: str | Path | None = None,
+    p8c_object_size_csv: str | Path | None = None,
     repo_root: str | Path = ".",
     result_generated_from_commit: str | None = None,
 ) -> dict[str, Any]:
     out = Path(output_dir)
     report = out / "ecpor_core_evidence_report.md"
+    inputs: dict[str, str | Path] = {
+        "p4_attempts_csv": p4_attempts_csv,
+        "p5_candidates_csv": p5_candidates_csv,
+        "p5_pipeline_runs_csv": p5_pipeline_runs_csv,
+        "p6_object_size_csv": p6_object_size_csv,
+        "p7b_attempts_csv": p7b_attempts_csv,
+        "p7b_candidates_csv": p7b_candidates_csv,
+        "p7b_object_size_csv": p7b_object_size_csv,
+        "p7b_analysis_report": p7b_analysis_report,
+        "p8a_compare_csv": p8a_compare_csv,
+    }
+    inputs.update(
+        _optional_paths(
+            p8c_attribution_report=p8c_attribution_report,
+            p8c_feature_deltas_csv=p8c_feature_deltas_csv,
+            p8c_opcode_delta_csv=p8c_opcode_delta_csv,
+            p8c_object_size_csv=p8c_object_size_csv,
+        )
+    )
     return build_result_manifest(
         stage="P8a.6",
         description="Core evidence report for ECPOR pruning and objective-layer sensitivity.",
-        inputs={
-            "p4_attempts_csv": p4_attempts_csv,
-            "p5_candidates_csv": p5_candidates_csv,
-            "p5_pipeline_runs_csv": p5_pipeline_runs_csv,
-            "p6_object_size_csv": p6_object_size_csv,
-            "p7b_attempts_csv": p7b_attempts_csv,
-            "p7b_candidates_csv": p7b_candidates_csv,
-            "p7b_object_size_csv": p7b_object_size_csv,
-            "p7b_analysis_report": p7b_analysis_report,
-            "p8a_compare_csv": p8a_compare_csv,
-        },
+        inputs=inputs,
         outputs={
             "output_dir": out,
             "ecpor_core_evidence_report": report,
@@ -557,6 +570,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     core.add_argument("--p7b-object-size", required=True)
     core.add_argument("--p7b-analysis-report", required=True)
     core.add_argument("--p8a-compare", required=True)
+    core.add_argument("--p8c-attribution-report")
+    core.add_argument("--p8c-feature-deltas")
+    core.add_argument("--p8c-opcode-delta")
+    core.add_argument("--p8c-object-size")
     core.add_argument("--output-dir", required=True)
     core.add_argument("--repo-root", default=".")
     core.add_argument("--result-generated-from-commit")
@@ -631,6 +648,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             p7b_analysis_report=args.p7b_analysis_report,
             p8a_compare_csv=args.p8a_compare,
             output_dir=args.output_dir,
+            p8c_attribution_report=args.p8c_attribution_report,
+            p8c_feature_deltas_csv=args.p8c_feature_deltas,
+            p8c_opcode_delta_csv=args.p8c_opcode_delta,
+            p8c_object_size_csv=args.p8c_object_size,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )
@@ -651,6 +672,10 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def _path_map(paths: Mapping[str, str | Path]) -> dict[str, str]:
     return {key: _path_text(path) for key, path in paths.items()}
+
+
+def _optional_paths(**paths: str | Path | None) -> dict[str, str | Path]:
+    return {key: path for key, path in paths.items() if path not in {None, ""}}
 
 
 def _tool_map(paths: Mapping[str, str | Path]) -> dict[str, str]:

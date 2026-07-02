@@ -167,6 +167,10 @@ class ResultManifestTests(unittest.TestCase):
             p7b_object_size = root / "p7b_object_size.csv"
             p7b_analysis_report = root / "p7b_analysis_report.md"
             p8a_compare = root / "p8a_compare.csv"
+            p8c_attribution_report = root / "p8c_attribution_report.md"
+            p8c_feature_deltas = root / "p8c_feature_deltas.csv"
+            p8c_opcode_delta = root / "p8c_opcode_delta.csv"
+            p8c_object_size = root / "p8c_object_size.csv"
             out_dir = root / "core"
             out_dir.mkdir()
             for path in [
@@ -181,6 +185,10 @@ class ResultManifestTests(unittest.TestCase):
             ]:
                 _write_text(path, "name\nrow\n")
             _write_text(p7b_analysis_report, "Depth2SmallerText: 3\n")
+            _write_text(p8c_attribution_report, "Program: testsuite_stanford_queens\n")
+            _write_text(p8c_feature_deltas, "comparison,num_instructions_delta\n")
+            _write_text(p8c_opcode_delta, "comparison,num_add_delta\n")
+            _write_text(p8c_object_size, "compile_mode,text_delta_pct\n")
             _write_core_evidence_outputs(out_dir)
 
             manifest = build_core_evidence_manifest(
@@ -193,6 +201,10 @@ class ResultManifestTests(unittest.TestCase):
                 p7b_object_size_csv=p7b_object_size,
                 p7b_analysis_report=p7b_analysis_report,
                 p8a_compare_csv=p8a_compare,
+                p8c_attribution_report=p8c_attribution_report,
+                p8c_feature_deltas_csv=p8c_feature_deltas,
+                p8c_opcode_delta_csv=p8c_opcode_delta,
+                p8c_object_size_csv=p8c_object_size,
                 output_dir=out_dir,
                 repo_root=root,
                 result_generated_from_commit="abc999",
@@ -208,7 +220,12 @@ class ResultManifestTests(unittest.TestCase):
         self.assertIn("ecpor_candidate_propagation_funnel_csv", loaded["outputs"])
         self.assertIn("ecpor_objective_layer_summary_csv", loaded["outputs"])
         self.assertIn("ecpor_attribution_summary_csv", loaded["outputs"])
+        self.assertIn("p8c_attribution_report", loaded["inputs"])
+        self.assertIn("p8c_feature_deltas_csv", loaded["inputs"])
+        self.assertIn("p8c_opcode_delta_csv", loaded["inputs"])
+        self.assertIn("p8c_object_size_csv", loaded["inputs"])
         self.assertIn("ecpor_core_evidence_report", loaded["sha256"])
+        self.assertIn("p8c_attribution_report", loaded["sha256"])
         self.assertIn("ecpor_attribution_summary_csv", loaded["sha256"])
         self.assertEqual(loaded["summary"]["DirectionAgreementRate"], "68.42%")
         self.assertEqual(loaded["summary"]["SmallerUnderBothCount"], 4)
