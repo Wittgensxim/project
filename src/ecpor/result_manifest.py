@@ -409,8 +409,10 @@ def build_core_evidence_manifest(
         )
     )
     return build_result_manifest(
-        stage="P8a.6",
-        description="Core evidence report for ECPOR pruning and objective-layer sensitivity.",
+        stage="P8c.2",
+        description=(
+            "Core evidence report with P8c Queens observed attribution summary."
+        ),
         inputs=inputs,
         outputs={
             "output_dir": out,

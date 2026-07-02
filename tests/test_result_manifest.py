@@ -213,7 +213,7 @@ class ResultManifestTests(unittest.TestCase):
             write_manifest(manifest_path, manifest)
             loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(loaded["stage"], "P8a.6")
+        self.assertEqual(loaded["stage"], "P8c.2")
         self.assertEqual(loaded["result_generated_from_commit"], "abc999")
         self.assertIn("ecpor_core_evidence_report", loaded["outputs"])
         self.assertIn("ecpor_validation_funnel_csv", loaded["outputs"])
