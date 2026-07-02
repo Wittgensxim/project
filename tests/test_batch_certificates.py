@@ -51,6 +51,31 @@ class BatchCertificateTests(unittest.TestCase):
             all(program in STANFORD_8_PROGRAMS for program in HOLDOUT_STANFORD_PROGRAMS)
         )
 
+    def test_p8b_misc8_preset_uses_ingested_inputs_and_full_pair_universe(self):
+        from ecpor.batch_certificates import (
+            FULL_SCALAR_PASS_PAIRS,
+            P8B_MISC8_PROGRAMS,
+            _preset_pass_pairs,
+            _preset_programs,
+        )
+
+        self.assertEqual(len(P8B_MISC8_PROGRAMS), 8)
+        self.assertEqual(
+            P8B_MISC8_PROGRAMS[0],
+            (
+                "testsuite_misc_aarch64_init_cpu_features",
+                "data/inputs/testsuite_misc_aarch64_init_cpu_features.ll",
+            ),
+        )
+        self.assertTrue(
+            all(
+                str(path).startswith("data/inputs/testsuite_misc_")
+                for _program, path in P8B_MISC8_PROGRAMS
+            )
+        )
+        self.assertEqual(_preset_programs("p8b-misc8x28"), P8B_MISC8_PROGRAMS)
+        self.assertEqual(_preset_pass_pairs("p8b-misc8x28"), FULL_SCALAR_PASS_PAIRS)
+
     def test_run_certificate_matrix_writes_summary_and_reproduces(self):
         from ecpor.batch_certificates import SUMMARY_FIELDS, run_certificate_matrix
 

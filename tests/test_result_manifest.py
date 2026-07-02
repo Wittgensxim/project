@@ -343,6 +343,67 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["summary"]["RejectedPrograms"], 1)
         self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
 
+    def test_builds_p8b_matrix_manifest(self):
+        from ecpor.result_manifest import build_p8b_matrix_manifest, write_manifest
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config = root / "benchmarks_p8b.yaml"
+            pipeline = root / "pipeline_scalar.yaml"
+            passspec = root / "passspec.yaml"
+            opt = root / "opt.exe"
+            out_dir = root / "pair_tests_p8b_misc8"
+            cert_dir = root / "pair_tests_p8b_misc8_certs"
+            summary_csv = root / "cert_summary_p8b_misc8_pre.csv"
+            summary_report = root / "cert_summary_report_p8b_misc8_pre.txt"
+            static_decisions = root / "static_filter_decisions_p8b_misc8_pre.csv"
+            static_report = root / "static_filter_report_p8b_misc8_pre.md"
+            out_dir.mkdir()
+            cert_dir.mkdir()
+            _write_text(config, "stage: P8b-0\nprograms: []\n")
+            _write_text(pipeline, "passes:\n  - a\n  - b\n")
+            _write_text(passspec, "passes: {}\n")
+            _write_text(opt, "opt")
+            _write_p8b_matrix_outputs(
+                summary_csv=summary_csv,
+                summary_report=summary_report,
+                static_decisions=static_decisions,
+                static_report=static_report,
+            )
+
+            manifest = build_p8b_matrix_manifest(
+                benchmark_config_path=config,
+                pipeline_config_path=pipeline,
+                passspec_path=passspec,
+                output_dir=out_dir,
+                cert_dir=cert_dir,
+                summary_csv=summary_csv,
+                summary_report=summary_report,
+                static_decisions_csv=static_decisions,
+                static_report=static_report,
+                opt_path=opt,
+                repo_root=root,
+                result_generated_from_commit="face123",
+            )
+            manifest_path = root / "p8b_matrix_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P8b-1")
+        self.assertEqual(loaded["result_generated_from_commit"], "face123")
+        self.assertIn("summary_csv", loaded["outputs"])
+        self.assertIn("static_report", loaded["outputs"])
+        self.assertIn("summary_csv", loaded["sha256"])
+        self.assertIn("opt", loaded["sha256"])
+        self.assertEqual(loaded["summary"]["TotalCertificates"], 2)
+        self.assertEqual(loaded["summary"]["ReproducedCertificates"], 2)
+        self.assertEqual(loaded["summary"]["HardFalseIndependent"], 0)
+        self.assertEqual(loaded["summary"]["CertifiedFeatureMismatchCount"], 0)
+        self.assertEqual(loaded["summary"]["RunFailed"], 0)
+        self.assertEqual(loaded["summary"]["NotCertifiedIndependent"], 1)
+        self.assertEqual(loaded["summary"]["StaticFalseNegativeObserved"], 0)
+        self.assertEqual(loaded["scope_limits"]["passspec_tuning"], False)
+
 
 def _write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
@@ -656,6 +717,82 @@ def _write_benchmark_ingest_outputs(out_dir: Path, input_ir: Path) -> None:
             CandidateSourceFilesScanned: 2
             AcceptedPrograms: 1
             RejectedPrograms: 1
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_p8b_matrix_outputs(
+    *,
+    summary_csv: Path,
+    summary_report: Path,
+    static_decisions: Path,
+    static_report: Path,
+) -> None:
+    with summary_csv.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "program",
+                "pair_a",
+                "pair_b",
+                "label",
+                "hard_equal",
+                "reproduced",
+                "feature_delta",
+                "failure_kind_ab",
+                "failure_kind_ba",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "program": "testsuite_misc_good",
+                "pair_a": "a",
+                "pair_b": "b",
+                "label": "certified_independent",
+                "hard_equal": "True",
+                "reproduced": "True",
+                "feature_delta": "{}",
+                "failure_kind_ab": "",
+                "failure_kind_ba": "",
+            }
+        )
+        writer.writerow(
+            {
+                "program": "testsuite_misc_good",
+                "pair_a": "b",
+                "pair_b": "c",
+                "label": "not_certified_independent",
+                "hard_equal": "False",
+                "reproduced": "True",
+                "feature_delta": '{"num_instructions": 1}',
+                "failure_kind_ab": "",
+                "failure_kind_ba": "",
+            }
+        )
+    _write_text(
+        summary_report,
+        textwrap.dedent(
+            """
+            Total certificates: 2
+            Reproduced: 2 / 2 = 100.00%
+            HardFalseIndependent: 0
+            CertifiedFeatureMismatchCount: 0
+            """
+        ).strip()
+        + "\n",
+    )
+    _write_text(static_decisions, "program,pair_a,pair_b,decision\np,a,b,candidate\n")
+    _write_text(
+        static_report,
+        textwrap.dedent(
+            """
+            StaticCandidateRecall: 100.00%
+            MacroStaticCandidateRecall: 100.00%
+            StaticFalseNegativeObserved: 0
+            StaticCandidateReduction: 50.00%
             """
         ).strip()
         + "\n",

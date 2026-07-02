@@ -40,6 +40,20 @@ STANFORD_8_PROGRAMS: list[Program] = [
     *HOLDOUT_STANFORD_PROGRAMS,
 ]
 
+P8B_MISC8_PROGRAMS: list[Program] = [
+    (
+        "testsuite_misc_aarch64_init_cpu_features",
+        "data/inputs/testsuite_misc_aarch64_init_cpu_features.ll",
+    ),
+    ("testsuite_misc_evalloop", "data/inputs/testsuite_misc_evalloop.ll"),
+    ("testsuite_misc_ffbench", "data/inputs/testsuite_misc_ffbench.ll"),
+    ("testsuite_misc_flops_1", "data/inputs/testsuite_misc_flops_1.ll"),
+    ("testsuite_misc_flops_2", "data/inputs/testsuite_misc_flops_2.ll"),
+    ("testsuite_misc_flops_3", "data/inputs/testsuite_misc_flops_3.ll"),
+    ("testsuite_misc_flops_4", "data/inputs/testsuite_misc_flops_4.ll"),
+    ("testsuite_misc_flops_5", "data/inputs/testsuite_misc_flops_5.ll"),
+]
+
 SCALAR_PIPELINE_PASSES = [
     "sroa",
     "early-cse",
@@ -232,7 +246,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Generate a certificate matrix.")
     parser.add_argument(
         "--preset",
-        choices=["stanford-3x3", "stanford-3x8", "stanford-3x28", "stanford-8x28"],
+        choices=[
+            "stanford-3x3",
+            "stanford-3x8",
+            "stanford-3x28",
+            "stanford-8x28",
+            "p8b-misc8x28",
+        ],
         default="stanford-3x8",
         help="Program/pass-pair preset to run.",
     )
@@ -294,12 +314,14 @@ def _safe_name(value: str) -> str:
 def _preset_pass_pairs(preset: str) -> list[PassPair]:
     if preset == "stanford-3x3":
         return STANFORD_3X3_PASS_PAIRS
-    if preset in {"stanford-3x28", "stanford-8x28"}:
+    if preset in {"stanford-3x28", "stanford-8x28", "p8b-misc8x28"}:
         return FULL_SCALAR_PASS_PAIRS
     return DEFAULT_PASS_PAIRS
 
 
 def _preset_programs(preset: str) -> list[Program]:
+    if preset == "p8b-misc8x28":
+        return P8B_MISC8_PROGRAMS
     if preset == "stanford-8x28":
         return STANFORD_8_PROGRAMS
     return DEFAULT_STANFORD_PROGRAMS

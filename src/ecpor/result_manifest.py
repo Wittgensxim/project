@@ -129,6 +129,13 @@ P8B_INGEST_SUMMARY_KEYS = {
     "SizeParseOk",
 }
 
+P8B_MATRIX_STATIC_SUMMARY_KEYS = {
+    "StaticCandidateRecall",
+    "MacroStaticCandidateRecall",
+    "StaticFalseNegativeObserved",
+    "StaticCandidateReduction",
+}
+
 
 def build_result_manifest(
     *,
@@ -513,6 +520,65 @@ def build_benchmark_ingest_manifest(
     )
 
 
+def build_p8b_matrix_manifest(
+    *,
+    benchmark_config_path: str | Path,
+    pipeline_config_path: str | Path,
+    passspec_path: str | Path,
+    output_dir: str | Path,
+    cert_dir: str | Path,
+    summary_csv: str | Path,
+    summary_report: str | Path,
+    static_decisions_csv: str | Path,
+    static_report: str | Path,
+    opt_path: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    summary = _certificate_matrix_summary(summary_csv)
+    summary.update(
+        _filter_keys(
+            _parse_key_value_report(static_report),
+            P8B_MATRIX_STATIC_SUMMARY_KEYS,
+        )
+    )
+    return build_result_manifest(
+        stage="P8b-1",
+        description="P8b Misc8 by 28 unordered pass-pair certificate matrix.",
+        inputs={
+            "benchmark_config": benchmark_config_path,
+            "pipeline_config": pipeline_config_path,
+            "passspec": passspec_path,
+        },
+        outputs={
+            "output_dir": output_dir,
+            "cert_dir": cert_dir,
+            "summary_csv": summary_csv,
+            "summary_report": summary_report,
+            "static_decisions_csv": static_decisions_csv,
+            "static_report": static_report,
+        },
+        tools={
+            "opt": opt_path,
+        },
+        summary=summary,
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "benchmark_set": "P8b-Misc8",
+                "program_count": 8,
+                "pass_pair_count": 28,
+                "passspec_tuning": False,
+                "new_search": False,
+                "runtime_benchmarks": False,
+                "code_size_evaluation": False,
+                "pre_tuning_static_filter_eval": True,
+            }
+        },
+    )
+
+
 def build_queens_effect_attribution_manifest(
     *,
     input_ir: str | Path,
@@ -663,6 +729,23 @@ def main(argv: Sequence[str] | None = None) -> int:
     p8b_ingest.add_argument("--repo-root", default=".")
     p8b_ingest.add_argument("--result-generated-from-commit")
 
+    p8b_matrix = subparsers.add_parser(
+        "p8b-matrix", help="Build a P8b-1 Misc8 pair-matrix manifest."
+    )
+    p8b_matrix.add_argument("--out-manifest", required=True)
+    p8b_matrix.add_argument("--benchmark-config", required=True)
+    p8b_matrix.add_argument("--pipeline-config", required=True)
+    p8b_matrix.add_argument("--passspec", required=True)
+    p8b_matrix.add_argument("--output-dir", required=True)
+    p8b_matrix.add_argument("--cert-dir", required=True)
+    p8b_matrix.add_argument("--summary-csv", required=True)
+    p8b_matrix.add_argument("--summary-report", required=True)
+    p8b_matrix.add_argument("--static-decisions", required=True)
+    p8b_matrix.add_argument("--static-report", required=True)
+    p8b_matrix.add_argument("--opt", required=True)
+    p8b_matrix.add_argument("--repo-root", default=".")
+    p8b_matrix.add_argument("--result-generated-from-commit")
+
     p8c = subparsers.add_parser(
         "p8c-attribution", help="Build a P8c Queens attribution manifest."
     )
@@ -749,6 +832,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             opt_path=args.opt,
             llc_path=args.llc,
             llvm_size_path=args.llvm_size,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "p8b-matrix":
+        manifest = build_p8b_matrix_manifest(
+            benchmark_config_path=args.benchmark_config,
+            pipeline_config_path=args.pipeline_config,
+            passspec_path=args.passspec,
+            output_dir=args.output_dir,
+            cert_dir=args.cert_dir,
+            summary_csv=args.summary_csv,
+            summary_report=args.summary_report,
+            static_decisions_csv=args.static_decisions,
+            static_report=args.static_report,
+            opt_path=args.opt,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )
@@ -910,6 +1008,45 @@ def _depth2_candidates(
     return result
 
 
+def _certificate_matrix_summary(path: str | Path) -> dict[str, Any]:
+    rows = _load_csv(path)
+    label_counts: dict[str, int] = {}
+    for row in rows:
+        label = row.get("label", "")
+        label_counts[label] = label_counts.get(label, 0) + 1
+    total = len(rows)
+    reproduced = sum(1 for row in rows if _is_true(row.get("reproduced", "")))
+    return {
+        "TotalCertificates": total,
+        "ReproducedCertificates": reproduced,
+        "CertificateReproductionRate": (
+            f"{(reproduced / total * 100.0):.2f}%" if total else "0.00%"
+        ),
+        "CertifiedIndependent": label_counts.get("certified_independent", 0),
+        "NotCertifiedIndependent": label_counts.get("not_certified_independent", 0),
+        "RunFailed": label_counts.get("run_failed", 0),
+        "HardFalseIndependent": sum(
+            1
+            for row in rows
+            if row.get("label") == "certified_independent"
+            and not _is_true(row.get("hard_equal", ""))
+        ),
+        "CertifiedFeatureMismatchCount": sum(
+            1
+            for row in rows
+            if row.get("label") == "certified_independent"
+            and _has_nonzero_feature_delta(row.get("feature_delta", ""))
+        ),
+        "FailureDirections": sum(
+            1
+            for row in rows
+            for key in ("failure_kind_ab", "failure_kind_ba")
+            if row.get(key, "").strip()
+            and row.get(key, "").strip() != "none"
+        ),
+    }
+
+
 def _load_csv(path: str | Path) -> list[dict[str, str]]:
     candidate = Path(path)
     if not candidate.exists():
@@ -928,6 +1065,32 @@ def _parse_optional_float(value: str | None) -> float | None:
     if value in {None, ""}:
         return None
     return float(str(value))
+
+
+def _is_true(value: str) -> bool:
+    return value.lower() == "true"
+
+
+def _has_nonzero_feature_delta(raw_delta: str) -> bool:
+    if not raw_delta.strip():
+        return False
+    try:
+        delta = json.loads(raw_delta)
+    except json.JSONDecodeError:
+        return True
+    if not isinstance(delta, dict):
+        return bool(delta)
+    return any(_is_nonzero_delta(value) for value in delta.values())
+
+
+def _is_nonzero_delta(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        return value != ""
+    return value is not None
 
 
 def _path_text(path: str | Path) -> str:

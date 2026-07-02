@@ -15,6 +15,7 @@ import yaml
 from .batch_certificates import (
     DEFAULT_STANFORD_PROGRAMS,
     HOLDOUT_STANFORD_PROGRAMS,
+    P8B_MISC8_PROGRAMS,
     STANFORD_8_PROGRAMS,
 )
 from .feature_scan import scan_ir_file
@@ -467,7 +468,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--features-json")
     parser.add_argument(
         "--program-preset",
-        choices=["stanford-3", "stanford-8"],
+        choices=["stanford-3", "stanford-8", "p8b-misc8"],
         help="Scan a built-in program set to build program features.",
     )
     parser.add_argument(
@@ -796,6 +797,8 @@ def _load_program_features_for_args(args: argparse.Namespace) -> tuple[dict[str,
         )
     if args.program_preset == "stanford-8":
         return aggregate_program_features(STANFORD_8_PROGRAMS), len(STANFORD_8_PROGRAMS)
+    if args.program_preset == "p8b-misc8":
+        return aggregate_program_features(P8B_MISC8_PROGRAMS), len(P8B_MISC8_PROGRAMS)
     return {}, 0
 
 
@@ -822,6 +825,9 @@ def _load_program_feature_map_for_args(
     if args.program_preset == "stanford-8":
         feature_map = scan_program_features(STANFORD_8_PROGRAMS)
         return feature_map, len(feature_map)
+    if args.program_preset == "p8b-misc8":
+        feature_map = scan_program_features(P8B_MISC8_PROGRAMS)
+        return feature_map, len(feature_map)
     return {}, 0
 
 
@@ -843,6 +849,8 @@ def _program_groups_for_args(
         }
     if args.program_preset == "stanford-3":
         return {"Calibration": [name for name, _path in DEFAULT_STANFORD_PROGRAMS]}
+    if args.program_preset == "p8b-misc8":
+        return {"P8b-Misc8": [name for name, _path in P8B_MISC8_PROGRAMS]}
     return None
 
 

@@ -176,6 +176,23 @@ class StaticFilterTests(unittest.TestCase):
         self.assertEqual(decisions[1]["program"], "without_alloca")
         self.assertEqual(decisions[1]["decision"], "low_priority")
 
+    def test_p8b_misc8_program_preset_scans_ingested_inputs(self):
+        import argparse
+
+        from ecpor.static_filter import _load_program_feature_map_for_args
+
+        args = argparse.Namespace(features_json=None, program_preset="p8b-misc8")
+
+        feature_map, program_count = _load_program_feature_map_for_args(
+            args,
+            observed_rows=[],
+        )
+
+        self.assertEqual(program_count, 8)
+        self.assertEqual(len(feature_map), 8)
+        self.assertIn("testsuite_misc_ffbench", feature_map)
+        self.assertGreater(feature_map["testsuite_misc_ffbench"]["num_instructions"], 0)
+
     def test_real_passspec_marks_observed_false_negative_pairs_candidate(self):
         from ecpor.static_filter import classify_pair, load_passspec
 
