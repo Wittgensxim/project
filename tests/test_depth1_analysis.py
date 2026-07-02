@@ -39,6 +39,7 @@ class Depth1AnalysisTests(unittest.TestCase):
                 output_dir=output_dir,
                 reference_p6_object_size_csv=reference_p6,
                 reference_p8a_compare_csv=reference_compare,
+                benchmark_label="Diverse8",
             )
             program_rows = _read_csv(output_dir / "depth1_program_summary.csv")
             pair_rows = _read_csv(output_dir / "depth1_pair_summary.csv")
@@ -63,8 +64,9 @@ class Depth1AnalysisTests(unittest.TestCase):
         self.assertEqual(inst_simplify["smaller_text"], "1")
         self.assertEqual(both_smaller[0]["program"], "ffbench")
         self.assertEqual(both_smaller[0]["pair"], "instcombine,simplifycfg")
+        self.assertIn("# Diverse8 Depth1 Analysis Report", report)
         self.assertIn("Depth1BothSmallerPrograms: 1", report)
-        self.assertIn("Misc8 repeats the Stanford depth1 pattern", report)
+        self.assertIn("Diverse8 repeats the Stanford depth1 pattern", report)
 
 
 def _write_attempts(path: Path) -> None:

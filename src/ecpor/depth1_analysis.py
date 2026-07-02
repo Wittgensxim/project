@@ -65,6 +65,7 @@ def run_depth1_analysis(
     output_dir: str | Path,
     reference_p6_object_size_csv: str | Path | None = None,
     reference_p8a_compare_csv: str | Path | None = None,
+    benchmark_label: str = "Misc8",
 ) -> Depth1AnalysisResult:
     attempts = _load_csv(p4_attempts_csv)
     candidates = _load_csv(p5_candidates_csv)
@@ -95,7 +96,13 @@ def run_depth1_analysis(
         BOTH_SMALLER_FIELDS,
     )
     (output_root / "depth1_analysis_report.md").write_text(
-        build_depth1_analysis_report(summary, program_rows, pair_rows, both_smaller_rows),
+        build_depth1_analysis_report(
+            summary,
+            program_rows,
+            pair_rows,
+            both_smaller_rows,
+            benchmark_label=benchmark_label,
+        ),
         encoding="utf-8",
     )
     return Depth1AnalysisResult(
@@ -111,11 +118,13 @@ def build_depth1_analysis_report(
     program_rows: Sequence[dict[str, str]],
     pair_rows: Sequence[dict[str, str]],
     both_smaller_rows: Sequence[dict[str, str]],
+    *,
+    benchmark_label: str = "Misc8",
 ) -> str:
     lines = [
-        "# Misc8 Depth1 Analysis Report",
+        f"# {benchmark_label} Depth1 Analysis Report",
         "",
-        "本报告解释 Misc8 的 depth1 结果；它不新增搜索、不跑 two-swap、不运行 runtime。",
+        f"本报告解释 {benchmark_label} 的 depth1 结果；它不新增搜索、不跑 two-swap、不运行 runtime。",
         "",
         f"Programs: {summary['Programs']}",
         f"SingleSwapCandidates: {summary['SingleSwapCandidates']}",
@@ -161,8 +170,8 @@ def build_depth1_analysis_report(
             "",
             "## Interpretation",
             "",
-            "Misc8 repeats the Stanford depth1 pattern: many IR-different candidates are objective-layer equal, and only a small number become smaller under both codegen paths.",
-            "当前唯一稳定收益来自 both-smaller case；这不足以触发 Misc8 two-swap。",
+            f"{benchmark_label} repeats the Stanford depth1 pattern: many IR-different candidates are objective-layer equal, and only a small number become smaller under both codegen paths.",
+            "当前稳定收益只来自 both-smaller case；这不足以直接触发更深搜索。",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -177,6 +186,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--p8a-compare", required=True)
     parser.add_argument("--reference-p6-object-size")
     parser.add_argument("--reference-p8a-compare")
+    parser.add_argument("--benchmark-label", default="Misc8")
     parser.add_argument("--out", default="data/outputs/depth1_analysis_p8b_misc8")
     args = parser.parse_args(argv)
     result = run_depth1_analysis(
@@ -188,6 +198,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         output_dir=args.out,
         reference_p6_object_size_csv=args.reference_p6_object_size,
         reference_p8a_compare_csv=args.reference_p8a_compare,
+        benchmark_label=args.benchmark_label,
     )
     print(
         build_depth1_analysis_report(
@@ -195,6 +206,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             result.program_rows,
             result.pair_rows,
             result.both_smaller_rows,
+            benchmark_label=args.benchmark_label,
         ),
         end="",
     )
