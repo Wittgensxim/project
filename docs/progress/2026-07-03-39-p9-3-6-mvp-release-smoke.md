@@ -175,7 +175,7 @@ D:\Miniconda\envs\dlm\python.exe -m pytest -q
 最终提交后复跑：
 
 ```text
-108 passed in 14.12s
+108 passed in 14.09s
 ```
 
 缺少 retained `data/outputs` 的负路径验证：
@@ -217,6 +217,25 @@ llvm_pipeline_rerun = false
 - fresh clone 仍不能直接重生成 P9-1 summary，因为 retained result inputs 不在 Git 中；这现在已经在 README / 主报告中明确。
 - 本轮修复只改变缺失输入时的失败行为，不改变已有 retained-result workspace 的 P9-1 核心结果。
 
+### 发布结果
+
+分支和补丁标签已推送：
+
+```text
+feature/phase-ordering-footprint -> origin
+v0.1.1-ecpor-mvp -> origin
+```
+
+GitHub Release 已创建并验证：
+
+```text
+name = v0.1.1 ECPOR MVP
+tag = v0.1.1-ecpor-mvp
+url = https://github.com/Wittgensxim/project/releases/tag/v0.1.1-ecpor-mvp
+```
+
+注意：`v0.1.1-ecpor-mvp` 标签指向 `88a423c`，release URL 的记录是发布后补写在分支进度文档里的，不移动已发布标签。
+
 ### 下一步
 
-推送分支与 `v0.1.1-ecpor-mvp` tag，并尝试用 `docs/releases/v0.1.1-ecpor-mvp.md` 创建 GitHub Release。之后再考虑 P9-4 diverse8 depth1-only。
+之后再考虑 P9-4 diverse8 depth1-only。
