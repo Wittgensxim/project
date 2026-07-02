@@ -36,6 +36,10 @@ class ResultManifestTests(unittest.TestCase):
             result_manifest.build_passspec_audit_manifest,
             manifest_builders.build_passspec_audit_manifest,
         )
+        self.assertIs(
+            result_manifest.build_passspec_trust_report_manifest,
+            manifest_builders.build_passspec_trust_report_manifest,
+        )
         self.assertIs(result_manifest.main, manifest_cli.main)
 
     def test_builds_p7a_manifest_from_outputs_and_hashes_files(self):
@@ -579,6 +583,63 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
         self.assertEqual(loaded["scope_limits"]["new_search"], False)
         self.assertEqual(loaded["scope_limits"]["static_filter_behavior_change"], False)
+
+    def test_builds_passspec_trust_report_manifest(self):
+        from ecpor.result_manifest import (
+            build_passspec_trust_report_manifest,
+            write_manifest,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            passspec = root / "passspec.yaml"
+            audit_manifest = root / "passspec_audit_manifest.json"
+            trust_report = root / "passspec_trust_report.md"
+            _write_text(passspec, "passes:\n  a:\n    may_produce:\n      - x\n")
+            _write_text(audit_manifest, '{"stage": "P10"}\n')
+            _write_text(
+                trust_report,
+                textwrap.dedent(
+                    """
+                    # PassSpec Trust Report
+
+                    TotalPasses: 8
+                    TotalHints: 64
+                    EmpiricalRepairHints: 5
+                    LegacyHintsWithoutExplicitProvenance: 59
+                    UnknownConfidenceHints: 59
+                    HintsWithSupportCases: 5
+                    """
+                ).strip()
+                + "\n",
+            )
+
+            manifest = build_passspec_trust_report_manifest(
+                passspec_path=passspec,
+                audit_manifest_path=audit_manifest,
+                trust_report_path=trust_report,
+                repo_root=root,
+                result_generated_from_commit="trust123",
+            )
+            manifest_path = root / "passspec_trust_report_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P10.5")
+        self.assertEqual(loaded["result_generated_from_commit"], "trust123")
+        self.assertIn("passspec", loaded["inputs"])
+        self.assertIn("passspec_audit_manifest", loaded["inputs"])
+        self.assertIn("passspec_trust_report", loaded["outputs"])
+        self.assertIn("passspec_trust_report", loaded["sha256"])
+        self.assertEqual(loaded["summary"]["EmpiricalRepairHints"], 5)
+        self.assertEqual(
+            loaded["summary"]["LegacyHintsWithoutExplicitProvenance"], 59
+        )
+        self.assertEqual(loaded["scope_limits"]["report_only"], True)
+        self.assertEqual(loaded["scope_limits"]["metadata_only"], True)
+        self.assertEqual(loaded["scope_limits"]["new_experiments"], False)
+        self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
+        self.assertEqual(loaded["scope_limits"]["passspec_behavior_change"], False)
 
     def test_builds_p8b_lite_manifests_for_depth1_chain(self):
         from ecpor.result_manifest import (

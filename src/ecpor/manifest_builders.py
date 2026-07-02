@@ -242,6 +242,8 @@ PASSSPEC_AUDIT_SUMMARY_KEYS = {
     "HintsWithSupportCases",
 }
 
+PASSSPEC_TRUST_REPORT_SUMMARY_KEYS = PASSSPEC_AUDIT_SUMMARY_KEYS
+
 
 
 def build_p7a_manifest(
@@ -763,6 +765,46 @@ def build_passspec_audit_manifest(
             "scope_limits": {
                 "metadata_only": True,
                 "static_filter_behavior_change": False,
+                "new_experiments": False,
+                "new_certificates": False,
+                "new_search": False,
+                "runtime_benchmarks": False,
+            }
+        },
+    )
+
+
+def build_passspec_trust_report_manifest(
+    *,
+    passspec_path: str | Path,
+    audit_manifest_path: str | Path,
+    trust_report_path: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    return build_result_manifest(
+        stage="P10.5",
+        description="PassSpec trust report for paper-facing methods notes.",
+        inputs={
+            "passspec": passspec_path,
+            "passspec_audit_manifest": audit_manifest_path,
+        },
+        outputs={
+            "passspec_trust_report": trust_report_path,
+        },
+        tools={},
+        summary=_filter_keys(
+            _parse_key_value_report(trust_report_path),
+            PASSSPEC_TRUST_REPORT_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "report_only": True,
+                "metadata_only": True,
+                "static_filter_behavior_change": False,
+                "passspec_behavior_change": False,
                 "new_experiments": False,
                 "new_certificates": False,
                 "new_search": False,

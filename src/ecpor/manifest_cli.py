@@ -12,6 +12,7 @@ from .manifest_builders import (
     build_depth1_analysis_manifest,
     build_effect_attribution_manifest,
     build_passspec_audit_manifest,
+    build_passspec_trust_report_manifest,
     build_p6_5_manifest,
     build_p7a_manifest,
     build_p7b_analysis_manifest,
@@ -310,6 +311,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     passspec_audit.add_argument("--repo-root", default=".")
     passspec_audit.add_argument("--result-generated-from-commit")
 
+    passspec_trust = subparsers.add_parser(
+        "passspec-trust-report",
+        help="Build a P10.5 PassSpec trust report manifest.",
+    )
+    passspec_trust.add_argument("--out-manifest", required=True)
+    passspec_trust.add_argument("--passspec", required=True)
+    passspec_trust.add_argument("--audit-manifest", required=True)
+    passspec_trust.add_argument("--trust-report", required=True)
+    passspec_trust.add_argument("--repo-root", default=".")
+    passspec_trust.add_argument("--result-generated-from-commit")
+
     p8c = subparsers.add_parser(
         "p8c-attribution", help="Build a P8c Queens attribution manifest."
     )
@@ -539,6 +551,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         manifest = build_passspec_audit_manifest(
             passspec_path=args.passspec,
             output_dir=args.output_dir,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "passspec-trust-report":
+        manifest = build_passspec_trust_report_manifest(
+            passspec_path=args.passspec,
+            audit_manifest_path=args.audit_manifest,
+            trust_report_path=args.trust_report,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )
