@@ -173,6 +173,7 @@ def build_core_evidence_misc8_report(
         f"BothSmaller: {objective.get('both_smaller', '0')}",
         f"BothSmallerPrograms: {summary['BothSmallerPrograms']}",
         f"AttributionCases: {summary['AttributionCases']}",
+        f"AttributionObservedButNotCausalProof: {summary['AttributionObservedButNotCausalProof']}",
         "",
         "## Validation Funnel",
         "",
