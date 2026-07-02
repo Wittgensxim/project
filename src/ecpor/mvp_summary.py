@@ -459,7 +459,8 @@ def _build_objective_row(
     comparisons = [
         row
         for row in compare_rows
-        if row.get("source", "single_swap") in {"single_swap", "depth2"}
+        if row.get("source", "single_swap")
+        in {"single_swap", "depth2", "two_swap"}
         and row.get("llc_direction")
         and row.get("clang_direction")
     ]

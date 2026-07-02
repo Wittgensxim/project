@@ -106,7 +106,8 @@ class MvpSummaryTests(unittest.TestCase):
         self.assertEqual(benchmark_rows[0]["one_swap_candidates"], "1")
         self.assertEqual(benchmark_rows[0]["both_smaller_programs"], "1")
         self.assertEqual(reduction_rows[0]["certified_independent"], "2")
-        self.assertEqual(objective_rows[0]["both_smaller_cases"], "1")
+        self.assertEqual(objective_rows[0]["direction_comparisons"], "3")
+        self.assertEqual(objective_rows[0]["both_smaller_cases"], "2")
         self.assertEqual(attribution_rows[0]["benchmark_set"], "Stanford-8")
         self.assertIn("P9-1 MVP Summary", report)
         self.assertIn("NoNewExperiments: True", report)
@@ -183,7 +184,8 @@ def _write_codegen_compare(path: Path, prefix: str) -> None:
         path,
         "program,candidate_id,source,llc_direction,clang_direction,direction_agree\n"
         f"{prefix}_p1,{prefix}_p1__swap,single_swap,smaller,smaller,True\n"
-        f"{prefix}_p2,{prefix}_p2__swap,single_swap,equal,equal,True\n",
+        f"{prefix}_p2,{prefix}_p2__swap,single_swap,equal,equal,True\n"
+        f"{prefix}_p1,{prefix}_p1__two_swap,two_swap,smaller,smaller,True\n",
     )
 
 
