@@ -168,7 +168,7 @@ D:\Miniconda\envs\dlm\python.exe -m pytest -q
 结果：
 
 ```text
-114 passed in 22.64s
+114 passed
 ```
 
 ## 代码快照
