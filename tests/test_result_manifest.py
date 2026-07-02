@@ -11,6 +11,25 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 
 class ResultManifestTests(unittest.TestCase):
+    def test_result_manifest_split_modules_keep_compatibility_exports(self):
+        from ecpor import manifest_builders, manifest_cli, manifest_common
+        from ecpor import result_manifest
+
+        self.assertIs(
+            result_manifest.build_result_manifest,
+            manifest_common.build_result_manifest,
+        )
+        self.assertIs(result_manifest.write_manifest, manifest_common.write_manifest)
+        self.assertIs(
+            result_manifest.build_p8b_matrix_manifest,
+            manifest_builders.build_p8b_matrix_manifest,
+        )
+        self.assertIs(
+            result_manifest.build_depth1_analysis_manifest,
+            manifest_builders.build_depth1_analysis_manifest,
+        )
+        self.assertIs(result_manifest.main, manifest_cli.main)
+
     def test_builds_p7a_manifest_from_outputs_and_hashes_files(self):
         from ecpor.result_manifest import build_p7a_manifest, write_manifest
 
