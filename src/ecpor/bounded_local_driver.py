@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
-from .batch_certificates import STANFORD_8_PROGRAMS, Program
+from .batch_certificates import P8B_MISC8_PROGRAMS, STANFORD_8_PROGRAMS, Program
 from .candidate_pipeline import (
     CandidateGeneration,
     CandidatePipeline,
@@ -281,7 +281,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Run P5 bounded local one-swap exploration."
     )
-    parser.add_argument("--program-preset", choices=["stanford-8"], default="stanford-8")
+    parser.add_argument(
+        "--program-preset",
+        choices=["stanford-8", "p8b-misc8"],
+        default="stanford-8",
+    )
     parser.add_argument("--pipeline", default="configs/pipeline_scalar.yaml")
     parser.add_argument("--attempts-csv", required=True)
     parser.add_argument("--out", default="data/outputs/bounded_local_p5")
@@ -302,7 +306,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         env_id = env_id or detected.env_id
         llvm_version = llvm_version or detected.llvm_version
     run = run_bounded_local_exploration(
-        programs=STANFORD_8_PROGRAMS,
+        programs=_programs_for_preset(args.program_preset),
         anchor_passes=list(pipeline["passes"]),
         attempts_csv=args.attempts_csv,
         opt_path=opt_path,
@@ -338,6 +342,12 @@ def _example_records(records: Sequence[PipelineRunRecord]) -> list[str]:
             f"num_basic_blocks={record.num_basic_blocks}"
         )
     return lines
+
+
+def _programs_for_preset(preset: str) -> list[Program]:
+    if preset == "p8b-misc8":
+        return P8B_MISC8_PROGRAMS
+    return STANFORD_8_PROGRAMS
 
 
 def _detect_environment_for_opt(opt: str) -> object:

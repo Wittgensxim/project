@@ -9,6 +9,45 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 
 class CodegenSensitivityTests(unittest.TestCase):
+    def test_can_compare_p6_depth1_candidates_without_p7_rows(self):
+        from ecpor.codegen_sensitivity import run_codegen_sensitivity
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            p6_ir = root / "p6_ir"
+            output_dir = root / "p8b"
+            p6_ir.mkdir()
+            p6_object_size = root / "p6_object_size.csv"
+            _write_ir(p6_ir / "tiny__anchor.ll")
+            _write_ir(p6_ir / "tiny__swap.ll")
+            _write_object_size_csv(
+                p6_object_size,
+                [
+                    _row("tiny", "tiny__anchor", "anchor", p6_ir / "tiny__anchor.ll", "100", "0"),
+                    _row("tiny", "tiny__swap", "single_swap", p6_ir / "tiny__swap.ll", "90", "-10"),
+                ],
+            )
+            fake_clang = _write_fake_clang(tmp_path=root)
+            fake_size = _write_fake_size_by_object_name(tmp_path=root)
+
+            result = run_codegen_sensitivity(
+                p6_object_size_csv=p6_object_size,
+                p7_object_size_csv=None,
+                output_dir=output_dir,
+                clang_path=[sys.executable, str(fake_clang)],
+                llvm_size_path=[sys.executable, str(fake_size)],
+            )
+            compare_rows = _read_csv(output_dir / "p8a_codegen_direction_compare.csv")
+            report = (output_dir / "p8a_codegen_sensitivity_report.md").read_text(
+                encoding="utf-8"
+            )
+
+        self.assertEqual(result.summary["IRInputs"], 2)
+        self.assertEqual(result.summary["Depth2Inputs"], 0)
+        self.assertEqual(result.summary["DirectionComparisonCandidates"], 1)
+        self.assertEqual(compare_rows[0]["source"], "single_swap")
+        self.assertIn("Depth2Inputs: 0", report)
+
     def test_compares_llc_and_clang_directions_for_p6_and_p7b_candidates(self):
         from ecpor.codegen_sensitivity import run_codegen_sensitivity
 

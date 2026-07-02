@@ -143,6 +143,56 @@ P8B_STATIC_REPAIR_KEYS = {
     "StaticCandidateReduction",
 }
 
+P8B_LAZY_VALIDATION_SUMMARY_KEYS = {
+    "attempted_adjacent_swaps",
+    "candidate_swaps",
+    "low_priority_skipped",
+    "cache_hits",
+    "dynamic_tests",
+    "certified_independent",
+    "not_certified_independent",
+    "run_failed",
+    "HardFalseIndependent",
+    "CertificateReproductionRate",
+    "CertifiedPruningRatioAttempted",
+    "CertifiedPruningRatioDynamic",
+    "SecondRunCacheHitRate",
+}
+
+P8B_BOUNDED_LOCAL_SUMMARY_KEYS = {
+    "attempted_adjacent_swaps",
+    "candidate_swaps",
+    "low_priority_skipped",
+    "dynamic_tests",
+    "certified_independent",
+    "not_certified_independent",
+    "run_failed",
+    "anchor_candidates",
+    "single_swap_candidates",
+    "collapsed_certified_independent",
+    "frozen_by_static_filter",
+    "invalid_run_failed",
+    "pipeline_runs",
+    "pipeline_run_failed",
+    "same_as_anchor",
+    "different_from_anchor",
+    "anchor_runs",
+    "single_swap_runs",
+    "single_swap_same_as_anchor",
+    "single_swap_different_from_anchor",
+}
+
+P8B_CODE_SIZE_SUMMARY_KEYS = {
+    "Programs",
+    "ObjectBuildFailed",
+    "SizeParseFailed",
+    "CodeSizeDeltaVsAnchor",
+    "SingleSwapP5SameAsAnchor",
+    "SingleSwapP5DifferentFromAnchor",
+    "IRDifferentButTextEqualCount",
+    "IRDifferentButTextEqualRate",
+}
+
 
 def build_result_manifest(
     *,
@@ -657,6 +707,203 @@ def build_p8b_static_filter_repair_manifest(
     )
 
 
+def build_p8b_lazy_validation_manifest(
+    *,
+    pipeline_config_path: str | Path,
+    passspec_path: str | Path,
+    output_dir: str | Path,
+    cert_dir: str | Path,
+    attempts_csv: str | Path,
+    report_path: str | Path,
+    opt_path: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    return build_result_manifest(
+        stage="P8b-3a",
+        description="P8b Misc8 prefix-state adjacent lazy validation.",
+        inputs={
+            "pipeline_config": pipeline_config_path,
+            "passspec": passspec_path,
+        },
+        outputs={
+            "output_dir": output_dir,
+            "cert_dir": cert_dir,
+            "attempts_csv": attempts_csv,
+            "report": report_path,
+        },
+        tools={
+            "opt": opt_path,
+        },
+        summary=_filter_keys(
+            _parse_key_value_report(report_path),
+            P8B_LAZY_VALIDATION_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "benchmark_set": "P8b-Misc8",
+                "program_count": 8,
+                "anchor_adjacent_swaps_per_program": 7,
+                "two_swap_search": False,
+                "full_searcher": False,
+                "runtime_benchmarks": False,
+                "code_size_evaluation": False,
+            }
+        },
+    )
+
+
+def build_p8b_bounded_local_manifest(
+    *,
+    pipeline_config_path: str | Path,
+    p4_attempts_csv: str | Path,
+    p5_dir: str | Path,
+    opt_path: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    p5 = Path(p5_dir)
+    report = p5 / "report.md"
+    return build_result_manifest(
+        stage="P8b-3b",
+        description="P8b Misc8 bounded local one-swap exploration.",
+        inputs={
+            "pipeline_config": pipeline_config_path,
+            "p4_attempts_csv": p4_attempts_csv,
+        },
+        outputs={
+            "output_dir": p5,
+            "candidates_csv": p5 / "candidates.csv",
+            "pipeline_runs_csv": p5 / "pipeline_runs.csv",
+            "report": report,
+        },
+        tools={
+            "opt": opt_path,
+        },
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            P8B_BOUNDED_LOCAL_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "benchmark_set": "P8b-Misc8",
+                "program_count": 8,
+                "depth": 1,
+                "two_swap_search": False,
+                "full_searcher": False,
+                "runtime_benchmarks": False,
+                "objective_selection": False,
+            }
+        },
+    )
+
+
+def build_p8b_code_size_manifest(
+    *,
+    p5_dir: str | Path,
+    p6_dir: str | Path,
+    llc_path: str | Path,
+    llvm_size_path: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    p5 = Path(p5_dir)
+    p6 = Path(p6_dir)
+    report = p6 / "code_size_report.md"
+    return build_result_manifest(
+        stage="P8b-3c",
+        description="P8b Misc8 llc object-size check for depth1 candidates.",
+        inputs={
+            "p5_output_dir": p5,
+            "p5_report": p5 / "report.md",
+            "candidates_csv": p5 / "candidates.csv",
+            "pipeline_runs_csv": p5 / "pipeline_runs.csv",
+        },
+        outputs={
+            "output_dir": p6,
+            "object_size_csv": p6 / "object_size.csv",
+            "code_size_report": report,
+        },
+        tools={
+            "llc": llc_path,
+            "llvm_size": llvm_size_path,
+        },
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            P8B_CODE_SIZE_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "benchmark_set": "P8b-Misc8",
+                "program_count": 8,
+                "depth": 1,
+                "codegen_path": "llc -filetype=obj",
+                "two_swap_search": False,
+                "full_searcher": False,
+                "runtime_benchmarks": False,
+            }
+        },
+    )
+
+
+def build_p8b_codegen_sensitivity_manifest(
+    *,
+    p6_object_size_csv: str | Path,
+    output_dir: str | Path,
+    clang_path: str | Path,
+    llvm_size_path: str | Path,
+    p7_object_size_csv: str | Path | None = None,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    out = Path(output_dir)
+    report = out / "p8a_codegen_sensitivity_report.md"
+    inputs: dict[str, str | Path] = {
+        "p6_object_size_csv": p6_object_size_csv,
+    }
+    inputs.update(_optional_paths(p7_object_size_csv=p7_object_size_csv))
+    return build_result_manifest(
+        stage="P8b-3d",
+        description="P8b Misc8 clang -c sensitivity check for depth1 candidates.",
+        inputs=inputs,
+        outputs={
+            "output_dir": out,
+            "p8a_clang_object_size_csv": out / "p8a_clang_object_size.csv",
+            "p8a_codegen_direction_compare_csv": out
+            / "p8a_codegen_direction_compare.csv",
+            "p8a_codegen_sensitivity_report": report,
+        },
+        tools={
+            "clang": clang_path,
+            "llvm_size": llvm_size_path,
+        },
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            P8A_CODEGEN_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "benchmark_set": "P8b-Misc8",
+                "program_count": 8,
+                "depth": 1,
+                "new_certificates": False,
+                "llvm_opt_rerun": False,
+                "two_swap_search": False,
+                "runtime_benchmarks": False,
+                "codegen_path_compared": "clang -c",
+            }
+        },
+    )
+
+
 def build_queens_effect_attribution_manifest(
     *,
     input_ir: str | Path,
@@ -839,6 +1086,58 @@ def main(argv: Sequence[str] | None = None) -> int:
     p8b_repair.add_argument("--repo-root", default=".")
     p8b_repair.add_argument("--result-generated-from-commit")
 
+    p8b_lazy = subparsers.add_parser(
+        "p8b-lazy-validation",
+        help="Build a P8b-3a Misc8 lazy-validation manifest.",
+    )
+    p8b_lazy.add_argument("--out-manifest", required=True)
+    p8b_lazy.add_argument("--pipeline-config", required=True)
+    p8b_lazy.add_argument("--passspec", required=True)
+    p8b_lazy.add_argument("--output-dir", required=True)
+    p8b_lazy.add_argument("--cert-dir", required=True)
+    p8b_lazy.add_argument("--attempts-csv", required=True)
+    p8b_lazy.add_argument("--report", required=True)
+    p8b_lazy.add_argument("--opt", required=True)
+    p8b_lazy.add_argument("--repo-root", default=".")
+    p8b_lazy.add_argument("--result-generated-from-commit")
+
+    p8b_bounded = subparsers.add_parser(
+        "p8b-bounded-local",
+        help="Build a P8b-3b Misc8 bounded-local manifest.",
+    )
+    p8b_bounded.add_argument("--out-manifest", required=True)
+    p8b_bounded.add_argument("--pipeline-config", required=True)
+    p8b_bounded.add_argument("--p4-attempts", required=True)
+    p8b_bounded.add_argument("--p5-dir", required=True)
+    p8b_bounded.add_argument("--opt", required=True)
+    p8b_bounded.add_argument("--repo-root", default=".")
+    p8b_bounded.add_argument("--result-generated-from-commit")
+
+    p8b_size = subparsers.add_parser(
+        "p8b-code-size",
+        help="Build a P8b-3c Misc8 code-size manifest.",
+    )
+    p8b_size.add_argument("--out-manifest", required=True)
+    p8b_size.add_argument("--p5-dir", required=True)
+    p8b_size.add_argument("--p6-dir", required=True)
+    p8b_size.add_argument("--llc", required=True)
+    p8b_size.add_argument("--llvm-size", required=True)
+    p8b_size.add_argument("--repo-root", default=".")
+    p8b_size.add_argument("--result-generated-from-commit")
+
+    p8b_codegen = subparsers.add_parser(
+        "p8b-codegen",
+        help="Build a P8b-3d Misc8 clang-codegen manifest.",
+    )
+    p8b_codegen.add_argument("--out-manifest", required=True)
+    p8b_codegen.add_argument("--p6-object-size", required=True)
+    p8b_codegen.add_argument("--p7-object-size")
+    p8b_codegen.add_argument("--output-dir", required=True)
+    p8b_codegen.add_argument("--clang", required=True)
+    p8b_codegen.add_argument("--llvm-size", required=True)
+    p8b_codegen.add_argument("--repo-root", default=".")
+    p8b_codegen.add_argument("--result-generated-from-commit")
+
     p8c = subparsers.add_parser(
         "p8c-attribution", help="Build a P8c Queens attribution manifest."
     )
@@ -952,6 +1251,46 @@ def main(argv: Sequence[str] | None = None) -> int:
             post_static_decisions_csv=args.post_static_decisions,
             post_static_report=args.post_static_report,
             repair_report=args.repair_report,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "p8b-lazy-validation":
+        manifest = build_p8b_lazy_validation_manifest(
+            pipeline_config_path=args.pipeline_config,
+            passspec_path=args.passspec,
+            output_dir=args.output_dir,
+            cert_dir=args.cert_dir,
+            attempts_csv=args.attempts_csv,
+            report_path=args.report,
+            opt_path=args.opt,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "p8b-bounded-local":
+        manifest = build_p8b_bounded_local_manifest(
+            pipeline_config_path=args.pipeline_config,
+            p4_attempts_csv=args.p4_attempts,
+            p5_dir=args.p5_dir,
+            opt_path=args.opt,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "p8b-code-size":
+        manifest = build_p8b_code_size_manifest(
+            p5_dir=args.p5_dir,
+            p6_dir=args.p6_dir,
+            llc_path=args.llc,
+            llvm_size_path=args.llvm_size,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "p8b-codegen":
+        manifest = build_p8b_codegen_sensitivity_manifest(
+            p6_object_size_csv=args.p6_object_size,
+            p7_object_size_csv=args.p7_object_size,
+            output_dir=args.output_dir,
+            clang_path=args.clang,
+            llvm_size_path=args.llvm_size,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )

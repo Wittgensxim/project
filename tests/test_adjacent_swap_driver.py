@@ -8,6 +8,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 
 class AdjacentSwapDriverTests(unittest.TestCase):
+    def test_program_preset_supports_p8b_misc8(self):
+        from ecpor.adjacent_swap_driver import _programs_for_preset
+
+        programs = _programs_for_preset("p8b-misc8")
+
+        self.assertEqual(len(programs), 8)
+        self.assertEqual(programs[0][0], "testsuite_misc_aarch64_init_cpu_features")
+        self.assertEqual(programs[2][0], "testsuite_misc_ffbench")
+
     def test_dynamic_pruning_ratio_is_not_applicable_without_dynamic_tests(self):
         from ecpor.adjacent_swap_driver import (
             AdjacentSwapAttempt,

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
 
-from .batch_certificates import STANFORD_8_PROGRAMS, Program
+from .batch_certificates import P8B_MISC8_PROGRAMS, STANFORD_8_PROGRAMS, Program
 from .certificate_db import CertificateDB
 from .environment import DEFAULT_EXECUTION_MODEL
 from .feature_scan import scan_ir_file
@@ -262,7 +262,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Run minimal anchor-adjacent lazy validation."
     )
-    parser.add_argument("--program-preset", choices=["stanford-8"], default="stanford-8")
+    parser.add_argument(
+        "--program-preset",
+        choices=["stanford-8", "p8b-misc8"],
+        default="stanford-8",
+    )
     parser.add_argument("--pipeline", default="configs/pipeline_scalar.yaml")
     parser.add_argument("--passspec", default="configs/passspec.yaml")
     parser.add_argument("--cert-dir", default="data/certs/lazy_validation")
@@ -277,7 +281,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     pipeline = load_pipeline_config(args.pipeline)
     run = run_adjacent_swap_validation(
-        programs=STANFORD_8_PROGRAMS,
+        programs=_programs_for_preset(args.program_preset),
         passes=list(pipeline["passes"]),
         passspec=load_passspec(args.passspec),
         cert_db=CertificateDB(args.cert_dir),
@@ -325,6 +329,12 @@ def _attempt_from_validation(
 
 def _safe_name(value: str) -> str:
     return "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in value)
+
+
+def _programs_for_preset(preset: str) -> list[Program]:
+    if preset == "p8b-misc8":
+        return P8B_MISC8_PROGRAMS
+    return STANFORD_8_PROGRAMS
 
 
 def _format_optional_percent(value: float | None) -> str:

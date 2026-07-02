@@ -477,6 +477,90 @@ class ResultManifestTests(unittest.TestCase):
         )
         self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
 
+    def test_builds_p8b_lite_manifests_for_depth1_chain(self):
+        from ecpor.result_manifest import (
+            build_p8b_bounded_local_manifest,
+            build_p8b_codegen_sensitivity_manifest,
+            build_p8b_code_size_manifest,
+            build_p8b_lazy_validation_manifest,
+            write_manifest,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pipeline = root / "pipeline_scalar.yaml"
+            passspec = root / "passspec.yaml"
+            opt = root / "opt.exe"
+            llc = root / "llc.exe"
+            clang = root / "clang.exe"
+            llvm_size = root / "llvm-size.exe"
+            p4_dir = root / "lazy_validation_p8b_misc8"
+            p4_cert_dir = root / "lazy_validation_p8b_misc8_certs"
+            p5_dir = root / "bounded_local_p8b_misc8"
+            p6_dir = root / "code_size_p8b_misc8"
+            p8a_dir = root / "codegen_sensitivity_p8b_misc8"
+            for path in [p4_dir, p4_cert_dir, p5_dir, p6_dir, p8a_dir]:
+                path.mkdir()
+            for tool in [opt, llc, clang, llvm_size]:
+                _write_text(tool, tool.name)
+            _write_text(pipeline, "passes:\n  - sroa\n  - early-cse\n")
+            _write_text(passspec, "passes: {}\n")
+            _write_p8b_lite_p4_outputs(p4_dir)
+            _write_p8b_lite_p5_outputs(p5_dir)
+            _write_p8b_lite_p6_outputs(p6_dir)
+            _write_p8b_lite_codegen_outputs(p8a_dir)
+
+            lazy_manifest = build_p8b_lazy_validation_manifest(
+                pipeline_config_path=pipeline,
+                passspec_path=passspec,
+                output_dir=p4_dir,
+                cert_dir=p4_cert_dir,
+                attempts_csv=p4_dir / "attempts.csv",
+                report_path=p4_dir / "report.md",
+                opt_path=opt,
+                repo_root=root,
+                result_generated_from_commit="lite123",
+            )
+            bounded_manifest = build_p8b_bounded_local_manifest(
+                pipeline_config_path=pipeline,
+                p4_attempts_csv=p4_dir / "attempts.csv",
+                p5_dir=p5_dir,
+                opt_path=opt,
+                repo_root=root,
+                result_generated_from_commit="lite123",
+            )
+            size_manifest = build_p8b_code_size_manifest(
+                p5_dir=p5_dir,
+                p6_dir=p6_dir,
+                llc_path=llc,
+                llvm_size_path=llvm_size,
+                repo_root=root,
+                result_generated_from_commit="lite123",
+            )
+            codegen_manifest = build_p8b_codegen_sensitivity_manifest(
+                p6_object_size_csv=p6_dir / "object_size.csv",
+                output_dir=p8a_dir,
+                clang_path=clang,
+                llvm_size_path=llvm_size,
+                repo_root=root,
+                result_generated_from_commit="lite123",
+            )
+            manifest_path = root / "p8b_lite_manifest.json"
+            write_manifest(manifest_path, codegen_manifest)
+            loaded_codegen = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(lazy_manifest["stage"], "P8b-3a")
+        self.assertEqual(lazy_manifest["summary"]["attempted_adjacent_swaps"], 56)
+        self.assertEqual(lazy_manifest["summary"]["CertificateReproductionRate"], "100.00%")
+        self.assertEqual(lazy_manifest["scope_limits"]["two_swap_search"], False)
+        self.assertEqual(bounded_manifest["stage"], "P8b-3b")
+        self.assertEqual(bounded_manifest["summary"]["single_swap_candidates"], 3)
+        self.assertEqual(size_manifest["stage"], "P8b-3c")
+        self.assertEqual(size_manifest["summary"]["CodeSizeDeltaVsAnchor"], 3)
+        self.assertEqual(loaded_codegen["stage"], "P8b-3d")
+        self.assertEqual(loaded_codegen["summary"]["Depth2Inputs"], 0)
+        self.assertNotIn("p7_object_size_csv", loaded_codegen["inputs"])
+
 
 def _write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
@@ -888,6 +972,156 @@ def _write_static_filter_report(
             MacroStaticCandidateRecall: {macro_recall}
             StaticFalseNegativeObserved: {false_negatives}
             StaticCandidateReduction: {reduction}
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_p8b_lite_p4_outputs(out_dir: Path) -> None:
+    _write_text(
+        out_dir / "attempts.csv",
+        (
+            "program,prefix_passes,state_path,state_hash,pass_a,pass_b,"
+            "static_decision,static_reason,action,label,cache_hit,dynamic_test,"
+            "reproduced,cert_id\n"
+            "testsuite_misc_ffbench,,input.ll,h0,sroa,early-cse,candidate,"
+            "producer_consumer,dynamic_test,not_certified_independent,False,"
+            "True,True,cert-1\n"
+        ),
+    )
+    _write_text(
+        out_dir / "report.md",
+        textwrap.dedent(
+            """
+            # P4 Lazy Validation Report
+
+            attempted_adjacent_swaps: 56
+            candidate_swaps: 40
+            low_priority_skipped: 16
+            cache_hits: 0
+            dynamic_tests: 40
+            certified_independent: 20
+            not_certified_independent: 20
+            run_failed: 0
+            HardFalseIndependent: 0
+            CertificateReproductionRate: 100.00%
+            CertifiedPruningRatioAttempted: 35.71%
+            CertifiedPruningRatioDynamic: 50.00%
+            SecondRunCacheHitRate: 0.00%
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_p8b_lite_p5_outputs(out_dir: Path) -> None:
+    _write_text(
+        out_dir / "candidates.csv",
+        "program,candidate_id,source,candidate_pipeline\n"
+        "testsuite_misc_ffbench,testsuite_misc_ffbench__anchor,anchor,\"a,b\"\n"
+        "testsuite_misc_ffbench,testsuite_misc_ffbench__swap,single_swap,\"b,a\"\n",
+    )
+    _write_text(
+        out_dir / "pipeline_runs.csv",
+        "program,candidate_id,pipeline\n"
+        "testsuite_misc_ffbench,testsuite_misc_ffbench__anchor,\"a,b\"\n"
+        "testsuite_misc_ffbench,testsuite_misc_ffbench__swap,\"b,a\"\n",
+    )
+    _write_text(
+        out_dir / "report.md",
+        textwrap.dedent(
+            """
+            # P5 Bounded Local Reorder Report
+
+            attempted_adjacent_swaps: 56
+            candidate_swaps: 40
+            low_priority_skipped: 16
+            dynamic_tests: 40
+            certified_independent: 20
+            not_certified_independent: 20
+            run_failed: 0
+            anchor_candidates: 8
+            single_swap_candidates: 3
+            collapsed_certified_independent: 20
+            frozen_by_static_filter: 16
+            invalid_run_failed: 0
+            pipeline_runs: 11
+            pipeline_run_failed: 0
+            same_as_anchor: 8
+            different_from_anchor: 3
+            anchor_runs: 8
+            single_swap_runs: 3
+            single_swap_same_as_anchor: 0
+            single_swap_different_from_anchor: 3
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_p8b_lite_p6_outputs(out_dir: Path) -> None:
+    _write_text(
+        out_dir / "object_size.csv",
+        (
+            "program,candidate_id,source,ir_path,text_size,text_delta,"
+            "text_delta_pct\n"
+            "testsuite_misc_ffbench,testsuite_misc_ffbench__anchor,anchor,"
+            "anchor.ll,100,0,0.000000\n"
+            "testsuite_misc_ffbench,testsuite_misc_ffbench__swap,single_swap,"
+            "swap.ll,96,-4,-4.000000\n"
+        ),
+    )
+    _write_text(
+        out_dir / "code_size_report.md",
+        textwrap.dedent(
+            """
+            # P6 Code Size Report
+
+            Programs: 8
+            ObjectBuildFailed: 0
+            SizeParseFailed: 0
+            CodeSizeDeltaVsAnchor: 3
+            SingleSwapP5SameAsAnchor: 0
+            SingleSwapP5DifferentFromAnchor: 3
+            IRDifferentButTextEqualCount: 2
+            IRDifferentButTextEqualRate: 66.67%
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_p8b_lite_codegen_outputs(out_dir: Path) -> None:
+    _write_text(
+        out_dir / "p8a_clang_object_size.csv",
+        "program,candidate_id,source\np,p__anchor,anchor\n",
+    )
+    _write_text(
+        out_dir / "p8a_codegen_direction_compare.csv",
+        "program,candidate_id,direction_agree\np,p__swap,True\n",
+    )
+    _write_text(
+        out_dir / "p8a_codegen_sensitivity_report.md",
+        textwrap.dedent(
+            """
+            # P8a Clang-C Codegen Sensitivity Report
+
+            Programs: 8
+            IRInputs: 11
+            AnchorInputs: 8
+            SingleSwapInputs: 3
+            Depth2Inputs: 0
+            ClangObjectBuildsAttempted: 11
+            ClangObjectBuildFailed: 0
+            ClangSizeParseFailed: 0
+            DirectionComparisonCandidates: 3
+            DirectionAgreementCount: 3
+            DirectionAgreementRate: 100.00%
+            SmallerUnderBothCount: 1
+            SmallerOnlyUnderLlcCount: 0
+            SmallerOnlyUnderClangCount: 0
+            DirectionDisagreementCount: 0
             """
         ).strip()
         + "\n",

@@ -69,14 +69,14 @@ class CodegenSensitivityResult:
 def run_codegen_sensitivity(
     *,
     p6_object_size_csv: str | Path,
-    p7_object_size_csv: str | Path,
+    p7_object_size_csv: str | Path | None,
     output_dir: str | Path,
     clang_path: ToolPath = "clang",
     llvm_size_path: ToolPath = "llvm-size",
     timeout_sec: float = 30.0,
 ) -> CodegenSensitivityResult:
     p6_rows = _load_csv(p6_object_size_csv)
-    p7_rows = _load_csv(p7_object_size_csv)
+    p7_rows = _load_csv(p7_object_size_csv) if p7_object_size_csv else []
     selected_rows = _select_input_rows(p6_rows, p7_rows)
     output_root = Path(output_dir)
     object_root = output_root / "clang_object_outputs"
@@ -155,8 +155,17 @@ def build_codegen_sensitivity_report(
                 f"ecpor_git_dirty: {metadata['ecpor_git_dirty']}",
                 f"p6_object_size_csv: {metadata['p6_object_size_csv']}",
                 f"p6_object_size_sha256: {metadata['p6_object_size_sha256']}",
-                f"p7_object_size_csv: {metadata['p7_object_size_csv']}",
-                f"p7_object_size_sha256: {metadata['p7_object_size_sha256']}",
+            ]
+        )
+        if metadata.get("p7_object_size_csv"):
+            lines.extend(
+                [
+                    f"p7_object_size_csv: {metadata['p7_object_size_csv']}",
+                    f"p7_object_size_sha256: {metadata['p7_object_size_sha256']}",
+                ]
+            )
+        lines.extend(
+            [
                 f"clang_path: {metadata['clang_path']}",
                 f"clang_sha256: {metadata['clang_sha256']}",
                 f"llvm_size_path: {metadata['llvm_size_path']}",
@@ -232,6 +241,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--p7-object-size",
         default="data/outputs/bounded_two_swap_p7b/two_swap_object_size.csv",
     )
+    parser.add_argument(
+        "--p6-only",
+        action="store_true",
+        help="Only compare P6 anchor and single-swap rows; do not load P7 rows.",
+    )
     parser.add_argument("--out", default="data/outputs/codegen_sensitivity_p8a")
     parser.add_argument("--clang", default="E:/llvm/build/bin/clang.exe")
     parser.add_argument("--llvm-size", default="E:/llvm/build/bin/llvm-size.exe")
@@ -240,7 +254,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     result = run_codegen_sensitivity(
         p6_object_size_csv=args.p6_object_size,
-        p7_object_size_csv=args.p7_object_size,
+        p7_object_size_csv=None if args.p6_only else args.p7_object_size,
         output_dir=args.out,
         clang_path=args.clang,
         llvm_size_path=args.llvm_size,
@@ -418,7 +432,7 @@ def _summarize(
 def _build_metadata(
     *,
     p6_object_size_csv: str | Path,
-    p7_object_size_csv: str | Path,
+    p7_object_size_csv: str | Path | None,
     clang_path: ToolPath,
     llvm_size_path: ToolPath,
 ) -> dict[str, str]:
@@ -428,8 +442,12 @@ def _build_metadata(
         "ecpor_git_dirty": str(git.dirty),
         "p6_object_size_csv": Path(p6_object_size_csv).as_posix(),
         "p6_object_size_sha256": _file_hash_or_empty(p6_object_size_csv),
-        "p7_object_size_csv": Path(p7_object_size_csv).as_posix(),
-        "p7_object_size_sha256": _file_hash_or_empty(p7_object_size_csv),
+        "p7_object_size_csv": (
+            "" if p7_object_size_csv is None else Path(p7_object_size_csv).as_posix()
+        ),
+        "p7_object_size_sha256": (
+            "" if p7_object_size_csv is None else _file_hash_or_empty(p7_object_size_csv)
+        ),
         "clang_path": _tool_path_text(clang_path),
         "clang_sha256": _tool_sha256(clang_path),
         "llvm_size_path": _tool_path_text(llvm_size_path),
