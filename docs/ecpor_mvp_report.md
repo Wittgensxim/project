@@ -42,6 +42,26 @@ P9-1 只汇总已有 Stanford-8 与 Misc8 结果；没有新增搜索、没有�
 | TotalBothSmallerPrograms | 2 | Stanford Queens 与 Misc ffbench |
 | AttributionCases | 2 | 两个 both-smaller program 均有 case-level attribution |
 
+## Post-MVP P9-5 depth1 扩展
+
+P9-5 是 post-MVP summary-only 扩展，不改变 `v0.1.1` MVP 发布边界。`v0.1.1` MVP 仍然是 Stanford-8 + Misc8，共 `16` 个程序、`448` 个 pair certificate；P9-5 只把已经完成的 Diverse8 depth1-only 证据合并进同一张总表。
+
+| 指标 | P9-5 结果 | 含义 |
+| --- | ---: | --- |
+| BenchmarkSets | 3 | Stanford-8、Misc8、Diverse8 |
+| TotalPrograms | 24 | 三组各 8 个程序 |
+| TotalPairMatrixCertificates | 672 | `3 * 8 * 28` 个 unordered pass-pair certificate |
+| TotalReproducedCertificates | 672 | 全部证书可复现 |
+| TotalHardFalseIndependent | 0 | 扩展到 24 程序后仍未观察到 hard false independent |
+| TotalAdjacentAttempts | 168 | 三组 depth1 adjacent validation 尝试数 |
+| CertifiedAdjacentEvents | 101 | 可作为当前 state hard-prune evidence 的事件 |
+| NotCertifiedAdjacentEvents | 39 | 必须保留为 one-swap 候选的事件 |
+| TotalOneSwapCandidates | 39 | depth1-only 候选数 |
+| TotalBothSmallerPrograms | 2 | 仍然只有 Queens 与 ffbench |
+| Diverse8BothSmallerPrograms | 0 | Diverse8 没有新增 both-smaller program |
+
+P9-5 的结论是：Diverse8 增加了 benchmark 覆盖面，但没有扩大 both-smaller program 集合。因此当前更适合进入总结合并和写作阶段，而不是继续加深搜索。
+
 ## Benchmark Set Summary
 
 | benchmark | programs | pair certs | reproduced | hard false | static FN | adjacent attempts | certified | not certified | one-swap | both-smaller programs |
@@ -156,7 +176,9 @@ AttributionCases=2
 | --- | --- |
 | [README.md](../README.md) | 五分钟项目入口 |
 | `data/outputs/final_mvp_summary/mvp_summary_report.md` | 自动生成的 P9-1 summary；保留在本地 result workspace，不纳入 Git |
+| `data/outputs/combined_depth1_summary/combined_depth1_report.md` | 自动生成的 P9-5 post-MVP depth1 总表；保留在本地 result workspace，不纳入 Git |
 | [docs/results/mvp_summary_manifest.json](results/mvp_summary_manifest.json) | P9-1 result manifest |
+| [docs/results/combined_depth1_summary_manifest.json](results/combined_depth1_summary_manifest.json) | P9-5 post-MVP result manifest |
 | [docs/results/core_evidence_manifest.json](results/core_evidence_manifest.json) | Stanford core evidence manifest |
 | [docs/results/core_evidence_misc8_manifest.json](results/core_evidence_misc8_manifest.json) | Misc8 evidence supplement manifest |
 | [docs/data_retention_manifest.md](data_retention_manifest.md) | `data/` 保留规则 |
@@ -175,4 +197,4 @@ AttributionCases=2
 
 ## 下一步
 
-P9-3 完成后，优先审阅 README 和本主报告能否让读者在 5 分钟内理解项目、在 30 分钟内复现 P9-1 summary。只有这层叙事稳定后，才考虑 P9-4 optional diverse8；即使进入 P9-4，也应保持 depth1-only，不进入更深搜索。
+P9-5 完成后，优先写阶段报告/论文草稿，或进入 P10 PassSpec provenance v2。当前不建议继续 two-swap、depth=3、beam/searcher、runtime benchmark、Alive2 或 PassInstrumentation。

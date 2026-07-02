@@ -32,6 +32,26 @@ ECPOR 是一个 evidence-carrying LLVM phase-ordering reduction 原型，不是�
 
 解释：证书层当前没有发现 hard false independent；静态过滤修复后在两个 benchmark set 上没有观察到 false negative；多数 IR 差异不会传导到 `.text`，只有 `testsuite_stanford_queens` 与 `testsuite_misc_ffbench` 出现 both-codegen-smaller case，并已进入可复查归因。
 
+## Post-MVP P9-5 depth1 扩展
+
+P9-5 不改变 `v0.1.1` MVP 语义。`v0.1.1` 仍然定义为 Stanford-8 + Misc8，共 `16` 个程序、`448` 个 pair certificate。P9-5 只是把已经完成的 Diverse8 depth1-only 证据并入一个 post-MVP 总表，用来确认扩展到 `24` 个程序后主结论是否稳定。
+
+| 指标 | P9-5 结果 |
+| --- | ---: |
+| benchmark sets | 3 |
+| programs | 24 |
+| pair certificates | 672 |
+| reproduced certificates | 672 / 672 |
+| HardFalseIndependent | 0 |
+| adjacent validation attempts | 168 |
+| certified adjacent events | 101 |
+| not-certified adjacent events | 39 |
+| one-swap candidates | 39 |
+| depth1 both-smaller programs | 2 |
+| Diverse8 both-smaller programs | 0 |
+
+解释：Diverse8 增加了覆盖面，但没有新增 depth1 both-smaller program。因此当前阶段不建议继续搜索；更合适的下一步是写阶段报告/论文草稿，或做 P10 PassSpec provenance v2。
+
 ## Evidence Level
 
 | evidence level | 含义 | 可作为 hard prune |
@@ -133,6 +153,7 @@ AttributionCases=2
 | `configs/` | scalar pipeline、passspec、benchmark ingest 配置 |
 | `data/inputs/` | 保留的 LLVM IR 输入 |
 | `data/outputs/final_mvp_summary/` | P9-1 MVP summary 输出 |
+| `data/outputs/combined_depth1_summary/` | P9-5 post-MVP 24-program depth1 summary 输出 |
 | `docs/results/` | 可提交 manifest |
 | `docs/progress/` | 按顺序拆分的中文进度记录 |
 | `docs/data_retention_manifest.md` | `data/` 保留规则 |
@@ -140,4 +161,4 @@ AttributionCases=2
 
 ## 下一步
 
-P9-3 之后优先审阅 README 与主报告是否足够清楚。若继续扩展 benchmark，应只做 P9-4 optional diverse8 且保持 depth1-only；在 P9 主报告稳定前，不进入完整 searcher 或更深搜索。
+P9-5 之后优先进入总结合并阶段：写阶段报告/论文草稿，或做 P10 PassSpec provenance v2。当前不建议继续 two-swap、depth=3、beam/searcher、runtime benchmark 或 Alive2。

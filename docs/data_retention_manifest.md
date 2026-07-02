@@ -46,6 +46,7 @@ data/outputs/depth1_analysis_p8b_misc8/
 data/outputs/effect_attribution_ffbench/
 data/outputs/core_evidence_report_misc8/
 data/outputs/final_mvp_summary/
+data/outputs/combined_depth1_summary/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
@@ -210,6 +211,28 @@ mvp_summary_report.md
 
 ```text
 docs/results/mvp_summary_manifest.json
+```
+
+P9-5 当前保留 post-MVP 24-program depth1 总结表：
+
+```text
+data/outputs/combined_depth1_summary/
+```
+
+原因：P9-5 不新增实验、不新增 certificate、不新增搜索，只汇总 Stanford-8、Misc8、Diverse8 的 depth1-only 证据。目录中保留：
+
+```text
+benchmark_set_summary.csv
+depth1_reduction_summary.csv
+depth1_objective_summary.csv
+depth1_codegen_summary.csv
+combined_depth1_report.md
+```
+
+对应 tracked manifest：
+
+```text
+docs/results/combined_depth1_summary_manifest.json
 ```
 
 ## 可删除：临时或重复目录
