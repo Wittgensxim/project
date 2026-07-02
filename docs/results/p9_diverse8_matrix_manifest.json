@@ -1,0 +1,59 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P9-4b",
+  "description": "P9-4b diverse8 full matrix and static filter pre evaluation.",
+  "result_generated_from_commit": "327b6b37d851949cc54edfb361262f73f42f19f8",
+  "ecpor_git_commit": "327b6b37d851949cc54edfb361262f73f42f19f8",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "benchmark_config": "configs/benchmarks_diverse8.yaml",
+    "pipeline_config": "configs/pipeline_scalar.yaml",
+    "passspec": "configs/passspec.yaml"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/pair_tests_p9_diverse8",
+    "cert_dir": "data/certs/pair_tests_p9_diverse8",
+    "summary_csv": "data/outputs/cert_summary_p9_diverse8_pre.csv",
+    "summary_report": "data/outputs/cert_summary_report_p9_diverse8_pre.txt",
+    "static_decisions_csv": "data/outputs/static_filter_decisions_p9_diverse8_pre.csv",
+    "static_report": "data/outputs/static_filter_report_p9_diverse8_pre.md"
+  },
+  "sha256": {
+    "benchmark_config": "32a46c9f68192c12007d1400701241655c4078640741f97b7241e3e20b39a17c",
+    "pipeline_config": "798fafb5e73bd26036dec30fd6d9592ec4ebf0b51a17bd5d73f81dc3acb8f2cf",
+    "passspec": "b6231cda06ce132423fe1f29d8d4cabd95c9722dbf41258691d084b097ec4788",
+    "summary_csv": "25d8d3f6ff4cc348b20cae199793e608c77c2ff5aff8afb736fffce95235f061",
+    "summary_report": "8ad68536d58f8e572f7f997e5d56994f874ca42fa5f1d19f5d89929936bc875c",
+    "static_decisions_csv": "6a6ea440328d6c58533594fb72e7826858ed9c5792b6bfc2cdd68d51ca1bc8ec",
+    "static_report": "56be5a11fecba2f90fa50847e115301e20f659400d6cddc02eca14cd2c8849f7",
+    "opt": "f4a10cdc53c8f1288bb4051318af63ca8b07aae0f0b8ffb13b788fc98ace2543"
+  },
+  "tools": {
+    "opt_path": "E:\\llvm\\build\\bin\\opt.exe"
+  },
+  "summary": {
+    "TotalCertificates": 224,
+    "ReproducedCertificates": 224,
+    "CertificateReproductionRate": "100.00%",
+    "CertifiedIndependent": 196,
+    "NotCertifiedIndependent": 28,
+    "RunFailed": 0,
+    "HardFalseIndependent": 0,
+    "CertifiedFeatureMismatchCount": 0,
+    "FailureDirections": 0,
+    "MacroStaticCandidateRecall": "100.00%",
+    "StaticCandidateReduction": "21.43%",
+    "StaticFalseNegativeObserved": 0,
+    "StaticCandidateRecall": "100.00%"
+  },
+  "scope_limits": {
+    "benchmark_set": "P9-Diverse8",
+    "program_count": 8,
+    "pass_pair_count": 28,
+    "passspec_tuning": false,
+    "new_search": false,
+    "runtime_benchmarks": false,
+    "code_size_evaluation": false,
+    "pre_tuning_static_filter_eval": true
+  }
+}
