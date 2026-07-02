@@ -28,6 +28,10 @@ class ResultManifestTests(unittest.TestCase):
             result_manifest.build_depth1_analysis_manifest,
             manifest_builders.build_depth1_analysis_manifest,
         )
+        self.assertIs(
+            result_manifest.build_combined_depth1_summary_manifest,
+            manifest_builders.build_combined_depth1_summary_manifest,
+        )
         self.assertIs(result_manifest.main, manifest_cli.main)
 
     def test_builds_p7a_manifest_from_outputs_and_hashes_files(self):

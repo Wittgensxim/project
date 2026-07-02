@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .environment import file_sha256
+from .combined_depth1_summary import build_combined_depth1_summary_manifest
 from .manifest_common import build_result_manifest
 
 
