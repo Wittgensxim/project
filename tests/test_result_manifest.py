@@ -1070,6 +1070,10 @@ def _write_p8b_lite_p6_outputs(out_dir: Path) -> None:
             "anchor.ll,100,0,0.000000\n"
             "testsuite_misc_ffbench,testsuite_misc_ffbench__swap,single_swap,"
             "swap.ll,96,-4,-4.000000\n"
+            "testsuite_misc_evalloop,testsuite_misc_evalloop__swap,single_swap,"
+            "evalloop_swap.ll,100,0,0.000000\n"
+            "testsuite_misc_flops_1,testsuite_misc_flops_1__swap,single_swap,"
+            "flops_swap.ll,108,8,8.000000\n"
         ),
     )
     _write_text(
@@ -1081,7 +1085,7 @@ def _write_p8b_lite_p6_outputs(out_dir: Path) -> None:
             Programs: 8
             ObjectBuildFailed: 0
             SizeParseFailed: 0
-            CodeSizeDeltaVsAnchor: 3
+            CodeSizeDeltaVsAnchor computed: 3
             SingleSwapP5SameAsAnchor: 0
             SingleSwapP5DifferentFromAnchor: 3
             IRDifferentButTextEqualCount: 2

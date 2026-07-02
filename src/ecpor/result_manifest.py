@@ -832,10 +832,7 @@ def build_p8b_code_size_manifest(
             "llc": llc_path,
             "llvm_size": llvm_size_path,
         },
-        summary=_filter_keys(
-            _parse_key_value_report(report),
-            P8B_CODE_SIZE_SUMMARY_KEYS,
-        ),
+        summary=_p8b_code_size_summary(report, p6 / "object_size.csv"),
         repo_root=repo_root,
         result_generated_from_commit=result_generated_from_commit,
         extra={
@@ -1510,6 +1507,39 @@ def _static_false_negative_delta(
     if not isinstance(pre, int) or not isinstance(post, int):
         return None
     return pre - post
+
+
+def _p8b_code_size_summary(
+    report: str | Path,
+    object_size_csv: str | Path,
+) -> dict[str, Any]:
+    summary = _filter_keys(
+        _parse_key_value_report(report),
+        P8B_CODE_SIZE_SUMMARY_KEYS,
+    )
+    rows = _load_csv(object_size_csv)
+    single_swap_rows = [row for row in rows if row.get("source") == "single_swap"]
+    computed_rows = [
+        row
+        for row in single_swap_rows
+        if row.get("text_delta", "") != ""
+        and not row.get("compile_failure_kind", "")
+        and not row.get("size_failure_kind", "")
+    ]
+    summary.setdefault("CodeSizeDeltaVsAnchor", len(computed_rows))
+    summary.setdefault(
+        "SmallerText",
+        sum(1 for row in computed_rows if (_parse_optional_float(row.get("text_delta")) or 0.0) < 0.0),
+    )
+    summary.setdefault(
+        "EqualText",
+        sum(1 for row in computed_rows if (_parse_optional_float(row.get("text_delta")) or 0.0) == 0.0),
+    )
+    summary.setdefault(
+        "LargerText",
+        sum(1 for row in computed_rows if (_parse_optional_float(row.get("text_delta")) or 0.0) > 0.0),
+    )
+    return summary
 
 
 def _load_csv(path: str | Path) -> list[dict[str, str]]:

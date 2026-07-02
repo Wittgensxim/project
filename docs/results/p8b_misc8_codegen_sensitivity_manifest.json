@@ -1,0 +1,56 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P8b-3d",
+  "description": "P8b Misc8 clang -c sensitivity check for depth1 candidates.",
+  "result_generated_from_commit": "9a449ee4e2b59a4a3b153ee06d136278d7b5373a",
+  "ecpor_git_commit": "9a449ee4e2b59a4a3b153ee06d136278d7b5373a",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "p6_object_size_csv": "data/outputs/code_size_p8b_misc8/object_size.csv"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/codegen_sensitivity_p8b_misc8",
+    "p8a_clang_object_size_csv": "data/outputs/codegen_sensitivity_p8b_misc8/p8a_clang_object_size.csv",
+    "p8a_codegen_direction_compare_csv": "data/outputs/codegen_sensitivity_p8b_misc8/p8a_codegen_direction_compare.csv",
+    "p8a_codegen_sensitivity_report": "data/outputs/codegen_sensitivity_p8b_misc8/p8a_codegen_sensitivity_report.md"
+  },
+  "sha256": {
+    "p6_object_size_csv": "3c71e9687bce1a54cb58ce1d632983af3f856e61e5efd6900f5dbd167e913fa3",
+    "p8a_clang_object_size_csv": "7f4680ae1129074f283f5d8a1bdabd9e33116a4283e3bd61827a993d18c51ddf",
+    "p8a_codegen_direction_compare_csv": "b8e642320a607d6d1a6c422ccfcb95c422c0ecac4bd937ddd61b0be347ffc2e7",
+    "p8a_codegen_sensitivity_report": "c4827ccf50a92400e8e222a09cd00a7db1df7391885ca68cfc22a8dc7c1de912",
+    "clang": "7813948a1b853beb1806fd1bb28b09917bcbd9e35d67b43345af02c100b93551",
+    "llvm_size": "f425ef87d64380ff5f8fd055ddb52e1f0d38f3031bb2a5bbddd557d71c5bc589"
+  },
+  "tools": {
+    "clang_path": "E:\\llvm\\build\\bin\\clang.exe",
+    "llvm_size_path": "E:\\llvm\\build\\bin\\llvm-size.exe"
+  },
+  "summary": {
+    "Depth2Inputs": 0,
+    "SmallerUnderBothCount": 1,
+    "Programs": 8,
+    "DirectionComparisonCandidates": 16,
+    "DirectionAgreementRate": "93.75%",
+    "SmallerOnlyUnderLlcCount": 0,
+    "AnchorInputs": 8,
+    "SmallerOnlyUnderClangCount": 0,
+    "ClangSizeParseFailed": 0,
+    "ClangObjectBuildsAttempted": 24,
+    "DirectionAgreementCount": 15,
+    "DirectionDisagreementCount": 1,
+    "SingleSwapInputs": 16,
+    "ClangObjectBuildFailed": 0,
+    "IRInputs": 24
+  },
+  "scope_limits": {
+    "benchmark_set": "P8b-Misc8",
+    "program_count": 8,
+    "depth": 1,
+    "new_certificates": false,
+    "llvm_opt_rerun": false,
+    "two_swap_search": false,
+    "runtime_benchmarks": false,
+    "codegen_path_compared": "clang -c"
+  }
+}

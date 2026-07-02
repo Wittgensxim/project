@@ -27,6 +27,10 @@ data/outputs/static_filter_report_p8b_misc8_pre.md
 data/outputs/static_filter_decisions_p8b_misc8_post.csv
 data/outputs/static_filter_report_p8b_misc8_post.md
 data/outputs/static_filter_repair_report_p8b_misc8.md
+data/outputs/lazy_validation_p8b_misc8/
+data/outputs/bounded_local_p8b_misc8/
+data/outputs/code_size_p8b_misc8/
+data/outputs/codegen_sensitivity_p8b_misc8/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
@@ -34,6 +38,7 @@ data/outputs/lazy_validation_p4_e83c409_second.md
 data/certs/pair_tests/
 data/certs/pair_tests_p8b_misc8/
 data/certs/lazy_validation_p4_e83c409/
+data/certs/lazy_validation_p8b_misc8/
 data/certs/bounded_two_swap_p7a/
 data/certs/bounded_two_swap_p7b/
 ```
@@ -96,6 +101,18 @@ data/outputs/static_filter_repair_report_p8b_misc8.md
 ```
 
 原因：P8b-2 修改了 `configs/passspec.yaml`，需要保留 pre/post 对照证明 `StaticFalseNegativeObserved` 从 `5` 降到 `0`，同时记录 candidate reduction 从 `17.86%` 降到 `10.71%` 的代价。
+
+P8b-3-lite 当前保留 Misc8 depth1 final 证据：
+
+```text
+data/outputs/lazy_validation_p8b_misc8/
+data/certs/lazy_validation_p8b_misc8/
+data/outputs/bounded_local_p8b_misc8/
+data/outputs/code_size_p8b_misc8/
+data/outputs/codegen_sensitivity_p8b_misc8/
+```
+
+原因：P8b-3-lite 是 Misc8 上的 P4/P5/P6/P8a depth1 链路验证，证明该 benchmark set 在不进入 two-swap 的情况下可复现 certificate、生成 one-swap candidate、计算 `llc` code-size 并进行 `clang -c` sensitivity 对照。当前 only both-smaller case 与后续 attribution 直接相关，因此保留 final 输出和 lazy-validation certificates；中间 object 输出仍可按阶段清理，但本轮先作为 final 证据保留。
 
 ## 可删除：临时或重复目录
 

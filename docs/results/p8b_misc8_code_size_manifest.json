@@ -1,0 +1,54 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P8b-3c",
+  "description": "P8b Misc8 llc object-size check for depth1 candidates.",
+  "result_generated_from_commit": "9a449ee4e2b59a4a3b153ee06d136278d7b5373a",
+  "ecpor_git_commit": "9a449ee4e2b59a4a3b153ee06d136278d7b5373a",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "p5_output_dir": "data/outputs/bounded_local_p8b_misc8",
+    "p5_report": "data/outputs/bounded_local_p8b_misc8/report.md",
+    "candidates_csv": "data/outputs/bounded_local_p8b_misc8/candidates.csv",
+    "pipeline_runs_csv": "data/outputs/bounded_local_p8b_misc8/pipeline_runs.csv"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/code_size_p8b_misc8",
+    "object_size_csv": "data/outputs/code_size_p8b_misc8/object_size.csv",
+    "code_size_report": "data/outputs/code_size_p8b_misc8/code_size_report.md"
+  },
+  "sha256": {
+    "p5_report": "883889a52589285ab858d5cef458033eeb05d29934e8ecbc262c5da5ed79e525",
+    "candidates_csv": "f858d815ef12718df5f7b3459f7d624e46c1f08ea7b0097172c1cd4efdcb9e07",
+    "pipeline_runs_csv": "73f5bd64388b3363e440b6d96738185e10ff5c8c2ba7faaf863ab14105cf88c3",
+    "object_size_csv": "3c71e9687bce1a54cb58ce1d632983af3f856e61e5efd6900f5dbd167e913fa3",
+    "code_size_report": "07865d32864c91dd98acbc94e2d5e4085963b00e51233d479c29843c011cbeec",
+    "llc": "1520eba7e1ee09cc6f38ce1d7ca6eb9fb5187f6ded3a9f70a37f264acebf384c",
+    "llvm_size": "f425ef87d64380ff5f8fd055ddb52e1f0d38f3031bb2a5bbddd557d71c5bc589"
+  },
+  "tools": {
+    "llc_path": "E:\\llvm\\build\\bin\\llc.exe",
+    "llvm_size_path": "E:\\llvm\\build\\bin\\llvm-size.exe"
+  },
+  "summary": {
+    "SizeParseFailed": 0,
+    "Programs": 8,
+    "IRDifferentButTextEqualRate": "93.75%",
+    "ObjectBuildFailed": 0,
+    "SingleSwapP5SameAsAnchor": 0,
+    "CodeSizeDeltaVsAnchor": 16,
+    "SmallerText": 1,
+    "EqualText": 15,
+    "LargerText": 0,
+    "SingleSwapP5DifferentFromAnchor": 16,
+    "IRDifferentButTextEqualCount": 15
+  },
+  "scope_limits": {
+    "benchmark_set": "P8b-Misc8",
+    "program_count": 8,
+    "depth": 1,
+    "codegen_path": "llc -filetype=obj",
+    "two_swap_search": false,
+    "full_searcher": false,
+    "runtime_benchmarks": false
+  }
+}
