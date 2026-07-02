@@ -24,6 +24,9 @@ data/outputs/cert_summary_p8b_misc8_pre.csv
 data/outputs/cert_summary_report_p8b_misc8_pre.txt
 data/outputs/static_filter_decisions_p8b_misc8_pre.csv
 data/outputs/static_filter_report_p8b_misc8_pre.md
+data/outputs/static_filter_decisions_p8b_misc8_post.csv
+data/outputs/static_filter_report_p8b_misc8_post.md
+data/outputs/static_filter_repair_report_p8b_misc8.md
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
@@ -83,6 +86,16 @@ data/outputs/static_filter_report_p8b_misc8_pre.md
 ```
 
 原因：P8b-1 在 Misc8 × 28 full matrix 上发现 `StaticFalseNegativeObserved = 5`，这些 pre-tuning 输出必须保留，后续 passspec 修正需要与它做 post 对照。`data/outputs/pair_tests_p8b_misc8/repro/` 已删除；它只是 certificate reproduction 的临时输出，可由证书再生成。
+
+P8b-2 当前保留 static filter repair 对照文件：
+
+```text
+data/outputs/static_filter_decisions_p8b_misc8_post.csv
+data/outputs/static_filter_report_p8b_misc8_post.md
+data/outputs/static_filter_repair_report_p8b_misc8.md
+```
+
+原因：P8b-2 修改了 `configs/passspec.yaml`，需要保留 pre/post 对照证明 `StaticFalseNegativeObserved` 从 `5` 降到 `0`，同时记录 candidate reduction 从 `17.86%` 降到 `10.71%` 的代价。
 
 ## 可删除：临时或重复目录
 

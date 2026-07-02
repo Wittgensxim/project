@@ -1,0 +1,58 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P8b-2",
+  "description": "P8b Misc8 static-filter false-negative repair.",
+  "result_generated_from_commit": "ca4cc094eeaf60f115a32863a45e0ea43bbaf512",
+  "ecpor_git_commit": "ca4cc094eeaf60f115a32863a45e0ea43bbaf512",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "observed_summary_csv": "data/outputs/cert_summary_p8b_misc8_pre.csv",
+    "passspec": "configs/passspec.yaml",
+    "pre_static_decisions_csv": "data/outputs/static_filter_decisions_p8b_misc8_pre.csv",
+    "pre_static_report": "data/outputs/static_filter_report_p8b_misc8_pre.md"
+  },
+  "outputs": {
+    "post_static_decisions_csv": "data/outputs/static_filter_decisions_p8b_misc8_post.csv",
+    "post_static_report": "data/outputs/static_filter_report_p8b_misc8_post.md",
+    "repair_report": "data/outputs/static_filter_repair_report_p8b_misc8.md"
+  },
+  "sha256": {
+    "observed_summary_csv": "a55372e29c1f53d4769592b68396c3421a3fc378d4fdbb236f2ffc7540e69f0e",
+    "passspec": "b6231cda06ce132423fe1f29d8d4cabd95c9722dbf41258691d084b097ec4788",
+    "pre_static_decisions_csv": "3256b7e913cb93d2718d5ff77b3182d99e3d14506490673993e1bc4af50d49a9",
+    "pre_static_report": "02cd04b2c086bcb4a54777a8b2d6cc9824b96104d0faf74e3a13c3aa0a928d20",
+    "post_static_decisions_csv": "b30a9456a7529b06205e1d57bbc6c09f650f3824c55d5c30f8528810e5aeb05b",
+    "post_static_report": "f78432bdd5aaec5a7be0a3f7432571ffac1029d0280a92e444da84a7be8b9b69",
+    "repair_report": "a9d434fc02c14e945061e344abf6852274d65208460881c97dece9bb6aa9752b"
+  },
+  "tools": {},
+  "summary": {
+    "PreStaticCandidateReduction": "17.86%",
+    "PreStaticCandidateRecall": "93.42%",
+    "PreStaticFalseNegativeObserved": 5,
+    "PreMacroStaticCandidateRecall": "94.39%",
+    "PostStaticCandidateReduction": "10.71%",
+    "PostStaticCandidateRecall": "100.00%",
+    "PostStaticFalseNegativeObserved": 0,
+    "PostMacroStaticCandidateRecall": "100.00%",
+    "StaticFalseNegativeDelta": 5,
+    "PassSpecRepair": "sroa.may_produce += dce_opportunity"
+  },
+  "scope_limits": {
+    "benchmark_set": "P8b-Misc8",
+    "new_certificates": false,
+    "certificate_matrix_rerun": false,
+    "new_search": false,
+    "runtime_benchmarks": false,
+    "code_size_evaluation": false,
+    "passspec_tuning": true,
+    "repair_source": "empirical_false_negative_repair_p8b1"
+  },
+  "repair_evidence": [
+    "sroa,adce on testsuite_misc_ffbench",
+    "sroa,dce on testsuite_misc_flops_1",
+    "sroa,adce on testsuite_misc_flops_1",
+    "sroa,dce on testsuite_misc_flops_2",
+    "sroa,adce on testsuite_misc_flops_2"
+  ]
+}

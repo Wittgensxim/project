@@ -275,6 +275,20 @@ $env:PYTHONPATH = "src"
 D:\Miniconda\envs\dlm\python.exe -m ecpor.result_manifest p8b-matrix --out-manifest docs\results\p8b_misc8_matrix_manifest.json --benchmark-config configs\benchmarks_p8b.yaml --pipeline-config configs\pipeline_scalar.yaml --passspec configs\passspec.yaml --output-dir data\outputs\pair_tests_p8b_misc8 --cert-dir data\certs\pair_tests_p8b_misc8 --summary-csv data\outputs\cert_summary_p8b_misc8_pre.csv --summary-report data\outputs\cert_summary_report_p8b_misc8_pre.txt --static-decisions data\outputs\static_filter_decisions_p8b_misc8_pre.csv --static-report data\outputs\static_filter_report_p8b_misc8_pre.md --opt E:\llvm\build\bin\opt.exe --repo-root . --result-generated-from-commit ed4cff79a13e0cb455a4c917fa10a3b9243fdf45
 ```
 
+Run P8b-2 static-filter post-repair evaluation without rerunning certificates:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.static_filter --program-preset p8b-misc8 --mode per-program --observed-summary data\outputs\cert_summary_p8b_misc8_pre.csv --out-csv data\outputs\static_filter_decisions_p8b_misc8_post.csv --out-report data\outputs\static_filter_report_p8b_misc8_post.md --window-size 7
+```
+
+Generate a tracked P8b-2 static-filter repair manifest:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.result_manifest p8b-static-repair --out-manifest docs\results\p8b_misc8_static_filter_repair_manifest.json --observed-summary data\outputs\cert_summary_p8b_misc8_pre.csv --passspec configs\passspec.yaml --pre-static-decisions data\outputs\static_filter_decisions_p8b_misc8_pre.csv --pre-static-report data\outputs\static_filter_report_p8b_misc8_pre.md --post-static-decisions data\outputs\static_filter_decisions_p8b_misc8_post.csv --post-static-report data\outputs\static_filter_report_p8b_misc8_post.md --repair-report data\outputs\static_filter_repair_report_p8b_misc8.md --repo-root . --result-generated-from-commit ca4cc094eeaf60f115a32863a45e0ea43bbaf512
+```
+
 Scan soft IR features for one output:
 
 ```powershell
