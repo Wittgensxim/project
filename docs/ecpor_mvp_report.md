@@ -125,7 +125,11 @@ D:\Miniconda\envs\dlm\python.exe -m pytest -q
 107 passed
 ```
 
-再重新生成 P9-1 MVP summary：
+外部 fresh clone 可以直接检查 README、本报告和 `docs/results/mvp_summary_manifest.json`，不需要本地 LLVM 或历史 `data/outputs`。这些 tracked 文档已经包含 P9-1 的冻结指标和 scope limits。
+
+完整重生成 P9-1 MVP summary 需要当前工作区保留已有 P4/P5/P6/P8/P9 输出，因为 `data/outputs/` 按 data retention 规则不纳入 Git 跟踪。如果缺少这些输入，`ecpor.mvp_summary` 会返回非零并列出缺失文件，而不是生成全 0 summary。
+
+在带有 retained result inputs 的工作区中重新生成 P9-1 MVP summary：
 
 ```powershell
 $env:PYTHONPATH = "src"
@@ -151,7 +155,7 @@ AttributionCases=2
 | 文件或目录 | 说明 |
 | --- | --- |
 | [README.md](../README.md) | 五分钟项目入口 |
-| [data/outputs/final_mvp_summary/mvp_summary_report.md](../data/outputs/final_mvp_summary/mvp_summary_report.md) | 自动生成的 P9-1 summary |
+| `data/outputs/final_mvp_summary/mvp_summary_report.md` | 自动生成的 P9-1 summary；保留在本地 result workspace，不纳入 Git |
 | [docs/results/mvp_summary_manifest.json](results/mvp_summary_manifest.json) | P9-1 result manifest |
 | [docs/results/core_evidence_manifest.json](results/core_evidence_manifest.json) | Stanford core evidence manifest |
 | [docs/results/core_evidence_misc8_manifest.json](results/core_evidence_misc8_manifest.json) | Misc8 evidence supplement manifest |

@@ -77,7 +77,15 @@ D:\Miniconda\envs\dlm\python.exe -m pytest -q
 107 passed
 ```
 
-重新生成 MVP summary：
+外部 clone 后可以直接阅读这些已跟踪文件来理解冻结结果：
+
+- [docs/ecpor_mvp_report.md](docs/ecpor_mvp_report.md)
+- [docs/results/mvp_summary_manifest.json](docs/results/mvp_summary_manifest.json)
+- [docs/project_progress.md](docs/project_progress.md)
+
+`data/outputs/` 按 data retention 规则不纳入 Git 跟踪；因此 fresh clone 默认不能直接重生成 P9-1 summary。下面的命令需要当前工作区保留已有 P4/P5/P6/P8/P9 输出，或先按历史阶段重新生成这些输入。若输入文件缺失，`ecpor.mvp_summary` 会返回非零并列出缺失文件，避免生成误导性的全 0 summary。
+
+在带有 retained result inputs 的工作区中重新生成 MVP summary：
 
 ```powershell
 $env:PYTHONPATH = "src"

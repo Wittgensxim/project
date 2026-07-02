@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -104,6 +105,7 @@ def run_mvp_summary(
     result_generated_from_commit: str | None = None,
 ) -> MvpSummaryResult:
     inputs = list(benchmark_sets or default_benchmark_sets())
+    _require_input_files(inputs)
     benchmark_rows: list[dict[str, str]] = []
     reduction_rows: list[dict[str, str]] = []
     objective_rows: list[dict[str, str]] = []
@@ -581,6 +583,18 @@ def _input_paths(benchmark_sets: Sequence[BenchmarkSetInputs]) -> dict[str, str 
     return paths
 
 
+def _require_input_files(benchmark_sets: Sequence[BenchmarkSetInputs]) -> None:
+    missing = [
+        f"{key}={Path(path).as_posix()}"
+        for key, path in _input_paths(benchmark_sets).items()
+        if not Path(path).is_file()
+    ]
+    if missing:
+        raise FileNotFoundError(
+            "missing MVP summary input files: " + "; ".join(missing)
+        )
+
+
 def _load_csv(path: str | Path) -> list[dict[str, str]]:
     candidate = Path(path)
     if not candidate.exists():
@@ -690,12 +704,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--repo-root", default=".")
     parser.add_argument("--result-generated-from-commit")
     args = parser.parse_args(argv)
-    result = run_mvp_summary(
-        output_dir=args.out,
-        manifest_path=args.manifest,
-        repo_root=args.repo_root,
-        result_generated_from_commit=args.result_generated_from_commit,
-    )
+    try:
+        result = run_mvp_summary(
+            output_dir=args.out,
+            manifest_path=args.manifest,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    except FileNotFoundError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
     report = Path(args.out) / "mvp_summary_report.md"
     print(report.read_text(encoding="utf-8"), end="")
     return 0 if result.summary else 1

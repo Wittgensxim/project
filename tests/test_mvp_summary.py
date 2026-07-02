@@ -10,6 +10,34 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 
 class MvpSummaryTests(unittest.TestCase):
+    def test_missing_required_inputs_fail_instead_of_zero_summary(self):
+        from ecpor.mvp_summary import BenchmarkSetInputs, run_mvp_summary
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            missing = root / "missing"
+
+            with self.assertRaises(FileNotFoundError) as raised:
+                run_mvp_summary(
+                    output_dir=root / "final_mvp_summary",
+                    benchmark_sets=[
+                        BenchmarkSetInputs(
+                            name="MissingSet",
+                            pair_summary_csv=missing / "cert_summary.csv",
+                            static_filter_report=missing / "static_report.md",
+                            lazy_validation_report=missing / "lazy_report.md",
+                            p5_candidates_csv=missing / "candidates.csv",
+                            p6_object_size_csv=missing / "object_size.csv",
+                            codegen_compare_csv=missing / "compare.csv",
+                            attribution_summary_csv=missing / "attribution.csv",
+                        )
+                    ],
+                )
+
+        message = str(raised.exception)
+        self.assertIn("missing MVP summary input files", message)
+        self.assertIn("MissingSet_pair_summary_csv", message)
+
     def test_builds_two_benchmark_mvp_summary_without_new_experiments(self):
         from ecpor.mvp_summary import BenchmarkSetInputs, run_mvp_summary
 
