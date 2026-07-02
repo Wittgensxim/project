@@ -1,0 +1,68 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P9-4a",
+  "description": "P9-4a diverse8 benchmark ingestion with family cap and source-dir stratification.",
+  "result_generated_from_commit": "f324e40163dc60a4296d44ed512fbcf8388eb0d2",
+  "ecpor_git_commit": "f324e40163dc60a4296d44ed512fbcf8388eb0d2",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "source_root": "E:/llvm-test-suite"
+  },
+  "outputs": {
+    "config": "configs/benchmarks_diverse8.yaml",
+    "output_dir": "data/outputs/benchmark_ingest_diverse8",
+    "ingest_summary_csv": "data/outputs/benchmark_ingest_diverse8/ingest_summary.csv",
+    "report": "data/outputs/benchmark_ingest_diverse8/report.md",
+    "accepted_ir_testsuite_diverse_aarch64_init_cpu_features": "data/inputs/testsuite_diverse_aarch64_init_cpu_features.ll",
+    "accepted_ir_testsuite_diverse_2003_05_14_initialize_string": "data/inputs/testsuite_diverse_2003_05_14_initialize_string.ll",
+    "accepted_ir_testsuite_diverse_2002_04_17_printfchar": "data/inputs/testsuite_diverse_2002_04_17_printfchar.ll",
+    "accepted_ir_testsuite_diverse_2003_05_21_bitfieldhandling": "data/inputs/testsuite_diverse_2003_05_21_bitfieldhandling.ll",
+    "accepted_ir_testsuite_diverse_2002_05_02_argumenttest": "data/inputs/testsuite_diverse_2002_05_02_argumenttest.ll",
+    "accepted_ir_testsuite_diverse_evalloop": "data/inputs/testsuite_diverse_evalloop.ll",
+    "accepted_ir_testsuite_diverse_2003_05_21_unionbitfields": "data/inputs/testsuite_diverse_2003_05_21_unionbitfields.ll",
+    "accepted_ir_testsuite_diverse_2002_05_02_casttest": "data/inputs/testsuite_diverse_2002_05_02_casttest.ll"
+  },
+  "sha256": {
+    "config": "32a46c9f68192c12007d1400701241655c4078640741f97b7241e3e20b39a17c",
+    "ingest_summary_csv": "537614a371251270cb820d95021e5e811945d602f8e1ad49d70bbf888f08de42",
+    "report": "3b643a8d82c3cc5929dd9b5aae9e2dffab97a95c6dbc7078696defc4cfd3ce77",
+    "accepted_ir_testsuite_diverse_aarch64_init_cpu_features": "99721aa690a6633cd5a5d25d7d1bfdfd82db6709412dcb30ae2e316e4e7e589c",
+    "accepted_ir_testsuite_diverse_2003_05_14_initialize_string": "e9b68de6ac7c7488e3636727c566e4f49cf909ef65434dca7ea1929135089631",
+    "accepted_ir_testsuite_diverse_2002_04_17_printfchar": "071e3a7f8af1f9654cf9f29919b150084f71a91c90af4da58d5f1f92ecd34741",
+    "accepted_ir_testsuite_diverse_2003_05_21_bitfieldhandling": "33d62c48f045250ef40a8589990d44e646d683fe978428ce7ab4f6a401ea31b3",
+    "accepted_ir_testsuite_diverse_2002_05_02_argumenttest": "34ca59b2056e597e9478cb7f32dacbafff1878896dda191c02e4cabc22998817",
+    "accepted_ir_testsuite_diverse_evalloop": "faf61cb10208356ac00e5d287b64226429e9e4594ed7df58c1b7a4e5e7f63c55",
+    "accepted_ir_testsuite_diverse_2003_05_21_unionbitfields": "107fb51b5520277dbd09819befb56c56ea50041fd996ed6d2d2578bae2bef7f2",
+    "accepted_ir_testsuite_diverse_2002_05_02_casttest": "a0c55cc257bde3f3f07e7f2c6b6c584d1bdd0fac57d302c28d05feca36cfa75d",
+    "clang": "7813948a1b853beb1806fd1bb28b09917bcbd9e35d67b43345af02c100b93551",
+    "opt": "f4a10cdc53c8f1288bb4051318af63ca8b07aae0f0b8ffb13b788fc98ace2543",
+    "llc": "1520eba7e1ee09cc6f38ce1d7ca6eb9fb5187f6ded3a9f70a37f264acebf384c",
+    "llvm_size": "f425ef87d64380ff5f8fd055ddb52e1f0d38f3031bb2a5bbddd557d71c5bc589"
+  },
+  "tools": {
+    "clang_path": "E:\\llvm\\build\\bin\\clang.exe",
+    "opt_path": "E:\\llvm\\build\\bin\\opt.exe",
+    "llc_path": "E:\\llvm\\build\\bin\\llc.exe",
+    "llvm_size_path": "E:\\llvm\\build\\bin\\llvm-size.exe"
+  },
+  "summary": {
+    "MaxProgramsPerFamily": 2,
+    "ClangObjectOk": 8,
+    "SizeParseOk": 8,
+    "ScalarPipelineOk": 8,
+    "AcceptedPrograms": 8,
+    "CandidateSourceFilesScanned": 30,
+    "IRGenerationOk": 29,
+    "LlcObjectOk": 8,
+    "MaxAcceptedFamilyCount": 1,
+    "RejectedPrograms": 22,
+    "FamilyLimitViolations": 0
+  },
+  "scope_limits": {
+    "new_certificates": false,
+    "pair_matrix": false,
+    "new_search": false,
+    "runtime_benchmarks": false,
+    "ingestion_only": true
+  }
+}
