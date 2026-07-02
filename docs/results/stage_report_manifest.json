@@ -1,0 +1,55 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P9-6",
+  "description": "Summary-only ECPOR stage report and paper-draft entry after the 24-program depth1 post-MVP summary.",
+  "result_generated_from_commit": "ca5842d294d34660898e2dfb80a67a4e7d933b35",
+  "ecpor_git_commit": "ca5842d294d34660898e2dfb80a67a4e7d933b35",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "combined_depth1_summary_manifest": "docs/results/combined_depth1_summary_manifest.json",
+    "mvp_summary_manifest": "docs/results/mvp_summary_manifest.json",
+    "core_evidence_manifest": "docs/results/core_evidence_manifest.json",
+    "core_evidence_misc8_manifest": "docs/results/core_evidence_misc8_manifest.json"
+  },
+  "outputs": {
+    "stage_report": "docs/ecpor_stage_report.md",
+    "readme": "README.md",
+    "mvp_report": "docs/ecpor_mvp_report.md"
+  },
+  "sha256": {
+    "combined_depth1_summary_manifest": "2f415711ad6b29ce12a1279e29bc38d9e55b3b80639dbfc252a89bd4e4c8a9be",
+    "mvp_summary_manifest": "63b9b26750a129264fb266721dfb9def2013e8c461d3f24b2053d8b106042912",
+    "core_evidence_manifest": "59daf9a6f2757f21a23eff04dc181313123cda089c02215e4f7a3d3c5ca00392",
+    "core_evidence_misc8_manifest": "700c6baf7d03fbcde0e332248a4c3d85522a10b55b79657722f14db995d052c4",
+    "stage_report": "0310115940f2243ef9f19888f3165adf7156e2b47d679c9e661fea52c4332d00",
+    "readme": "b394c434fba0f723a2e34ebd7ca99b35e62f7b8f4eb465dfdcf5c72bf9291895",
+    "mvp_report": "27f3f78ceb34d3d63547cb11b97d4def429ba924f6140b4e797083af6b10b77f"
+  },
+  "summary": {
+    "BenchmarkSets": 3,
+    "TotalPrograms": 24,
+    "TotalPairMatrixCertificates": 672,
+    "TotalReproducedCertificates": 672,
+    "TotalHardFalseIndependent": 0,
+    "TotalAdjacentAttempts": 168,
+    "CertifiedAdjacentEvents": 101,
+    "NotCertifiedAdjacentEvents": 39,
+    "TotalOneSwapCandidates": 39,
+    "TotalBothSmallerPrograms": 2,
+    "Diverse8BothSmallerPrograms": 0,
+    "AttributionCases": 2,
+    "StageReportWritten": true
+  },
+  "scope_limits": {
+    "stage": "P9-6",
+    "summary_only": true,
+    "new_experiments": false,
+    "new_certificates": false,
+    "new_search": false,
+    "runtime_benchmarks": false,
+    "two_swap_search": false,
+    "depth": 1,
+    "paper_draft": true,
+    "passspec_provenance_changes": false
+  }
+}
