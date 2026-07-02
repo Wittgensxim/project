@@ -345,12 +345,15 @@ class ResultManifestTests(unittest.TestCase):
                 llvm_size_path=llvm_size,
                 repo_root=root,
                 result_generated_from_commit="feed123",
+                stage="P9-4a",
+                description="Diverse8 benchmark ingestion smoke test.",
             )
             manifest_path = root / "benchmark_ingest_manifest.json"
             write_manifest(manifest_path, manifest)
             loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(loaded["stage"], "P8b-0")
+        self.assertEqual(loaded["stage"], "P9-4a")
+        self.assertEqual(loaded["description"], "Diverse8 benchmark ingestion smoke test.")
         self.assertEqual(loaded["result_generated_from_commit"], "feed123")
         self.assertIn("config", loaded["outputs"])
         self.assertIn("ingest_summary_csv", loaded["outputs"])
@@ -360,6 +363,9 @@ class ResultManifestTests(unittest.TestCase):
         self.assertIn("clang", loaded["sha256"])
         self.assertEqual(loaded["summary"]["AcceptedPrograms"], 1)
         self.assertEqual(loaded["summary"]["RejectedPrograms"], 1)
+        self.assertEqual(loaded["summary"]["MaxProgramsPerFamily"], 2)
+        self.assertEqual(loaded["summary"]["MaxAcceptedFamilyCount"], 1)
+        self.assertEqual(loaded["summary"]["FamilyLimitViolations"], 0)
         self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
 
     def test_builds_p8b_matrix_manifest(self):
@@ -963,12 +969,12 @@ def _write_benchmark_ingest_outputs(out_dir: Path, input_ir: Path) -> None:
     _write_text(
         out_dir / "ingest_summary.csv",
         (
-            "program,source_path,input_ir,status,failure_stage,failure_kind,"
+            "program,family,source_path,input_ir,status,failure_stage,failure_kind,"
             "num_functions,num_instructions,num_basic_blocks,scalar_pipeline_ok,"
             "llc_object_ok,clang_object_ok,size_parse_ok\n"
-            f"testsuite_misc_good,Good.c,{input_ir.as_posix()},accepted,,,1,1,1,"
+            f"testsuite_misc_good,testsuite_misc_good,Good.c,{input_ir.as_posix()},accepted,,,1,1,1,"
             "True,True,True,True\n"
-            "testsuite_misc_bad,Bad.c,,rejected,ir_generation,clang_failed,0,0,0,"
+            "testsuite_misc_bad,testsuite_misc_bad,Bad.c,,rejected,ir_generation,clang_failed,0,0,0,"
             "False,False,False,False\n"
         ),
     )
@@ -981,6 +987,9 @@ def _write_benchmark_ingest_outputs(out_dir: Path, input_ir: Path) -> None:
             CandidateSourceFilesScanned: 2
             AcceptedPrograms: 1
             RejectedPrograms: 1
+            MaxProgramsPerFamily: 2
+            MaxAcceptedFamilyCount: 1
+            FamilyLimitViolations: 0
             """
         ).strip()
         + "\n",

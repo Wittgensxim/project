@@ -1,0 +1,66 @@
+stage: P9-4a
+source: llvm-test-suite
+source_roots:
+  - "E:/llvm-test-suite/SingleSource/Benchmarks/Misc"
+  - "E:/llvm-test-suite/SingleSource/Regression/C"
+  - "E:/llvm-test-suite/SingleSource/UnitTests"
+instruction_limit: 5000
+max_programs_per_family: 2
+scalar_pipeline: "function(sroa,early-cse,instcombine,simplifycfg,reassociate,gvn,dce,adce)"
+programs:
+  - id: testsuite_diverse_aarch64_init_cpu_features
+    family: testsuite_diverse_aarch64_init_cpu_features
+    source: "E:/llvm-test-suite/SingleSource/Benchmarks/Misc/aarch64-init-cpu-features.c"
+    ir: data/inputs/testsuite_diverse_aarch64_init_cpu_features.ll
+    num_functions: 1
+    num_instructions: 38
+    num_basic_blocks: 1
+  - id: testsuite_diverse_2003_05_14_initialize_string
+    family: testsuite_diverse_2003_05_14_initialize_string
+    source: "E:/llvm-test-suite/SingleSource/Regression/C/2003-05-14-initialize-string.c"
+    ir: data/inputs/testsuite_diverse_2003_05_14_initialize_string.ll
+    num_functions: 1
+    num_instructions: 7
+    num_basic_blocks: 1
+  - id: testsuite_diverse_2002_04_17_printfchar
+    family: testsuite_diverse_2002_04_17_printfchar
+    source: "E:/llvm-test-suite/SingleSource/UnitTests/2002-04-17-PrintfChar.c"
+    ir: data/inputs/testsuite_diverse_2002_04_17_printfchar.ll
+    num_functions: 2
+    num_instructions: 15
+    num_basic_blocks: 2
+  - id: testsuite_diverse_2003_05_21_bitfieldhandling
+    family: testsuite_diverse_2003_05_21_bitfieldhandling
+    source: "E:/llvm-test-suite/SingleSource/Regression/C/2003-05-21-BitfieldHandling.c"
+    ir: data/inputs/testsuite_diverse_2003_05_21_bitfieldhandling.ll
+    num_functions: 1
+    num_instructions: 75
+    num_basic_blocks: 1
+  - id: testsuite_diverse_2002_05_02_argumenttest
+    family: testsuite_diverse_2002_05_02_argumenttest
+    source: "E:/llvm-test-suite/SingleSource/UnitTests/2002-05-02-ArgumentTest.c"
+    ir: data/inputs/testsuite_diverse_2002_05_02_argumenttest.ll
+    num_functions: 2
+    num_instructions: 27
+    num_basic_blocks: 2
+  - id: testsuite_diverse_evalloop
+    family: testsuite_diverse_evalloop
+    source: "E:/llvm-test-suite/SingleSource/Benchmarks/Misc/evalloop.c"
+    ir: data/inputs/testsuite_diverse_evalloop.ll
+    num_functions: 3
+    num_instructions: 550
+    num_basic_blocks: 3
+  - id: testsuite_diverse_2003_05_21_unionbitfields
+    family: testsuite_diverse_2003_05_21_unionbitfields
+    source: "E:/llvm-test-suite/SingleSource/Regression/C/2003-05-21-UnionBitfields.c"
+    ir: data/inputs/testsuite_diverse_2003_05_21_unionbitfields.ll
+    num_functions: 2
+    num_instructions: 32
+    num_basic_blocks: 2
+  - id: testsuite_diverse_2002_05_02_casttest
+    family: testsuite_diverse_2002_05_02_casttest
+    source: "E:/llvm-test-suite/SingleSource/UnitTests/2002-05-02-CastTest.c"
+    ir: data/inputs/testsuite_diverse_2002_05_02_casttest.ll
+    num_functions: 1
+    num_instructions: 156
+    num_basic_blocks: 1

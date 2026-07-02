@@ -115,6 +115,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     p8b_ingest.add_argument("--llvm-size", required=True)
     p8b_ingest.add_argument("--repo-root", default=".")
     p8b_ingest.add_argument("--result-generated-from-commit")
+    p8b_ingest.add_argument("--stage-name", default="P8b-0")
+    p8b_ingest.add_argument(
+        "--description",
+        default="Benchmark ingestion for P8b expansion from llvm-test-suite.",
+    )
 
     p8b_matrix = subparsers.add_parser(
         "p8b-matrix", help="Build a P8b-1 Misc8 pair-matrix manifest."
@@ -340,6 +345,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             llvm_size_path=args.llvm_size,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
+            stage=args.stage_name,
+            description=args.description,
         )
     elif args.stage == "p8b-matrix":
         manifest = build_p8b_matrix_manifest(

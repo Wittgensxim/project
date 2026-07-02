@@ -19,6 +19,7 @@ data/outputs/codegen_sensitivity_p8a/
 data/outputs/core_evidence_report/
 data/outputs/effect_attribution_queens/
 data/outputs/benchmark_ingest_p8b/
+data/outputs/benchmark_ingest_diverse8/
 data/outputs/pair_tests_p8b_misc8/
 data/outputs/cert_summary_p8b_misc8_pre.csv
 data/outputs/cert_summary_report_p8b_misc8_pre.txt
@@ -82,6 +83,15 @@ report.md
 ```
 
 原因：P8b-0 的 accepted `.ll` 已作为 `data/inputs/testsuite_misc_*.ll` 跟踪；`ingest_summary.csv` 和 `report.md` 记录筛选成功/失败原因。scratch IR、scalar IR 和 object 文件默认不保留。
+
+`data/outputs/benchmark_ingest_diverse8/` 当前只保留 P9-4a 必要文件：
+
+```text
+ingest_summary.csv
+report.md
+```
+
+原因：P9-4a 的 accepted `.ll` 已作为 `data/inputs/testsuite_diverse_*.ll` 跟踪；`ingest_summary.csv` 和 `report.md` 记录 diverse8 的 source-dir stratification、family cap 和 LLVM/object-size gate 结果。scratch IR、scalar IR 和 object 文件默认不保留。
 
 P8b-1 当前保留 pre-tuning full matrix 必要文件：
 

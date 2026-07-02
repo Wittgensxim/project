@@ -123,6 +123,9 @@ P8B_INGEST_SUMMARY_KEYS = {
     "CandidateSourceFilesScanned",
     "AcceptedPrograms",
     "RejectedPrograms",
+    "MaxProgramsPerFamily",
+    "MaxAcceptedFamilyCount",
+    "FamilyLimitViolations",
     "IRGenerationOk",
     "ScalarPipelineOk",
     "LlcObjectOk",
@@ -531,6 +534,8 @@ def build_benchmark_ingest_manifest(
     llvm_size_path: str | Path,
     repo_root: str | Path = ".",
     result_generated_from_commit: str | None = None,
+    stage: str = "P8b-0",
+    description: str = "Benchmark ingestion for P8b expansion from llvm-test-suite.",
 ) -> dict[str, Any]:
     out = Path(output_dir)
     summary_csv = out / "ingest_summary.csv"
@@ -548,8 +553,8 @@ def build_benchmark_ingest_manifest(
             "input_ir"
         ]
     return build_result_manifest(
-        stage="P8b-0",
-        description="Benchmark ingestion for P8b expansion from llvm-test-suite.",
+        stage=stage,
+        description=description,
         inputs={
             "source_root": source_root,
         },

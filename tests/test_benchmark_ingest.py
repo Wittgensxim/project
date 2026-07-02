@@ -103,6 +103,112 @@ class BenchmarkIngestTests(unittest.TestCase):
             ["accepted_limit_reached", "accepted_limit_reached"],
         )
 
+    def test_family_cap_rejects_extra_accepted_programs_from_same_family(self):
+        from ecpor.benchmark_ingest import run_benchmark_ingest
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_root = root / "suite"
+            source_root.mkdir()
+            for name in ["alpha.c", "flops-1.c", "flops-2.c", "flops-3.c"]:
+                (source_root / name).write_text(
+                    "int main(void) { return 0; }\n", encoding="utf-8"
+                )
+            tools = _write_fake_tools(root)
+
+            result = run_benchmark_ingest(
+                source_roots=[source_root],
+                input_dir=root / "inputs",
+                output_dir=root / "outputs",
+                config_path=root / "benchmarks_diverse8.yaml",
+                clang_path=[sys.executable, str(tools / "fake_clang.py")],
+                opt_path=[sys.executable, str(tools / "fake_opt.py")],
+                llc_path=[sys.executable, str(tools / "fake_llc.py")],
+                llvm_size_path=[sys.executable, str(tools / "fake_size.py")],
+                accepted_limit=4,
+                min_scanned=4,
+                instruction_limit=5000,
+                timeout_sec=5.0,
+                max_programs_per_family=2,
+                stage_name="P9-4a",
+            )
+
+            rows = _read_csv(root / "outputs" / "ingest_summary.csv")
+            config = (root / "benchmarks_diverse8.yaml").read_text(encoding="utf-8")
+            flops_rows = [row for row in rows if row["family"] == "testsuite_misc_flops"]
+            rejected = next(row for row in rows if row["program"] == "testsuite_misc_flops_3")
+
+        self.assertEqual(result.summary["AcceptedPrograms"], 3)
+        self.assertEqual(result.summary["MaxProgramsPerFamily"], 2)
+        self.assertEqual(result.summary["MaxAcceptedFamilyCount"], 2)
+        self.assertEqual(result.summary["FamilyLimitViolations"], 1)
+        self.assertEqual([row["status"] for row in flops_rows], ["accepted", "accepted", "rejected"])
+        self.assertEqual(rejected["failure_stage"], "selection")
+        self.assertEqual(rejected["failure_kind"], "family_limit_reached")
+        self.assertIn("stage: P9-4a", config)
+        self.assertIn("max_programs_per_family: 2", config)
+        self.assertIn("    family: testsuite_misc_flops", config)
+
+    def test_program_prefix_marks_diverse_inputs(self):
+        from ecpor.benchmark_ingest import run_benchmark_ingest
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_root = root / "suite"
+            source_root.mkdir()
+            (source_root / "Good.c").write_text(
+                "int main(void) { return 0; }\n", encoding="utf-8"
+            )
+            tools = _write_fake_tools(root)
+
+            result = run_benchmark_ingest(
+                source_roots=[source_root],
+                input_dir=root / "inputs",
+                output_dir=root / "outputs",
+                config_path=root / "benchmarks_diverse8.yaml",
+                clang_path=[sys.executable, str(tools / "fake_clang.py")],
+                opt_path=[sys.executable, str(tools / "fake_opt.py")],
+                llc_path=[sys.executable, str(tools / "fake_llc.py")],
+                llvm_size_path=[sys.executable, str(tools / "fake_size.py")],
+                accepted_limit=1,
+                min_scanned=1,
+                instruction_limit=5000,
+                timeout_sec=5.0,
+                program_prefix="testsuite_diverse",
+            )
+
+            rows = _read_csv(root / "outputs" / "ingest_summary.csv")
+            config = (root / "benchmarks_diverse8.yaml").read_text(encoding="utf-8")
+
+        self.assertEqual(result.summary["AcceptedPrograms"], 1)
+        self.assertEqual(rows[0]["program"], "testsuite_diverse_good")
+        self.assertEqual(rows[0]["family"], "testsuite_diverse_good")
+        self.assertIn("data/inputs/testsuite_diverse_good.ll", config)
+
+    def test_discover_c_sources_can_stratify_source_dirs(self):
+        from ecpor.benchmark_ingest import discover_c_sources
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            first = root / "first"
+            second = root / "second"
+            first.mkdir()
+            second.mkdir()
+            for path in [
+                first / "a1.c",
+                first / "a2.c",
+                second / "b1.c",
+                second / "b2.c",
+            ]:
+                path.write_text("int main(void) { return 0; }\n", encoding="utf-8")
+
+            sources = discover_c_sources([first, second], stratify_source_dirs=True)
+
+        self.assertEqual(
+            [path.name for path in sources],
+            ["a1.c", "b1.c", "a2.c", "b2.c"],
+        )
+
 
 def _write_fake_tools(root: Path) -> Path:
     tools = root / "tools"

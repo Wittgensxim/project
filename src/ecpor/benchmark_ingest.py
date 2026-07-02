@@ -29,6 +29,7 @@ DEFAULT_SCALAR_PIPELINE = (
 
 INGEST_SUMMARY_FIELDS = [
     "program",
+    "family",
     "source_path",
     "input_ir",
     "status",
@@ -74,12 +75,19 @@ def run_benchmark_ingest(
     scalar_pipeline: str = DEFAULT_SCALAR_PIPELINE,
     accepted_limit: int = 8,
     min_scanned: int = 20,
+    max_programs_per_family: int | None = None,
+    stratify_source_dirs: bool = False,
+    program_prefix: str = "testsuite_misc",
+    stage_name: str = "P8b-0",
     instruction_limit: int = 5000,
     timeout_sec: float = 30.0,
     config_input_prefix: str = "data/inputs",
     keep_scratch: bool = False,
 ) -> BenchmarkIngestResult:
-    sources = discover_c_sources(source_roots)
+    sources = discover_c_sources(
+        source_roots,
+        stratify_source_dirs=stratify_source_dirs,
+    )
     output_root = Path(output_dir)
     input_root = Path(input_dir)
     scratch_root = output_root / "_scratch"
@@ -96,22 +104,38 @@ def run_benchmark_ingest(
     rows: list[dict[str, str]] = []
     accepted_rows: list[dict[str, str]] = []
     rejected_rows: list[dict[str, str]] = []
+    accepted_family_counts: dict[str, int] = {}
     for source in sources:
         if len(accepted_rows) >= accepted_limit and len(rows) >= min_scanned:
             break
-        program = _program_id(source, used_ids)
+        program = _program_id(source, used_ids, program_prefix=program_prefix)
+        family = _program_family(program)
         if len(accepted_rows) >= accepted_limit:
             row = _row(
                 program=program,
+                family=family,
                 source=source,
                 status="rejected",
                 failure_stage="selection",
                 failure_kind="accepted_limit_reached",
             )
+        elif (
+            max_programs_per_family is not None
+            and accepted_family_counts.get(family, 0) >= max_programs_per_family
+        ):
+            row = _row(
+                program=program,
+                family=family,
+                source=source,
+                status="rejected",
+                failure_stage="selection",
+                failure_kind="family_limit_reached",
+            )
         else:
             row = _ingest_one_source(
                 source=source,
                 program=program,
+                family=family,
                 input_root=input_root,
                 ir_root=ir_root,
                 scalar_root=scalar_root,
@@ -127,17 +151,27 @@ def run_benchmark_ingest(
         rows.append(row)
         if row["status"] == "accepted":
             accepted_rows.append(row)
+            accepted_family_counts[family] = accepted_family_counts.get(family, 0) + 1
         else:
             rejected_rows.append(row)
 
     _write_csv(output_root / "ingest_summary.csv", rows, INGEST_SUMMARY_FIELDS)
-    _write_report(output_root / "report.md", rows, accepted_rows, rejected_rows)
+    _write_report(
+        output_root / "report.md",
+        rows,
+        accepted_rows,
+        rejected_rows,
+        stage_name=stage_name,
+        max_programs_per_family=max_programs_per_family,
+    )
     _write_config(
         Path(config_path),
         accepted_rows,
+        stage_name=stage_name,
         source_roots=source_roots,
         scalar_pipeline=scalar_pipeline,
         instruction_limit=instruction_limit,
+        max_programs_per_family=max_programs_per_family,
         config_input_prefix=config_input_prefix,
     )
     if not keep_scratch:
@@ -147,23 +181,42 @@ def run_benchmark_ingest(
         rows=rows,
         accepted_rows=accepted_rows,
         rejected_rows=rejected_rows,
-        summary=_summary(rows, accepted_rows, rejected_rows),
+        summary=_summary(
+            rows,
+            accepted_rows,
+            rejected_rows,
+            max_programs_per_family=max_programs_per_family,
+        ),
     )
 
 
-def discover_c_sources(source_roots: Sequence[str | Path]) -> list[Path]:
-    sources: list[Path] = []
+def discover_c_sources(
+    source_roots: Sequence[str | Path],
+    *,
+    stratify_source_dirs: bool = False,
+) -> list[Path]:
+    buckets: list[list[Path]] = []
     for root in source_roots:
         candidate = Path(root)
         if candidate.is_file() and candidate.suffix.lower() == ".c":
-            sources.append(candidate)
+            buckets.append([candidate])
         elif candidate.exists():
-            sources.extend(
-                path
-                for path in candidate.rglob("*.c")
-                if path.is_file() and not path.name.startswith(".")
+            buckets.append(
+                sorted(
+                    (
+                        path
+                        for path in candidate.rglob("*.c")
+                        if path.is_file() and not path.name.startswith(".")
+                    ),
+                    key=lambda path: path.as_posix().lower(),
+                )
             )
-    return sorted(sources, key=lambda path: path.as_posix().lower())
+    if stratify_source_dirs:
+        return _round_robin_sources(buckets)
+    return sorted(
+        (path for bucket in buckets for path in bucket),
+        key=lambda path: path.as_posix().lower(),
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -184,6 +237,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--llvm-size", default="E:/llvm/build/bin/llvm-size.exe")
     parser.add_argument("--accepted-limit", type=int, default=8)
     parser.add_argument("--min-scanned", type=int, default=20)
+    parser.add_argument("--max-programs-per-family", type=int)
+    parser.add_argument("--stratify-source-dirs", action="store_true")
+    parser.add_argument("--program-prefix", default="testsuite_misc")
+    parser.add_argument("--stage-name", default="P8b-0")
     parser.add_argument("--instruction-limit", type=int, default=5000)
     parser.add_argument("--timeout-sec", type=float, default=30.0)
     parser.add_argument("--keep-scratch", action="store_true")
@@ -203,11 +260,24 @@ def main(argv: Sequence[str] | None = None) -> int:
         llvm_size_path=args.llvm_size,
         accepted_limit=args.accepted_limit,
         min_scanned=args.min_scanned,
+        max_programs_per_family=args.max_programs_per_family,
+        stratify_source_dirs=args.stratify_source_dirs,
+        program_prefix=args.program_prefix,
+        stage_name=args.stage_name,
         instruction_limit=args.instruction_limit,
         timeout_sec=args.timeout_sec,
         keep_scratch=args.keep_scratch,
     )
-    print(_report_text(result.rows, result.accepted_rows, result.rejected_rows), end="")
+    print(
+        _report_text(
+            result.rows,
+            result.accepted_rows,
+            result.rejected_rows,
+            stage_name=args.stage_name,
+            max_programs_per_family=args.max_programs_per_family,
+        ),
+        end="",
+    )
     return 0
 
 
@@ -215,6 +285,7 @@ def _ingest_one_source(
     *,
     source: Path,
     program: str,
+    family: str,
     input_root: Path,
     ir_root: Path,
     scalar_root: Path,
@@ -235,6 +306,7 @@ def _ingest_one_source(
     if _compile_failure_kind(ir_result, candidate_ir):
         return _row(
             program=program,
+            family=family,
             source=source,
             status="rejected",
             failure_stage="ir_generation",
@@ -245,6 +317,7 @@ def _ingest_one_source(
     if "optnone" in ir_text:
         return _row(
             program=program,
+            family=family,
             source=source,
             status="rejected",
             failure_stage="ir_validation",
@@ -255,6 +328,7 @@ def _ingest_one_source(
     if int(features.get("num_instructions", 0)) >= instruction_limit:
         return _row(
             program=program,
+            family=family,
             source=source,
             status="rejected",
             failure_stage="ir_validation",
@@ -272,6 +346,7 @@ def _ingest_one_source(
     if scalar_result.failure_kind:
         return _row(
             program=program,
+            family=family,
             source=source,
             status="rejected",
             failure_stage="scalar_pipeline",
@@ -292,6 +367,7 @@ def _ingest_one_source(
     if llc_record.compile_failure_kind or llc_record.size_failure_kind:
         return _row(
             program=program,
+            family=family,
             source=source,
             status="rejected",
             failure_stage="llc_object",
@@ -315,6 +391,7 @@ def _ingest_one_source(
     if clang_record.compile_failure_kind or clang_record.size_failure_kind:
         return _row(
             program=program,
+            family=family,
             source=source,
             status="rejected",
             failure_stage="clang_object",
@@ -329,6 +406,7 @@ def _ingest_one_source(
     shutil.copyfile(candidate_ir, accepted_ir)
     return _row(
         program=program,
+        family=family,
         source=source,
         input_ir=accepted_ir,
         status="accepted",
@@ -408,6 +486,7 @@ def _compile_failure_kind(result: _CommandResult, output_path: Path) -> str | No
 def _row(
     *,
     program: str,
+    family: str,
     source: Path,
     status: str,
     failure_stage: str = "",
@@ -422,6 +501,7 @@ def _row(
     feature_values = features or {}
     return {
         "program": program,
+        "family": family,
         "source_path": str(source),
         "input_ir": str(input_ir) if input_ir else "",
         "status": status,
@@ -453,9 +533,18 @@ def _write_report(
     rows: Sequence[dict[str, str]],
     accepted_rows: Sequence[dict[str, str]],
     rejected_rows: Sequence[dict[str, str]],
+    *,
+    stage_name: str,
+    max_programs_per_family: int | None,
 ) -> None:
     Path(path).write_text(
-        _report_text(rows, accepted_rows, rejected_rows),
+        _report_text(
+            rows,
+            accepted_rows,
+            rejected_rows,
+            stage_name=stage_name,
+            max_programs_per_family=max_programs_per_family,
+        ),
         encoding="utf-8",
     )
 
@@ -464,15 +553,27 @@ def _report_text(
     rows: Sequence[dict[str, str]],
     accepted_rows: Sequence[dict[str, str]],
     rejected_rows: Sequence[dict[str, str]],
+    *,
+    stage_name: str = "P8b-0",
+    max_programs_per_family: int | None = None,
 ) -> str:
+    summary = _summary(
+        rows,
+        accepted_rows,
+        rejected_rows,
+        max_programs_per_family=max_programs_per_family,
+    )
     lines = [
-        "# P8b-0 Benchmark Ingest Report",
+        f"# {stage_name} Benchmark Ingest Report",
         "",
-        "本报告只记录 benchmark ingestion，不运行 pair matrix，不新增 certificate。",
+        "Benchmark ingestion only; no pair matrix and no new certificate.",
         "",
         f"CandidateSourceFilesScanned: {len(rows)}",
         f"AcceptedPrograms: {len(accepted_rows)}",
         f"RejectedPrograms: {len(rejected_rows)}",
+        f"MaxProgramsPerFamily: {summary['MaxProgramsPerFamily']}",
+        f"MaxAcceptedFamilyCount: {summary['MaxAcceptedFamilyCount']}",
+        f"FamilyLimitViolations: {summary['FamilyLimitViolations']}",
         f"IRGenerationOk: {_count_stage_ok(rows, 'ir_generation')}",
         f"ScalarPipelineOk: {sum(1 for row in rows if row['scalar_pipeline_ok'] == 'True')}",
         f"LlcObjectOk: {sum(1 for row in rows if row['llc_object_ok'] == 'True')}",
@@ -487,7 +588,7 @@ def _report_text(
     lines.extend(["", "## Accepted Programs", ""])
     for row in accepted_rows:
         lines.append(
-            f"- {row['program']}: instructions={row['num_instructions']} ir={row['input_ir']}"
+            f"- {row['program']}: family={row['family']} instructions={row['num_instructions']} ir={row['input_ir']}"
         )
     return "\n".join(lines) + "\n"
 
@@ -496,14 +597,16 @@ def _write_config(
     path: Path,
     accepted_rows: Sequence[dict[str, str]],
     *,
+    stage_name: str,
     source_roots: Sequence[str | Path],
     scalar_pipeline: str,
     instruction_limit: int,
+    max_programs_per_family: int | None,
     config_input_prefix: str,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     lines = [
-        "stage: P8b-0",
+        f"stage: {stage_name}",
         "source: llvm-test-suite",
         "source_roots:",
     ]
@@ -511,6 +614,7 @@ def _write_config(
     lines.extend(
         [
             f"instruction_limit: {instruction_limit}",
+            f"max_programs_per_family: {max_programs_per_family or ''}",
             f'scalar_pipeline: "{scalar_pipeline}"',
             "programs:",
         ]
@@ -520,6 +624,7 @@ def _write_config(
         lines.extend(
             [
                 f"  - id: {row['program']}",
+                f"    family: {row['family']}",
                 f'    source: "{Path(row["source_path"]).as_posix()}"',
                 f"    ir: {ir_path}",
                 f"    num_functions: {row['num_functions']}",
@@ -534,11 +639,22 @@ def _summary(
     rows: Sequence[dict[str, str]],
     accepted_rows: Sequence[dict[str, str]],
     rejected_rows: Sequence[dict[str, str]],
+    *,
+    max_programs_per_family: int | None = None,
 ) -> dict[str, Any]:
+    family_counts: dict[str, int] = {}
+    for row in accepted_rows:
+        family = row.get("family", "")
+        family_counts[family] = family_counts.get(family, 0) + 1
     return {
         "CandidateSourceFilesScanned": len(rows),
         "AcceptedPrograms": len(accepted_rows),
         "RejectedPrograms": len(rejected_rows),
+        "MaxProgramsPerFamily": max_programs_per_family or 0,
+        "MaxAcceptedFamilyCount": max(family_counts.values(), default=0),
+        "FamilyLimitViolations": sum(
+            1 for row in rejected_rows if row["failure_kind"] == "family_limit_reached"
+        ),
         "IRGenerationOk": _count_stage_ok(rows, "ir_generation"),
         "ScalarPipelineOk": sum(
             1 for row in rows if row["scalar_pipeline_ok"] == "True"
@@ -563,13 +679,31 @@ def _count_stage_ok(rows: Sequence[dict[str, str]], stage: str) -> int:
     return 0
 
 
-def _program_id(source: Path, used_ids: dict[str, int]) -> str:
-    base = "testsuite_misc_" + re.sub(r"[^a-z0-9]+", "_", source.stem.lower()).strip("_")
+def _program_id(
+    source: Path, used_ids: dict[str, int], *, program_prefix: str = "testsuite_misc"
+) -> str:
+    prefix = program_prefix.strip("_")
+    normalized_stem = re.sub(r"[^a-z0-9]+", "_", source.stem.lower()).strip("_")
+    base = f"{prefix}_{normalized_stem}" if prefix else normalized_stem
     count = used_ids.get(base, 0)
     used_ids[base] = count + 1
     if count == 0:
         return base
     return f"{base}_{count + 1}"
+
+
+def _program_family(program: str) -> str:
+    return re.sub(r"(?:_\d+|\d+)$", "", program)
+
+
+def _round_robin_sources(buckets: Sequence[Sequence[Path]]) -> list[Path]:
+    sources: list[Path] = []
+    max_len = max((len(bucket) for bucket in buckets), default=0)
+    for index in range(max_len):
+        for bucket in buckets:
+            if index < len(bucket):
+                sources.append(bucket[index])
+    return sources
 
 
 def _normalize_tool_path(tool_path: ToolPath | OptPath) -> list[str]:
