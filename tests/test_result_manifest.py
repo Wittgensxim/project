@@ -578,6 +578,53 @@ class ResultManifestTests(unittest.TestCase):
                 repo_root=root,
                 result_generated_from_commit="lite123",
             )
+            diverse_lazy_manifest = build_p8b_lazy_validation_manifest(
+                pipeline_config_path=pipeline,
+                passspec_path=passspec,
+                output_dir=p4_dir,
+                cert_dir=p4_cert_dir,
+                attempts_csv=p4_dir / "attempts.csv",
+                report_path=p4_dir / "report.md",
+                opt_path=opt,
+                repo_root=root,
+                result_generated_from_commit="diverse123",
+                stage="P9-4c-P4",
+                description="P9-4c diverse8 prefix-state adjacent lazy validation.",
+                benchmark_set="P9-Diverse8",
+            )
+            diverse_bounded_manifest = build_p8b_bounded_local_manifest(
+                pipeline_config_path=pipeline,
+                p4_attempts_csv=p4_dir / "attempts.csv",
+                p5_dir=p5_dir,
+                opt_path=opt,
+                repo_root=root,
+                result_generated_from_commit="diverse123",
+                stage="P9-4c-P5",
+                description="P9-4c diverse8 bounded local one-swap exploration.",
+                benchmark_set="P9-Diverse8",
+            )
+            diverse_size_manifest = build_p8b_code_size_manifest(
+                p5_dir=p5_dir,
+                p6_dir=p6_dir,
+                llc_path=llc,
+                llvm_size_path=llvm_size,
+                repo_root=root,
+                result_generated_from_commit="diverse123",
+                stage="P9-4c-P6",
+                description="P9-4c diverse8 llc object-size check.",
+                benchmark_set="P9-Diverse8",
+            )
+            diverse_codegen_manifest = build_p8b_codegen_sensitivity_manifest(
+                p6_object_size_csv=p6_dir / "object_size.csv",
+                output_dir=p8a_dir,
+                clang_path=clang,
+                llvm_size_path=llvm_size,
+                repo_root=root,
+                result_generated_from_commit="diverse123",
+                stage="P9-4c-P8a",
+                description="P9-4c diverse8 clang -c sensitivity check.",
+                benchmark_set="P9-Diverse8",
+            )
             manifest_path = root / "p8b_lite_manifest.json"
             write_manifest(manifest_path, codegen_manifest)
             loaded_codegen = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -593,6 +640,14 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded_codegen["stage"], "P8b-3d")
         self.assertEqual(loaded_codegen["summary"]["Depth2Inputs"], 0)
         self.assertNotIn("p7_object_size_csv", loaded_codegen["inputs"])
+        self.assertEqual(diverse_lazy_manifest["stage"], "P9-4c-P4")
+        self.assertEqual(diverse_lazy_manifest["scope_limits"]["benchmark_set"], "P9-Diverse8")
+        self.assertEqual(diverse_bounded_manifest["stage"], "P9-4c-P5")
+        self.assertEqual(diverse_bounded_manifest["scope_limits"]["benchmark_set"], "P9-Diverse8")
+        self.assertEqual(diverse_size_manifest["stage"], "P9-4c-P6")
+        self.assertEqual(diverse_size_manifest["scope_limits"]["benchmark_set"], "P9-Diverse8")
+        self.assertEqual(diverse_codegen_manifest["stage"], "P9-4c-P8a")
+        self.assertEqual(diverse_codegen_manifest["scope_limits"]["benchmark_set"], "P9-Diverse8")
 
     def test_builds_p8b35_analysis_attribution_and_misc8_manifests(self):
         from ecpor.result_manifest import (
@@ -636,6 +691,19 @@ class ResultManifestTests(unittest.TestCase):
                 repo_root=root,
                 result_generated_from_commit="depth123",
             )
+            diverse_depth1_manifest = build_depth1_analysis_manifest(
+                p4_attempts_csv=p4_attempts,
+                p5_candidates_csv=p5_candidates,
+                p5_pipeline_runs_csv=p5_pipeline_runs,
+                p6_object_size_csv=p6_object_size,
+                p8a_compare_csv=p8a_compare,
+                output_dir=depth1_dir,
+                repo_root=root,
+                result_generated_from_commit="diverse-depth123",
+                stage="P9-4c-analysis",
+                description="P9-4c diverse8 depth1 result analysis.",
+                benchmark_set="P9-Diverse8",
+            )
             attribution_manifest = build_effect_attribution_manifest(
                 input_ir=root / "testsuite_misc_ffbench.ll",
                 output_dir=attribution_dir,
@@ -672,6 +740,11 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(depth1_manifest["stage"], "P8b-3.5a")
         self.assertEqual(depth1_manifest["summary"]["Depth1BothSmallerPrograms"], 1)
         self.assertEqual(depth1_manifest["scope_limits"]["two_swap_search"], False)
+        self.assertEqual(diverse_depth1_manifest["stage"], "P9-4c-analysis")
+        self.assertEqual(
+            diverse_depth1_manifest["scope_limits"]["benchmark_set"],
+            "P9-Diverse8",
+        )
         self.assertEqual(attribution_manifest["stage"], "P8b-3.5b")
         self.assertEqual(attribution_manifest["summary"]["Program"], "testsuite_misc_ffbench")
         self.assertEqual(

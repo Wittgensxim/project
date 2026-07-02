@@ -175,6 +175,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     p8b_lazy.add_argument("--opt", required=True)
     p8b_lazy.add_argument("--repo-root", default=".")
     p8b_lazy.add_argument("--result-generated-from-commit")
+    p8b_lazy.add_argument("--stage-name", default="P8b-3a")
+    p8b_lazy.add_argument(
+        "--description",
+        default="P8b Misc8 prefix-state adjacent lazy validation.",
+    )
+    p8b_lazy.add_argument("--benchmark-set", default="P8b-Misc8")
+    p8b_lazy.add_argument("--program-count", type=int, default=8)
+    p8b_lazy.add_argument("--anchor-adjacent-swaps-per-program", type=int, default=7)
 
     p8b_bounded = subparsers.add_parser(
         "p8b-bounded-local",
@@ -187,6 +195,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     p8b_bounded.add_argument("--opt", required=True)
     p8b_bounded.add_argument("--repo-root", default=".")
     p8b_bounded.add_argument("--result-generated-from-commit")
+    p8b_bounded.add_argument("--stage-name", default="P8b-3b")
+    p8b_bounded.add_argument(
+        "--description",
+        default="P8b Misc8 bounded local one-swap exploration.",
+    )
+    p8b_bounded.add_argument("--benchmark-set", default="P8b-Misc8")
+    p8b_bounded.add_argument("--program-count", type=int, default=8)
 
     p8b_size = subparsers.add_parser(
         "p8b-code-size",
@@ -199,6 +214,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     p8b_size.add_argument("--llvm-size", required=True)
     p8b_size.add_argument("--repo-root", default=".")
     p8b_size.add_argument("--result-generated-from-commit")
+    p8b_size.add_argument("--stage-name", default="P8b-3c")
+    p8b_size.add_argument(
+        "--description",
+        default="P8b Misc8 llc object-size check for depth1 candidates.",
+    )
+    p8b_size.add_argument("--benchmark-set", default="P8b-Misc8")
+    p8b_size.add_argument("--program-count", type=int, default=8)
 
     p8b_codegen = subparsers.add_parser(
         "p8b-codegen",
@@ -212,6 +234,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     p8b_codegen.add_argument("--llvm-size", required=True)
     p8b_codegen.add_argument("--repo-root", default=".")
     p8b_codegen.add_argument("--result-generated-from-commit")
+    p8b_codegen.add_argument("--stage-name", default="P8b-3d")
+    p8b_codegen.add_argument(
+        "--description",
+        default="P8b Misc8 clang -c sensitivity check for depth1 candidates.",
+    )
+    p8b_codegen.add_argument("--benchmark-set", default="P8b-Misc8")
+    p8b_codegen.add_argument("--program-count", type=int, default=8)
 
     depth1 = subparsers.add_parser(
         "depth1-analysis", help="Build a P8b-3.5a depth1-analysis manifest."
@@ -225,6 +254,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     depth1.add_argument("--output-dir", required=True)
     depth1.add_argument("--repo-root", default=".")
     depth1.add_argument("--result-generated-from-commit")
+    depth1.add_argument("--stage-name", default="P8b-3.5a")
+    depth1.add_argument(
+        "--description",
+        default="Misc8 depth-1 result analysis from existing P4-P8a outputs.",
+    )
+    depth1.add_argument("--benchmark-set", default="P8b-Misc8")
 
     effect = subparsers.add_parser(
         "effect-attribution", help="Build a generic effect-attribution manifest."
@@ -399,6 +434,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             opt_path=args.opt,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
+            stage=args.stage_name,
+            description=args.description,
+            benchmark_set=args.benchmark_set,
+            program_count=args.program_count,
+            anchor_adjacent_swaps_per_program=args.anchor_adjacent_swaps_per_program,
         )
     elif args.stage == "p8b-bounded-local":
         manifest = build_p8b_bounded_local_manifest(
@@ -408,6 +448,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             opt_path=args.opt,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
+            stage=args.stage_name,
+            description=args.description,
+            benchmark_set=args.benchmark_set,
+            program_count=args.program_count,
         )
     elif args.stage == "p8b-code-size":
         manifest = build_p8b_code_size_manifest(
@@ -417,6 +461,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             llvm_size_path=args.llvm_size,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
+            stage=args.stage_name,
+            description=args.description,
+            benchmark_set=args.benchmark_set,
+            program_count=args.program_count,
         )
     elif args.stage == "p8b-codegen":
         manifest = build_p8b_codegen_sensitivity_manifest(
@@ -427,6 +475,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             llvm_size_path=args.llvm_size,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
+            stage=args.stage_name,
+            description=args.description,
+            benchmark_set=args.benchmark_set,
+            program_count=args.program_count,
         )
     elif args.stage == "depth1-analysis":
         manifest = build_depth1_analysis_manifest(
@@ -438,6 +490,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             output_dir=args.output_dir,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
+            stage=args.stage_name,
+            description=args.description,
+            benchmark_set=args.benchmark_set,
         )
     elif args.stage == "effect-attribution":
         manifest = build_effect_attribution_manifest(

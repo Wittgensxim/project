@@ -729,10 +729,15 @@ def build_p8b_lazy_validation_manifest(
     opt_path: str | Path,
     repo_root: str | Path = ".",
     result_generated_from_commit: str | None = None,
+    stage: str = "P8b-3a",
+    description: str = "P8b Misc8 prefix-state adjacent lazy validation.",
+    benchmark_set: str = "P8b-Misc8",
+    program_count: int = 8,
+    anchor_adjacent_swaps_per_program: int = 7,
 ) -> dict[str, Any]:
     return build_result_manifest(
-        stage="P8b-3a",
-        description="P8b Misc8 prefix-state adjacent lazy validation.",
+        stage=stage,
+        description=description,
         inputs={
             "pipeline_config": pipeline_config_path,
             "passspec": passspec_path,
@@ -754,9 +759,9 @@ def build_p8b_lazy_validation_manifest(
         result_generated_from_commit=result_generated_from_commit,
         extra={
             "scope_limits": {
-                "benchmark_set": "P8b-Misc8",
-                "program_count": 8,
-                "anchor_adjacent_swaps_per_program": 7,
+                "benchmark_set": benchmark_set,
+                "program_count": program_count,
+                "anchor_adjacent_swaps_per_program": anchor_adjacent_swaps_per_program,
                 "two_swap_search": False,
                 "full_searcher": False,
                 "runtime_benchmarks": False,
@@ -774,12 +779,16 @@ def build_p8b_bounded_local_manifest(
     opt_path: str | Path,
     repo_root: str | Path = ".",
     result_generated_from_commit: str | None = None,
+    stage: str = "P8b-3b",
+    description: str = "P8b Misc8 bounded local one-swap exploration.",
+    benchmark_set: str = "P8b-Misc8",
+    program_count: int = 8,
 ) -> dict[str, Any]:
     p5 = Path(p5_dir)
     report = p5 / "report.md"
     return build_result_manifest(
-        stage="P8b-3b",
-        description="P8b Misc8 bounded local one-swap exploration.",
+        stage=stage,
+        description=description,
         inputs={
             "pipeline_config": pipeline_config_path,
             "p4_attempts_csv": p4_attempts_csv,
@@ -801,8 +810,8 @@ def build_p8b_bounded_local_manifest(
         result_generated_from_commit=result_generated_from_commit,
         extra={
             "scope_limits": {
-                "benchmark_set": "P8b-Misc8",
-                "program_count": 8,
+                "benchmark_set": benchmark_set,
+                "program_count": program_count,
                 "depth": 1,
                 "two_swap_search": False,
                 "full_searcher": False,
@@ -821,13 +830,17 @@ def build_p8b_code_size_manifest(
     llvm_size_path: str | Path,
     repo_root: str | Path = ".",
     result_generated_from_commit: str | None = None,
+    stage: str = "P8b-3c",
+    description: str = "P8b Misc8 llc object-size check for depth1 candidates.",
+    benchmark_set: str = "P8b-Misc8",
+    program_count: int = 8,
 ) -> dict[str, Any]:
     p5 = Path(p5_dir)
     p6 = Path(p6_dir)
     report = p6 / "code_size_report.md"
     return build_result_manifest(
-        stage="P8b-3c",
-        description="P8b Misc8 llc object-size check for depth1 candidates.",
+        stage=stage,
+        description=description,
         inputs={
             "p5_output_dir": p5,
             "p5_report": p5 / "report.md",
@@ -848,8 +861,8 @@ def build_p8b_code_size_manifest(
         result_generated_from_commit=result_generated_from_commit,
         extra={
             "scope_limits": {
-                "benchmark_set": "P8b-Misc8",
-                "program_count": 8,
+                "benchmark_set": benchmark_set,
+                "program_count": program_count,
                 "depth": 1,
                 "codegen_path": "llc -filetype=obj",
                 "two_swap_search": False,
@@ -869,6 +882,10 @@ def build_p8b_codegen_sensitivity_manifest(
     p7_object_size_csv: str | Path | None = None,
     repo_root: str | Path = ".",
     result_generated_from_commit: str | None = None,
+    stage: str = "P8b-3d",
+    description: str = "P8b Misc8 clang -c sensitivity check for depth1 candidates.",
+    benchmark_set: str = "P8b-Misc8",
+    program_count: int = 8,
 ) -> dict[str, Any]:
     out = Path(output_dir)
     report = out / "p8a_codegen_sensitivity_report.md"
@@ -877,8 +894,8 @@ def build_p8b_codegen_sensitivity_manifest(
     }
     inputs.update(_optional_paths(p7_object_size_csv=p7_object_size_csv))
     return build_result_manifest(
-        stage="P8b-3d",
-        description="P8b Misc8 clang -c sensitivity check for depth1 candidates.",
+        stage=stage,
+        description=description,
         inputs=inputs,
         outputs={
             "output_dir": out,
@@ -899,8 +916,8 @@ def build_p8b_codegen_sensitivity_manifest(
         result_generated_from_commit=result_generated_from_commit,
         extra={
             "scope_limits": {
-                "benchmark_set": "P8b-Misc8",
-                "program_count": 8,
+                "benchmark_set": benchmark_set,
+                "program_count": program_count,
                 "depth": 1,
                 "new_certificates": False,
                 "llvm_opt_rerun": False,
@@ -922,12 +939,15 @@ def build_depth1_analysis_manifest(
     output_dir: str | Path,
     repo_root: str | Path = ".",
     result_generated_from_commit: str | None = None,
+    stage: str = "P8b-3.5a",
+    description: str = "Misc8 depth-1 result analysis from existing P4-P8a outputs.",
+    benchmark_set: str = "P8b-Misc8",
 ) -> dict[str, Any]:
     out = Path(output_dir)
     report = out / "depth1_analysis_report.md"
     return build_result_manifest(
-        stage="P8b-3.5a",
-        description="Misc8 depth-1 result analysis from existing P4-P8a outputs.",
+        stage=stage,
+        description=description,
         inputs={
             "p4_attempts_csv": p4_attempts_csv,
             "p5_candidates_csv": p5_candidates_csv,
@@ -951,7 +971,7 @@ def build_depth1_analysis_manifest(
         result_generated_from_commit=result_generated_from_commit,
         extra={
             "scope_limits": {
-                "benchmark_set": "P8b-Misc8",
+                "benchmark_set": benchmark_set,
                 "depth": 1,
                 "two_swap_search": False,
                 "new_search": False,

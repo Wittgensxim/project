@@ -8,7 +8,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
-from .batch_certificates import P8B_MISC8_PROGRAMS, STANFORD_8_PROGRAMS, Program
+from .batch_certificates import (
+    P8B_MISC8_PROGRAMS,
+    STANFORD_8_PROGRAMS,
+    Program,
+    load_benchmark_config_programs,
+)
 from .candidate_pipeline import (
     CandidateGeneration,
     CandidatePipeline,
@@ -286,6 +291,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         choices=["stanford-8", "p8b-misc8"],
         default="stanford-8",
     )
+    parser.add_argument(
+        "--benchmark-config",
+        help="Load programs from a benchmark YAML config instead of a built-in preset.",
+    )
     parser.add_argument("--pipeline", default="configs/pipeline_scalar.yaml")
     parser.add_argument("--attempts-csv", required=True)
     parser.add_argument("--out", default="data/outputs/bounded_local_p5")
@@ -306,7 +315,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         env_id = env_id or detected.env_id
         llvm_version = llvm_version or detected.llvm_version
     run = run_bounded_local_exploration(
-        programs=_programs_for_preset(args.program_preset),
+        programs=_programs_for_args(args),
         anchor_passes=list(pipeline["passes"]),
         attempts_csv=args.attempts_csv,
         opt_path=opt_path,
@@ -348,6 +357,12 @@ def _programs_for_preset(preset: str) -> list[Program]:
     if preset == "p8b-misc8":
         return P8B_MISC8_PROGRAMS
     return STANFORD_8_PROGRAMS
+
+
+def _programs_for_args(args: argparse.Namespace) -> list[Program]:
+    if args.benchmark_config:
+        return load_benchmark_config_programs(args.benchmark_config)
+    return _programs_for_preset(args.program_preset)
 
 
 def _detect_environment_for_opt(opt: str) -> object:

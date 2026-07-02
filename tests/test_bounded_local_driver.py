@@ -4,11 +4,72 @@ import tempfile
 import textwrap
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 
 class BoundedLocalDriverTests(unittest.TestCase):
+    def test_main_uses_benchmark_config_programs(self):
+        from ecpor import bounded_local_driver as driver
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            input_ir = _write_input_ir(tmp_path)
+            attempts_csv = tmp_path / "attempts.csv"
+            benchmark_config = tmp_path / "benchmarks.yaml"
+            pipeline_config = tmp_path / "pipeline.yaml"
+            _write_attempts_csv(attempts_csv)
+            benchmark_config.write_text(
+                "programs:\n"
+                "  - id: cfg_tiny\n"
+                f"    ir: {input_ir.as_posix()}\n",
+                encoding="utf-8",
+            )
+            pipeline_config.write_text(
+                "passes:\n  - sroa\n  - early-cse\n  - instcombine\n",
+                encoding="utf-8",
+            )
+            fake_run = SimpleNamespace(
+                summary={},
+                candidate_generation=SimpleNamespace(evidence_rows=[]),
+                pipeline_runs=[],
+                metadata={},
+            )
+
+            with patch.object(
+                driver,
+                "run_bounded_local_exploration",
+                return_value=fake_run,
+            ) as run_exploration, patch.object(
+                driver,
+                "build_bounded_local_report",
+                return_value="report\n",
+            ):
+                exit_code = driver.main(
+                    [
+                        "--benchmark-config",
+                        str(benchmark_config),
+                        "--pipeline",
+                        str(pipeline_config),
+                        "--attempts-csv",
+                        str(attempts_csv),
+                        "--out",
+                        str(tmp_path / "out"),
+                        "--opt",
+                        "opt",
+                        "--env-id",
+                        "env-test",
+                        "--llvm-version",
+                        "llvm-test",
+                    ]
+                )
+
+        self.assertEqual(exit_code, 0)
+        programs = run_exploration.call_args.kwargs["programs"]
+        self.assertEqual(programs, [("cfg_tiny", input_ir)])
+
     def test_program_preset_supports_p8b_misc8(self):
         from ecpor.bounded_local_driver import _programs_for_preset
 
