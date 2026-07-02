@@ -1,0 +1,54 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P9-4c-P6",
+  "description": "P9-4c diverse8 llc object-size check for depth1 candidates.",
+  "result_generated_from_commit": "3ad70629745dd4d4ccc4b57a8097902c31a77a61",
+  "ecpor_git_commit": "3ad70629745dd4d4ccc4b57a8097902c31a77a61",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "p5_output_dir": "data/outputs/bounded_local_p9_diverse8",
+    "p5_report": "data/outputs/bounded_local_p9_diverse8/report.md",
+    "candidates_csv": "data/outputs/bounded_local_p9_diverse8/candidates.csv",
+    "pipeline_runs_csv": "data/outputs/bounded_local_p9_diverse8/pipeline_runs.csv"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/code_size_p9_diverse8",
+    "object_size_csv": "data/outputs/code_size_p9_diverse8/object_size.csv",
+    "code_size_report": "data/outputs/code_size_p9_diverse8/code_size_report.md"
+  },
+  "sha256": {
+    "p5_report": "876138ae3907df57e82eb64d3e97372d7650620d9fdf35353967106f7c67f095",
+    "candidates_csv": "3b4f969e6df509d989c261ce2fcccb66a0b12dc7d4be048cf1ac7636db2d99d7",
+    "pipeline_runs_csv": "7bf53c24b54ed12d23a897a1ba316b88b4992624da9d72f589b4e45d3ba4c45a",
+    "object_size_csv": "b03d992ad5c27efb38b85f9ea577c0fbb42a36db18dceeeb8dc94a691c8e1f22",
+    "code_size_report": "4cbb6b26a4a751c343419226b9cccfb51f5753f8d102a7975c9233545ea64131",
+    "llc": "1520eba7e1ee09cc6f38ce1d7ca6eb9fb5187f6ded3a9f70a37f264acebf384c",
+    "llvm_size": "f425ef87d64380ff5f8fd055ddb52e1f0d38f3031bb2a5bbddd557d71c5bc589"
+  },
+  "tools": {
+    "llc_path": "E:\\llvm\\build\\bin\\llc.exe",
+    "llvm_size_path": "E:\\llvm\\build\\bin\\llvm-size.exe"
+  },
+  "summary": {
+    "IRDifferentButTextEqualRate": "66.67%",
+    "SizeParseFailed": 0,
+    "SingleSwapP5DifferentFromAnchor": 6,
+    "SingleSwapP5SameAsAnchor": 1,
+    "IRDifferentButTextEqualCount": 4,
+    "Programs": 8,
+    "ObjectBuildFailed": 0,
+    "CodeSizeDeltaVsAnchor": 7,
+    "SmallerText": 0,
+    "EqualText": 5,
+    "LargerText": 2
+  },
+  "scope_limits": {
+    "benchmark_set": "P9-Diverse8",
+    "program_count": 8,
+    "depth": 1,
+    "codegen_path": "llc -filetype=obj",
+    "two_swap_search": false,
+    "full_searcher": false,
+    "runtime_benchmarks": false
+  }
+}

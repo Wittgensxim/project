@@ -22,6 +22,11 @@ data/outputs/benchmark_ingest_p8b/
 data/outputs/benchmark_ingest_diverse8/
 data/outputs/pair_tests_p8b_misc8/
 data/outputs/pair_tests_p9_diverse8/
+data/outputs/lazy_validation_p9_diverse8/
+data/outputs/bounded_local_p9_diverse8/
+data/outputs/code_size_p9_diverse8/
+data/outputs/codegen_sensitivity_p9_diverse8/
+data/outputs/depth1_analysis_p9_diverse8/
 data/outputs/cert_summary_p8b_misc8_pre.csv
 data/outputs/cert_summary_report_p8b_misc8_pre.txt
 data/outputs/static_filter_decisions_p8b_misc8_pre.csv
@@ -50,6 +55,7 @@ data/certs/pair_tests_p8b_misc8/
 data/certs/pair_tests_p9_diverse8/
 data/certs/lazy_validation_p4_e83c409/
 data/certs/lazy_validation_p8b_misc8/
+data/certs/lazy_validation_p9_diverse8/
 data/certs/bounded_two_swap_p7a/
 data/certs/bounded_two_swap_p7b/
 ```
@@ -124,6 +130,27 @@ data/outputs/static_filter_report_p9_diverse8_pre.md
 ```
 
 原因：P9-4b 是 P9-4a diverse8 输入集上的证书层和 static filter pre 评估证据。结果为 `224/224` reproduced、`HardFalseIndependent = 0`、`RunFailed = 0`、`StaticFalseNegativeObserved = 0`，后续 P9-4c depth1 链路需要引用这一组 pre 证据。`repro/` 子目录属于 certificate reproduction 临时输出，可由证书再生成，阶段清理时可以删除。
+
+P9-4c 当前保留 Diverse8 depth1 final 证据：
+
+```text
+data/outputs/lazy_validation_p9_diverse8/
+data/certs/lazy_validation_p9_diverse8/
+data/outputs/bounded_local_p9_diverse8/
+data/outputs/code_size_p9_diverse8/
+data/outputs/codegen_sensitivity_p9_diverse8/
+data/outputs/depth1_analysis_p9_diverse8/
+```
+
+原因：P9-4c 是 P9-Diverse8 的 depth1 链路证据，覆盖 P4 prefix-state lazy validation、P5 one-swap candidate propagation、P6 `llc` object-size、P8a-style `clang -c` sensitivity 和 depth1 analysis。结果为 `attempted_adjacent_swaps = 56`、`CertificateReproductionRate = 100.00%`、`run_failed = 0`、`pipeline_run_failed = 0`、`ObjectBuildFailed = 0`、`ClangObjectBuildFailed = 0`、`Depth1BothSmallerPrograms = 0`。这些输出由 tracked manifests 对应：
+
+```text
+docs/results/p9_diverse8_lazy_validation_manifest.json
+docs/results/p9_diverse8_bounded_local_manifest.json
+docs/results/p9_diverse8_code_size_manifest.json
+docs/results/p9_diverse8_codegen_sensitivity_manifest.json
+docs/results/p9_diverse8_depth1_analysis_manifest.json
+```
 
 P8b-2 当前保留 static filter repair 对照文件：
 

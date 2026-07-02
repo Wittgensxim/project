@@ -1,0 +1,59 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P9-4c-analysis",
+  "description": "P9-4c diverse8 depth1 result analysis.",
+  "result_generated_from_commit": "3ad70629745dd4d4ccc4b57a8097902c31a77a61",
+  "ecpor_git_commit": "3ad70629745dd4d4ccc4b57a8097902c31a77a61",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "p4_attempts_csv": "data/outputs/lazy_validation_p9_diverse8/attempts.csv",
+    "p5_candidates_csv": "data/outputs/bounded_local_p9_diverse8/candidates.csv",
+    "p5_pipeline_runs_csv": "data/outputs/bounded_local_p9_diverse8/pipeline_runs.csv",
+    "p6_object_size_csv": "data/outputs/code_size_p9_diverse8/object_size.csv",
+    "p8a_compare_csv": "data/outputs/codegen_sensitivity_p9_diverse8/p8a_codegen_direction_compare.csv"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/depth1_analysis_p9_diverse8",
+    "depth1_program_summary_csv": "data/outputs/depth1_analysis_p9_diverse8/depth1_program_summary.csv",
+    "depth1_pair_summary_csv": "data/outputs/depth1_analysis_p9_diverse8/depth1_pair_summary.csv",
+    "depth1_both_smaller_cases_csv": "data/outputs/depth1_analysis_p9_diverse8/depth1_both_smaller_cases.csv",
+    "depth1_analysis_report": "data/outputs/depth1_analysis_p9_diverse8/depth1_analysis_report.md"
+  },
+  "sha256": {
+    "p4_attempts_csv": "6ab025d0f83e1da8d23a46a3450d93bbca2d5366c84f9051f6fd15b8d1ff82ca",
+    "p5_candidates_csv": "3b4f969e6df509d989c261ce2fcccb66a0b12dc7d4be048cf1ac7636db2d99d7",
+    "p5_pipeline_runs_csv": "7bf53c24b54ed12d23a897a1ba316b88b4992624da9d72f589b4e45d3ba4c45a",
+    "p6_object_size_csv": "b03d992ad5c27efb38b85f9ea577c0fbb42a36db18dceeeb8dc94a691c8e1f22",
+    "p8a_compare_csv": "82e543eb40939f2130382c4af74833f241907dd9ef28169b037cccadc2407fb8",
+    "depth1_program_summary_csv": "e75e9c45e2510a2cc602bf54c769b832ef28c915f4776108cf4b70fb28cc10b1",
+    "depth1_pair_summary_csv": "a6876814622d659db055c9f61a4b00c3613c4672403351355bcba6bb403b7d92",
+    "depth1_both_smaller_cases_csv": "8ba6aab9c9b25b04c117922794fd54edb0f11f22cf76da51ef63ac849baf85e9",
+    "depth1_analysis_report": "f3162db9e80554225d818d07fc26c05d5a987e49ed61f0b7f92004b212c40781"
+  },
+  "tools": {},
+  "summary": {
+    "ReferenceIRDifferentButTextEqualRate": "93.75%",
+    "IRDifferentButTextEqualRate": "57.14%",
+    "ObjectEvaluated": 7,
+    "Depth1BothSmallerPrograms": 0,
+    "SingleSwapCandidates": 7,
+    "DirectionAgreementRate": "71.43%",
+    "BothSmallerCases": 0,
+    "DirectionComparisonCandidates": 7,
+    "SmallerText": 0,
+    "Programs": 8,
+    "ReferenceDepth1BothSmallerPrograms": 1,
+    "DirectionDisagreementCount": 2,
+    "EqualText": 5,
+    "IRDifferentButTextEqualCount": 4,
+    "LargerText": 2
+  },
+  "scope_limits": {
+    "benchmark_set": "P9-Diverse8",
+    "depth": 1,
+    "two_swap_search": false,
+    "new_search": false,
+    "new_certificates": false,
+    "runtime_benchmarks": false
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P9-4c-P4",
+  "description": "P9-4c diverse8 prefix-state adjacent lazy validation.",
+  "result_generated_from_commit": "3ad70629745dd4d4ccc4b57a8097902c31a77a61",
+  "ecpor_git_commit": "3ad70629745dd4d4ccc4b57a8097902c31a77a61",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "pipeline_config": "configs/pipeline_scalar.yaml",
+    "passspec": "configs/passspec.yaml"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/lazy_validation_p9_diverse8",
+    "cert_dir": "data/certs/lazy_validation_p9_diverse8",
+    "attempts_csv": "data/outputs/lazy_validation_p9_diverse8/attempts.csv",
+    "report": "data/outputs/lazy_validation_p9_diverse8/report.md"
+  },
+  "sha256": {
+    "pipeline_config": "798fafb5e73bd26036dec30fd6d9592ec4ebf0b51a17bd5d73f81dc3acb8f2cf",
+    "passspec": "b6231cda06ce132423fe1f29d8d4cabd95c9722dbf41258691d084b097ec4788",
+    "attempts_csv": "6ab025d0f83e1da8d23a46a3450d93bbca2d5366c84f9051f6fd15b8d1ff82ca",
+    "report": "57e1c298568dd24c9f94db88654c846bbe2f0cda68c5ca07b378c49c1a34b2d3",
+    "opt": "f4a10cdc53c8f1288bb4051318af63ca8b07aae0f0b8ffb13b788fc98ace2543"
+  },
+  "tools": {
+    "opt_path": "E:\\llvm\\build\\bin\\opt.exe"
+  },
+  "summary": {
+    "attempted_adjacent_swaps": 56,
+    "dynamic_tests": 44,
+    "not_certified_independent": 7,
+    "CertifiedPruningRatioDynamic": "84.09%",
+    "SecondRunCacheHitRate": "0.00%",
+    "candidate_swaps": 44,
+    "certified_independent": 37,
+    "CertifiedPruningRatioAttempted": "66.07%",
+    "CertificateReproductionRate": "100.00%",
+    "low_priority_skipped": 12,
+    "cache_hits": 0,
+    "HardFalseIndependent": 0,
+    "run_failed": 0
+  },
+  "scope_limits": {
+    "benchmark_set": "P9-Diverse8",
+    "program_count": 8,
+    "anchor_adjacent_swaps_per_program": 7,
+    "two_swap_search": false,
+    "full_searcher": false,
+    "runtime_benchmarks": false,
+    "code_size_evaluation": false
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P9-4c-P8a",
+  "description": "P9-4c diverse8 clang -c sensitivity check for depth1 candidates.",
+  "result_generated_from_commit": "3ad70629745dd4d4ccc4b57a8097902c31a77a61",
+  "ecpor_git_commit": "3ad70629745dd4d4ccc4b57a8097902c31a77a61",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "p6_object_size_csv": "data/outputs/code_size_p9_diverse8/object_size.csv"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/codegen_sensitivity_p9_diverse8",
+    "p8a_clang_object_size_csv": "data/outputs/codegen_sensitivity_p9_diverse8/p8a_clang_object_size.csv",
+    "p8a_codegen_direction_compare_csv": "data/outputs/codegen_sensitivity_p9_diverse8/p8a_codegen_direction_compare.csv",
+    "p8a_codegen_sensitivity_report": "data/outputs/codegen_sensitivity_p9_diverse8/p8a_codegen_sensitivity_report.md"
+  },
+  "sha256": {
+    "p6_object_size_csv": "b03d992ad5c27efb38b85f9ea577c0fbb42a36db18dceeeb8dc94a691c8e1f22",
+    "p8a_clang_object_size_csv": "d5d2d56cba38b7464c28d44f4ee20021d02e64b1a6a8c9c5416d1a9309eada6d",
+    "p8a_codegen_direction_compare_csv": "82e543eb40939f2130382c4af74833f241907dd9ef28169b037cccadc2407fb8",
+    "p8a_codegen_sensitivity_report": "cf0e6c6d1f125738ca31be8553db798d585e150a5dd7e35b4dccaa6c4fbb8e10",
+    "clang": "7813948a1b853beb1806fd1bb28b09917bcbd9e35d67b43345af02c100b93551",
+    "llvm_size": "f425ef87d64380ff5f8fd055ddb52e1f0d38f3031bb2a5bbddd557d71c5bc589"
+  },
+  "tools": {
+    "clang_path": "E:\\llvm\\build\\bin\\clang.exe",
+    "llvm_size_path": "E:\\llvm\\build\\bin\\llvm-size.exe"
+  },
+  "summary": {
+    "SmallerOnlyUnderLlcCount": 0,
+    "SmallerOnlyUnderClangCount": 0,
+    "ClangSizeParseFailed": 0,
+    "DirectionAgreementRate": "71.43%",
+    "ClangObjectBuildsAttempted": 15,
+    "ClangObjectBuildFailed": 0,
+    "DirectionComparisonCandidates": 7,
+    "Depth2Inputs": 0,
+    "IRInputs": 15,
+    "AnchorInputs": 8,
+    "SmallerUnderBothCount": 0,
+    "DirectionDisagreementCount": 2,
+    "SingleSwapInputs": 7,
+    "Programs": 8,
+    "DirectionAgreementCount": 5
+  },
+  "scope_limits": {
+    "benchmark_set": "P9-Diverse8",
+    "program_count": 8,
+    "depth": 1,
+    "new_certificates": false,
+    "llvm_opt_rerun": false,
+    "two_swap_search": false,
+    "runtime_benchmarks": false,
+    "codegen_path_compared": "clang -c"
+  }
+}
