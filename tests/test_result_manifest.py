@@ -281,6 +281,68 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["summary"]["FinalOpcodeDeltaNonZero"], "num_add_delta=-1")
         self.assertEqual(loaded["scope_limits"]["single_program"], "testsuite_stanford_queens")
 
+    def test_builds_benchmark_ingest_manifest(self):
+        from ecpor.result_manifest import build_benchmark_ingest_manifest, write_manifest
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_root = root / "suite"
+            source_root.mkdir()
+            clang = root / "clang.exe"
+            opt = root / "opt.exe"
+            llc = root / "llc.exe"
+            llvm_size = root / "llvm-size.exe"
+            config = root / "benchmarks_p8b.yaml"
+            out_dir = root / "benchmark_ingest_p8b"
+            input_ir = root / "data" / "inputs" / "testsuite_misc_good.ll"
+            out_dir.mkdir()
+            input_ir.parent.mkdir(parents=True)
+            _write_text(clang, "clang")
+            _write_text(opt, "opt")
+            _write_text(llc, "llc")
+            _write_text(llvm_size, "size")
+            _write_text(input_ir, "define i32 @main() { ret i32 0 }\n")
+            _write_text(
+                config,
+                textwrap.dedent(
+                    """
+                    stage: P8b-0
+                    programs:
+                      - id: testsuite_misc_good
+                        ir: data/inputs/testsuite_misc_good.ll
+                    """
+                ).strip()
+                + "\n",
+            )
+            _write_benchmark_ingest_outputs(out_dir, input_ir)
+
+            manifest = build_benchmark_ingest_manifest(
+                source_root=source_root,
+                config_path=config,
+                output_dir=out_dir,
+                clang_path=clang,
+                opt_path=opt,
+                llc_path=llc,
+                llvm_size_path=llvm_size,
+                repo_root=root,
+                result_generated_from_commit="feed123",
+            )
+            manifest_path = root / "benchmark_ingest_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P8b-0")
+        self.assertEqual(loaded["result_generated_from_commit"], "feed123")
+        self.assertIn("config", loaded["outputs"])
+        self.assertIn("ingest_summary_csv", loaded["outputs"])
+        self.assertIn("report", loaded["outputs"])
+        self.assertIn("accepted_ir_testsuite_misc_good", loaded["outputs"])
+        self.assertIn("accepted_ir_testsuite_misc_good", loaded["sha256"])
+        self.assertIn("clang", loaded["sha256"])
+        self.assertEqual(loaded["summary"]["AcceptedPrograms"], 1)
+        self.assertEqual(loaded["summary"]["RejectedPrograms"], 1)
+        self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
+
 
 def _write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
@@ -566,6 +628,34 @@ def _write_p8c_outputs(out_dir: Path) -> None:
             ClangTextDelta: -16
             BothCodegenSmaller: True
             FinalOpcodeDeltaNonZero: num_add_delta=-1
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_benchmark_ingest_outputs(out_dir: Path, input_ir: Path) -> None:
+    _write_text(
+        out_dir / "ingest_summary.csv",
+        (
+            "program,source_path,input_ir,status,failure_stage,failure_kind,"
+            "num_functions,num_instructions,num_basic_blocks,scalar_pipeline_ok,"
+            "llc_object_ok,clang_object_ok,size_parse_ok\n"
+            f"testsuite_misc_good,Good.c,{input_ir.as_posix()},accepted,,,1,1,1,"
+            "True,True,True,True\n"
+            "testsuite_misc_bad,Bad.c,,rejected,ir_generation,clang_failed,0,0,0,"
+            "False,False,False,False\n"
+        ),
+    )
+    _write_text(
+        out_dir / "report.md",
+        textwrap.dedent(
+            """
+            # P8b-0 Benchmark Ingest Report
+
+            CandidateSourceFilesScanned: 2
+            AcceptedPrograms: 1
+            RejectedPrograms: 1
             """
         ).strip()
         + "\n",

@@ -118,6 +118,17 @@ P8C_ATTRIBUTION_SUMMARY_KEYS = {
     "FinalOpcodeDeltaNonZero",
 }
 
+P8B_INGEST_SUMMARY_KEYS = {
+    "CandidateSourceFilesScanned",
+    "AcceptedPrograms",
+    "RejectedPrograms",
+    "IRGenerationOk",
+    "ScalarPipelineOk",
+    "LlcObjectOk",
+    "ClangObjectOk",
+    "SizeParseOk",
+}
+
 
 def build_result_manifest(
     *,
@@ -444,6 +455,64 @@ def build_core_evidence_manifest(
     )
 
 
+def build_benchmark_ingest_manifest(
+    *,
+    source_root: str | Path,
+    config_path: str | Path,
+    output_dir: str | Path,
+    clang_path: str | Path,
+    opt_path: str | Path,
+    llc_path: str | Path,
+    llvm_size_path: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    out = Path(output_dir)
+    summary_csv = out / "ingest_summary.csv"
+    report = out / "report.md"
+    outputs: dict[str, str | Path] = {
+        "config": config_path,
+        "output_dir": out,
+        "ingest_summary_csv": summary_csv,
+        "report": report,
+    }
+    for row in _load_csv(summary_csv):
+        if row.get("status") != "accepted" or not row.get("input_ir"):
+            continue
+        outputs[f"accepted_ir_{_manifest_key(row.get('program', ''))}"] = row[
+            "input_ir"
+        ]
+    return build_result_manifest(
+        stage="P8b-0",
+        description="Benchmark ingestion for P8b expansion from llvm-test-suite.",
+        inputs={
+            "source_root": source_root,
+        },
+        outputs=outputs,
+        tools={
+            "clang": clang_path,
+            "opt": opt_path,
+            "llc": llc_path,
+            "llvm_size": llvm_size_path,
+        },
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            P8B_INGEST_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "new_certificates": False,
+                "pair_matrix": False,
+                "new_search": False,
+                "runtime_benchmarks": False,
+                "ingestion_only": True,
+            }
+        },
+    )
+
+
 def build_queens_effect_attribution_manifest(
     *,
     input_ir: str | Path,
@@ -580,6 +649,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     core.add_argument("--repo-root", default=".")
     core.add_argument("--result-generated-from-commit")
 
+    p8b_ingest = subparsers.add_parser(
+        "benchmark-ingest", help="Build a P8b-0 benchmark ingestion manifest."
+    )
+    p8b_ingest.add_argument("--out-manifest", required=True)
+    p8b_ingest.add_argument("--source-root", required=True)
+    p8b_ingest.add_argument("--config", required=True)
+    p8b_ingest.add_argument("--output-dir", required=True)
+    p8b_ingest.add_argument("--clang", required=True)
+    p8b_ingest.add_argument("--opt", required=True)
+    p8b_ingest.add_argument("--llc", required=True)
+    p8b_ingest.add_argument("--llvm-size", required=True)
+    p8b_ingest.add_argument("--repo-root", default=".")
+    p8b_ingest.add_argument("--result-generated-from-commit")
+
     p8c = subparsers.add_parser(
         "p8c-attribution", help="Build a P8c Queens attribution manifest."
     )
@@ -654,6 +737,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             p8c_feature_deltas_csv=args.p8c_feature_deltas,
             p8c_opcode_delta_csv=args.p8c_opcode_delta,
             p8c_object_size_csv=args.p8c_object_size,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "benchmark-ingest":
+        manifest = build_benchmark_ingest_manifest(
+            source_root=args.source_root,
+            config_path=args.config,
+            output_dir=args.output_dir,
+            clang_path=args.clang,
+            opt_path=args.opt,
+            llc_path=args.llc,
+            llvm_size_path=args.llvm_size,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )
@@ -837,6 +932,10 @@ def _parse_optional_float(value: str | None) -> float | None:
 
 def _path_text(path: str | Path) -> str:
     return Path(path).as_posix()
+
+
+def _manifest_key(value: str) -> str:
+    return "".join(char if char.isalnum() else "_" for char in value).strip("_")
 
 
 if __name__ == "__main__":
