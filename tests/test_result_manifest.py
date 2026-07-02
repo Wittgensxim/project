@@ -207,9 +207,12 @@ class ResultManifestTests(unittest.TestCase):
         self.assertIn("ecpor_validation_funnel_csv", loaded["outputs"])
         self.assertIn("ecpor_candidate_propagation_funnel_csv", loaded["outputs"])
         self.assertIn("ecpor_objective_layer_summary_csv", loaded["outputs"])
+        self.assertIn("ecpor_attribution_summary_csv", loaded["outputs"])
         self.assertIn("ecpor_core_evidence_report", loaded["sha256"])
+        self.assertIn("ecpor_attribution_summary_csv", loaded["sha256"])
         self.assertEqual(loaded["summary"]["DirectionAgreementRate"], "68.42%")
         self.assertEqual(loaded["summary"]["SmallerUnderBothCount"], 4)
+        self.assertEqual(loaded["summary"]["AttributionCases"], 1)
         self.assertNotIn("queens", loaded["summary"])
 
     def test_builds_p8c_queens_attribution_manifest(self):
@@ -481,6 +484,18 @@ def _write_core_evidence_outputs(out_dir: Path) -> None:
         "direction_comparison_candidates,direction_agreement_rate,smaller_under_both\n38,68.42%,4\n",
     )
     _write_text(
+        out_dir / "ecpor_attribution_summary.csv",
+        (
+            "program,pair,scope,local_feature_delta,final_feature_delta,opcode_delta,"
+            "llc_text_delta_pct,clang_text_delta_pct,evidence_level\n"
+            "testsuite_stanford_queens,\"simplifycfg,instcombine\","
+            "single-state observed attribution,num_instructions_delta=-1,"
+            "num_instructions_delta=-1,"
+            "\"num_icmp_delta=-1;num_select_delta=-1;num_add_delta=1\","
+            "-4.401651,-1.673640,\"observed attribution, not causal proof\"\n"
+        ),
+    )
+    _write_text(
         out_dir / "ecpor_core_evidence_report.md",
         textwrap.dedent(
             """
@@ -489,6 +504,7 @@ def _write_core_evidence_outputs(out_dir: Path) -> None:
             DirectionComparisonCandidates: 38
             DirectionAgreementRate: 68.42%
             SmallerUnderBothCount: 4
+            AttributionCases: 1
             queens: detail line
             """
         ).strip()

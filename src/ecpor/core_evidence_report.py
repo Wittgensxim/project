@@ -58,6 +58,18 @@ OBJECTIVE_LAYER_FIELDS = [
     "direction_disagreement_count",
 ]
 
+ATTRIBUTION_SUMMARY_FIELDS = [
+    "program",
+    "pair",
+    "scope",
+    "local_feature_delta",
+    "final_feature_delta",
+    "opcode_delta",
+    "llc_text_delta_pct",
+    "clang_text_delta_pct",
+    "evidence_level",
+]
+
 
 @dataclass(frozen=True)
 class CoreEvidenceReport:
@@ -65,6 +77,7 @@ class CoreEvidenceReport:
     propagation_rows: list[dict[str, str]]
     pruning_rows: list[dict[str, str]]
     objective_rows: list[dict[str, str]]
+    attribution_rows: list[dict[str, str]]
     summary: dict[str, Any]
 
 
@@ -80,6 +93,10 @@ def run_core_evidence_report(
     p7b_analysis_report: str | Path,
     p8a_compare_csv: str | Path,
     output_dir: str | Path,
+    p8c_attribution_report: str | Path | None = None,
+    p8c_feature_deltas_csv: str | Path | None = None,
+    p8c_opcode_delta_csv: str | Path | None = None,
+    p8c_object_size_csv: str | Path | None = None,
 ) -> CoreEvidenceReport:
     p4_attempts = _load_csv(p4_attempts_csv)
     p5_candidates = _load_csv(p5_candidates_csv)
@@ -90,6 +107,10 @@ def run_core_evidence_report(
     p7b_object_rows = _load_csv(p7b_object_size_csv)
     p7b_analysis = _parse_key_value_report(p7b_analysis_report)
     p8a_compare = _load_csv(p8a_compare_csv)
+    p8c_attribution = _parse_optional_key_value_report(p8c_attribution_report)
+    p8c_feature_deltas = _load_optional_csv(p8c_feature_deltas_csv)
+    p8c_opcode_delta = _load_optional_csv(p8c_opcode_delta_csv)
+    p8c_object_rows = _load_optional_csv(p8c_object_size_csv)
 
     validation_rows = _build_validation_rows(
         p4_attempts=p4_attempts,
@@ -110,11 +131,18 @@ def run_core_evidence_report(
         p8a_compare=p8a_compare,
     )
     objective_rows = [_build_objective_summary(p8a_compare)]
+    attribution_rows = _build_attribution_rows(
+        attribution_report=p8c_attribution,
+        feature_deltas=p8c_feature_deltas,
+        opcode_deltas=p8c_opcode_delta,
+        object_rows=p8c_object_rows,
+    )
     summary = _build_summary(
         validation_rows=validation_rows,
         propagation_rows=propagation_rows,
         pruning_rows=pruning_rows,
         objective_row=objective_rows[0],
+        attribution_rows=attribution_rows,
         p6_object_rows=p6_object_rows,
         p7b_object_rows=p7b_object_rows,
         p7b_analysis=p7b_analysis,
@@ -142,6 +170,11 @@ def run_core_evidence_report(
         objective_rows,
         OBJECTIVE_LAYER_FIELDS,
     )
+    _write_csv(
+        output_root / "ecpor_attribution_summary.csv",
+        attribution_rows,
+        ATTRIBUTION_SUMMARY_FIELDS,
+    )
     (output_root / "ecpor_core_evidence_report.md").write_text(
         build_core_evidence_report(
             summary=summary,
@@ -149,6 +182,7 @@ def run_core_evidence_report(
             propagation_rows=propagation_rows,
             pruning_rows=pruning_rows,
             objective_rows=objective_rows,
+            attribution_rows=attribution_rows,
         ),
         encoding="utf-8",
     )
@@ -157,6 +191,7 @@ def run_core_evidence_report(
         propagation_rows=propagation_rows,
         pruning_rows=pruning_rows,
         objective_rows=objective_rows,
+        attribution_rows=attribution_rows,
         summary=summary,
     )
 
@@ -168,6 +203,7 @@ def build_core_evidence_report(
     propagation_rows: Sequence[dict[str, str]],
     pruning_rows: Sequence[dict[str, str]],
     objective_rows: Sequence[dict[str, str]],
+    attribution_rows: Sequence[dict[str, str]],
 ) -> str:
     objective = objective_rows[0] if objective_rows else {}
     lines = [
@@ -235,6 +271,26 @@ def build_core_evidence_report(
             f"SmallerOnlyUnderClangCount: {objective.get('smaller_only_under_clang', '0')}",
             f"DirectionDisagreementCount: {objective.get('direction_disagreement_count', '0')}",
             "",
+            "## Observed Attribution Summary",
+            "",
+            "This is observed attribution evidence, not pruning evidence or causal proof.",
+            "",
+            f"AttributionCases: {len(attribution_rows)}",
+            f"AttributionObservedButNotCausalProof: {bool(attribution_rows)}",
+            "",
+            "| program | pair | scope | local feature delta | final feature delta | opcode delta | llc text delta % | clang text delta % | evidence level |",
+            "| --- | --- | --- | --- | --- | --- | ---: | ---: | --- |",
+        ]
+    )
+    for row in attribution_rows:
+        lines.append(
+            "| {program} | {pair} | {scope} | {local_feature_delta} | "
+            "{final_feature_delta} | {opcode_delta} | {llc_text_delta_pct} | "
+            "{clang_text_delta_pct} | {evidence_level} |".format(**row)
+        )
+    lines.extend(
+        [
+            "",
             "## Relation to Original Research Question",
             "",
             "ECPOR 当前已经证明：",
@@ -292,6 +348,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--p8a-compare",
         default="data/outputs/codegen_sensitivity_p8a/p8a_codegen_direction_compare.csv",
     )
+    parser.add_argument("--p8c-attribution-report", default="")
+    parser.add_argument("--p8c-feature-deltas", default="")
+    parser.add_argument("--p8c-opcode-delta", default="")
+    parser.add_argument("--p8c-object-size", default="")
     parser.add_argument("--out", default="data/outputs/core_evidence_report")
     args = parser.parse_args(argv)
 
@@ -306,6 +366,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         p7b_analysis_report=args.p7b_analysis_report,
         p8a_compare_csv=args.p8a_compare,
         output_dir=args.out,
+        p8c_attribution_report=args.p8c_attribution_report,
+        p8c_feature_deltas_csv=args.p8c_feature_deltas,
+        p8c_opcode_delta_csv=args.p8c_opcode_delta,
+        p8c_object_size_csv=args.p8c_object_size,
     )
     print(
         build_core_evidence_report(
@@ -314,6 +378,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             propagation_rows=result.propagation_rows,
             pruning_rows=result.pruning_rows,
             objective_rows=result.objective_rows,
+            attribution_rows=result.attribution_rows,
         ),
         end="",
     )
@@ -531,12 +596,47 @@ def _build_objective_summary(rows: Sequence[dict[str, str]]) -> dict[str, str]:
     }
 
 
+def _build_attribution_rows(
+    *,
+    attribution_report: Mapping[str, Any],
+    feature_deltas: Sequence[dict[str, str]],
+    opcode_deltas: Sequence[dict[str, str]],
+    object_rows: Sequence[dict[str, str]],
+) -> list[dict[str, str]]:
+    if not attribution_report and not feature_deltas and not opcode_deltas:
+        return []
+
+    program = str(attribution_report.get("Program") or _first_value(object_rows, "program"))
+    if not program:
+        program = "testsuite_stanford_queens"
+    local_features = _comparison_row(feature_deltas, "local_AB_vs_BA")
+    final_features = _comparison_row(feature_deltas, "final_AB_vs_BA")
+    final_opcodes = _comparison_row(opcode_deltas, "final_AB_vs_BA")
+    return [
+        {
+            "program": program,
+            "pair": "simplifycfg,instcombine",
+            "scope": "single-state observed attribution",
+            "local_feature_delta": _format_nonzero_deltas(local_features),
+            "final_feature_delta": _format_nonzero_deltas(final_features),
+            "opcode_delta": (
+                str(attribution_report.get("FinalOpcodeDeltaNonZero") or "")
+                or _format_nonzero_deltas(final_opcodes)
+            ),
+            "llc_text_delta_pct": _object_text_delta_pct(object_rows, "llc"),
+            "clang_text_delta_pct": _object_text_delta_pct(object_rows, "clang"),
+            "evidence_level": "observed attribution, not causal proof",
+        }
+    ]
+
+
 def _build_summary(
     *,
     validation_rows: Sequence[dict[str, str]],
     propagation_rows: Sequence[dict[str, str]],
     pruning_rows: Sequence[dict[str, str]],
     objective_row: Mapping[str, str],
+    attribution_rows: Sequence[dict[str, str]],
     p6_object_rows: Sequence[dict[str, str]],
     p7b_object_rows: Sequence[dict[str, str]],
     p7b_analysis: Mapping[str, Any],
@@ -559,12 +659,22 @@ def _build_summary(
         "P7bObjectRows": len(p7b_object_rows),
         "DirectionAgreementRate": objective_row.get("direction_agreement_rate", "0.00%"),
         "SmallerUnderBothCount": _parse_int(objective_row.get("smaller_under_both")),
+        "AttributionCases": len(attribution_rows),
     }
 
 
 def _load_csv(path: str | Path) -> list[dict[str, str]]:
     with Path(path).open(newline="", encoding="utf-8") as handle:
         return list(csv.DictReader(handle))
+
+
+def _load_optional_csv(path: str | Path | None) -> list[dict[str, str]]:
+    if path in {None, ""}:
+        return []
+    candidate = Path(path)
+    if not candidate.exists():
+        return []
+    return _load_csv(candidate)
 
 
 def _write_csv(
@@ -592,6 +702,12 @@ def _parse_key_value_report(path: str | Path) -> dict[str, Any]:
             continue
         values[key] = _parse_scalar(value.strip())
     return values
+
+
+def _parse_optional_key_value_report(path: str | Path | None) -> dict[str, Any]:
+    if path in {None, ""}:
+        return {}
+    return _parse_key_value_report(path)
 
 
 def _parse_scalar(value: str) -> Any:
@@ -662,6 +778,47 @@ def _summary_count(rows: Sequence[dict[str, str]], evidence_type: str) -> int:
         if row.get("evidence_event") == evidence_type:
             return _parse_int(row.get("count"))
     return 0
+
+
+def _first_value(rows: Sequence[dict[str, str]], field: str) -> str:
+    for row in rows:
+        value = row.get(field, "")
+        if value:
+            return value
+    return ""
+
+
+def _comparison_row(
+    rows: Sequence[dict[str, str]], comparison: str
+) -> dict[str, str]:
+    for row in rows:
+        if row.get("comparison") == comparison:
+            return row
+    return {}
+
+
+def _format_nonzero_deltas(row: Mapping[str, str]) -> str:
+    parts: list[str] = []
+    for key, value in row.items():
+        if not key.endswith("_delta"):
+            continue
+        numeric = _parse_optional_float(value)
+        if numeric in {None, 0.0}:
+            continue
+        parts.append(f"{key}={value}")
+    return ";".join(parts)
+
+
+def _object_text_delta_pct(
+    rows: Sequence[dict[str, str]], compile_mode: str
+) -> str:
+    for row in rows:
+        if row.get("compile_mode") != compile_mode:
+            continue
+        if row.get("state_name") not in {"", "BA_final"}:
+            continue
+        return row.get("text_delta_pct", "")
+    return ""
 
 
 def _percent(numerator: int, denominator: int) -> str:

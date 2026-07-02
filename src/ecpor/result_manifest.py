@@ -100,6 +100,8 @@ CORE_EVIDENCE_SUMMARY_KEYS = {
     "SmallerOnlyUnderLlcCount",
     "SmallerOnlyUnderClangCount",
     "DirectionDisagreementCount",
+    "AttributionCases",
+    "AttributionObservedButNotCausalProof",
 }
 
 P8C_ATTRIBUTION_SUMMARY_KEYS = {
@@ -407,6 +409,7 @@ def build_core_evidence_manifest(
             / "ecpor_certified_pruning_summary.csv",
             "ecpor_objective_layer_summary_csv": out
             / "ecpor_objective_layer_summary.csv",
+            "ecpor_attribution_summary_csv": out / "ecpor_attribution_summary.csv",
         },
         tools={},
         summary=_filter_keys(

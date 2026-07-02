@@ -24,6 +24,10 @@ class CoreEvidenceReportTests(unittest.TestCase):
             p7b_object_size = root / "p7b_object_size.csv"
             p7b_analysis_report = root / "p7b_analysis_report.md"
             p8a_compare = root / "p8a_compare.csv"
+            p8c_attribution_report = root / "p8c_attribution_report.md"
+            p8c_feature_deltas = root / "p8c_feature_deltas.csv"
+            p8c_opcode_delta = root / "p8c_opcode_delta.csv"
+            p8c_object_size = root / "p8c_object_size.csv"
 
             _write_attempts(p4_attempts)
             _write_p5_candidates(p5_candidates)
@@ -47,6 +51,10 @@ class CoreEvidenceReportTests(unittest.TestCase):
                 + "\n",
             )
             _write_compare(p8a_compare)
+            _write_p8c_attribution_report(p8c_attribution_report)
+            _write_p8c_feature_deltas(p8c_feature_deltas)
+            _write_p8c_opcode_delta(p8c_opcode_delta)
+            _write_p8c_object_size(p8c_object_size)
 
             result = run_core_evidence_report(
                 p4_attempts_csv=p4_attempts,
@@ -58,6 +66,10 @@ class CoreEvidenceReportTests(unittest.TestCase):
                 p7b_object_size_csv=p7b_object_size,
                 p7b_analysis_report=p7b_analysis_report,
                 p8a_compare_csv=p8a_compare,
+                p8c_attribution_report=p8c_attribution_report,
+                p8c_feature_deltas_csv=p8c_feature_deltas,
+                p8c_opcode_delta_csv=p8c_opcode_delta,
+                p8c_object_size_csv=p8c_object_size,
                 output_dir=output_dir,
             )
             validation_rows = _read_csv(output_dir / "ecpor_validation_funnel.csv")
@@ -66,6 +78,7 @@ class CoreEvidenceReportTests(unittest.TestCase):
             )
             evidence_rows = _read_csv(output_dir / "ecpor_certified_pruning_summary.csv")
             objective_rows = _read_csv(output_dir / "ecpor_objective_layer_summary.csv")
+            attribution_rows = _read_csv(output_dir / "ecpor_attribution_summary.csv")
             report = (output_dir / "ecpor_core_evidence_report.md").read_text(
                 encoding="utf-8"
             )
@@ -100,9 +113,28 @@ class CoreEvidenceReportTests(unittest.TestCase):
         self.assertEqual(objective["direction_agreement_count"], "1")
         self.assertEqual(objective["direction_agreement_rate"], "50.00%")
         self.assertEqual(result.summary["DirectionAgreementRate"], "50.00%")
+        attribution = attribution_rows[0]
+        self.assertEqual(attribution["program"], "testsuite_stanford_queens")
+        self.assertEqual(attribution["pair"], "simplifycfg,instcombine")
+        self.assertEqual(attribution["scope"], "single-state observed attribution")
+        self.assertEqual(attribution["local_feature_delta"], "num_instructions_delta=-1")
+        self.assertEqual(attribution["final_feature_delta"], "num_instructions_delta=-1")
+        self.assertEqual(
+            attribution["opcode_delta"],
+            "num_icmp_delta=-1;num_select_delta=-1;num_add_delta=1",
+        )
+        self.assertEqual(attribution["llc_text_delta_pct"], "-4.401651")
+        self.assertEqual(attribution["clang_text_delta_pct"], "-1.673640")
+        self.assertEqual(
+            attribution["evidence_level"], "observed attribution, not causal proof"
+        )
+        self.assertEqual(result.summary["AttributionCases"], 1)
         self.assertIn("Validation Funnel", report)
         self.assertIn("Candidate Propagation Funnel", report)
         self.assertIn("Objective-layer Evidence", report)
+        self.assertIn("Observed Attribution Summary", report)
+        self.assertIn("AttributionCases: 1", report)
+        self.assertIn("num_icmp_delta=-1;num_select_delta=-1;num_add_delta=1", report)
         self.assertIn("Relation to Original Research Question", report)
         self.assertIn("DirectionAgreementRate: 50.00%", report)
 
@@ -274,6 +306,122 @@ def _write_compare(path: Path) -> None:
                     "llc_direction": "equal",
                     "clang_direction": "larger",
                     "direction_agree": "False",
+                },
+            ]
+        )
+
+
+def _write_p8c_attribution_report(path: Path) -> None:
+    _write_text(
+        path,
+        textwrap.dedent(
+            """
+            # P8c Queens Effect Attribution
+
+            Program: testsuite_stanford_queens
+            LocalInstructionDelta: -1
+            FinalInstructionDelta: -1
+            FinalOpcodeDeltaNonZero: num_icmp_delta=-1;num_select_delta=-1;num_add_delta=1
+            BothCodegenSmaller: True
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_p8c_feature_deltas(path: Path) -> None:
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "comparison",
+                "left_state",
+                "right_state",
+                "hard_hash_equal",
+                "num_instructions_delta",
+                "num_branch_delta",
+            ],
+        )
+        writer.writeheader()
+        writer.writerows(
+            [
+                {
+                    "comparison": "local_AB_vs_BA",
+                    "left_state": "AB_local",
+                    "right_state": "BA_local",
+                    "hard_hash_equal": "False",
+                    "num_instructions_delta": "-1",
+                    "num_branch_delta": "0",
+                },
+                {
+                    "comparison": "final_AB_vs_BA",
+                    "left_state": "AB_final",
+                    "right_state": "BA_final",
+                    "hard_hash_equal": "False",
+                    "num_instructions_delta": "-1",
+                    "num_branch_delta": "0",
+                },
+            ]
+        )
+
+
+def _write_p8c_opcode_delta(path: Path) -> None:
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "comparison",
+                "left_state",
+                "right_state",
+                "num_icmp_delta",
+                "num_select_delta",
+                "num_add_delta",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "comparison": "final_AB_vs_BA",
+                "left_state": "AB_final",
+                "right_state": "BA_final",
+                "num_icmp_delta": "-1",
+                "num_select_delta": "-1",
+                "num_add_delta": "1",
+            }
+        )
+
+
+def _write_p8c_object_size(path: Path) -> None:
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "program",
+                "state_name",
+                "compile_mode",
+                "text_delta",
+                "text_delta_pct",
+                "direction",
+            ],
+        )
+        writer.writeheader()
+        writer.writerows(
+            [
+                {
+                    "program": "testsuite_stanford_queens",
+                    "state_name": "BA_final",
+                    "compile_mode": "llc",
+                    "text_delta": "-32",
+                    "text_delta_pct": "-4.401651",
+                    "direction": "smaller",
+                },
+                {
+                    "program": "testsuite_stanford_queens",
+                    "state_name": "BA_final",
+                    "compile_mode": "clang",
+                    "text_delta": "-16",
+                    "text_delta_pct": "-1.673640",
+                    "direction": "smaller",
                 },
             ]
         )
