@@ -1,9 +1,9 @@
 {
   "manifest_schema_version": 1,
-  "stage": "P8a.6",
-  "description": "Core evidence report for ECPOR pruning and objective-layer sensitivity.",
-  "result_generated_from_commit": "346dbedd1c4beabaa80268923ad0904cf4ec8aca",
-  "ecpor_git_commit": "346dbedd1c4beabaa80268923ad0904cf4ec8aca",
+  "stage": "P8c.2",
+  "description": "Core evidence report with P8c Queens observed attribution summary.",
+  "result_generated_from_commit": "6225f27918d8af0195601c2222c642496abae24d",
+  "ecpor_git_commit": "6225f27918d8af0195601c2222c642496abae24d",
   "ecpor_git_dirty": false,
   "inputs": {
     "p4_attempts_csv": "data/outputs/lazy_validation_p4_e83c409_first.csv",
@@ -14,7 +14,11 @@
     "p7b_candidates_csv": "data/outputs/bounded_two_swap_p7b/two_swap_candidates.csv",
     "p7b_object_size_csv": "data/outputs/bounded_two_swap_p7b/two_swap_object_size.csv",
     "p7b_analysis_report": "data/outputs/bounded_two_swap_p7b_analysis/p7b_analysis_report.md",
-    "p8a_compare_csv": "data/outputs/codegen_sensitivity_p8a/p8a_codegen_direction_compare.csv"
+    "p8a_compare_csv": "data/outputs/codegen_sensitivity_p8a/p8a_codegen_direction_compare.csv",
+    "p8c_attribution_report": "data/outputs/effect_attribution_queens/attribution_report.md",
+    "p8c_feature_deltas_csv": "data/outputs/effect_attribution_queens/feature_deltas.csv",
+    "p8c_opcode_delta_csv": "data/outputs/effect_attribution_queens/opcode_delta.csv",
+    "p8c_object_size_csv": "data/outputs/effect_attribution_queens/object_size.csv"
   },
   "outputs": {
     "output_dir": "data/outputs/core_evidence_report",
@@ -22,7 +26,8 @@
     "ecpor_validation_funnel_csv": "data/outputs/core_evidence_report/ecpor_validation_funnel.csv",
     "ecpor_candidate_propagation_funnel_csv": "data/outputs/core_evidence_report/ecpor_candidate_propagation_funnel.csv",
     "ecpor_certified_pruning_summary_csv": "data/outputs/core_evidence_report/ecpor_certified_pruning_summary.csv",
-    "ecpor_objective_layer_summary_csv": "data/outputs/core_evidence_report/ecpor_objective_layer_summary.csv"
+    "ecpor_objective_layer_summary_csv": "data/outputs/core_evidence_report/ecpor_objective_layer_summary.csv",
+    "ecpor_attribution_summary_csv": "data/outputs/core_evidence_report/ecpor_attribution_summary.csv"
   },
   "sha256": {
     "p4_attempts_csv": "ceada53bcb557dfd9a4d9c8217f652b7995f158154d4df5827a1a340acffb777",
@@ -34,20 +39,27 @@
     "p7b_object_size_csv": "45b5e0f8ab787079c6a3a67c8c0a34d8bf251ed8c6215a4056a233e157953e5e",
     "p7b_analysis_report": "f93c70736717e61b48c2eea06c9aa03201cc13ed3fccfec33b22ccd1be2a6184",
     "p8a_compare_csv": "f252aab4b7f440888f41b1d9445e80c2d4ce888dc5146fa64cd5ddd63c68a7df",
-    "ecpor_core_evidence_report": "de1d2a6f59b9532cf1e55755677f29f63ceb026bc7cb1b960c0f688e49927df5",
+    "p8c_attribution_report": "7b95ea1b1975b05b26dc39e015258d83e596ee6d947a3eac1fdec3df44780cfd",
+    "p8c_feature_deltas_csv": "92181104653cd00df1adfefc2c31fb495a89145ce92fe2d88b8380de9465fb5f",
+    "p8c_opcode_delta_csv": "0972275e3cd37b037de88d30239bef147217660d76dd2f2eca651d748ea72b90",
+    "p8c_object_size_csv": "f104a926fd2a81bb73e13ce6a59c64c73414cf74adfc65db99ca91cf95c1b3e7",
+    "ecpor_core_evidence_report": "d5000eb30b5a4e1a9ba6b633177378c6c5dd1eef5210ee77a8c6814a70040a0f",
     "ecpor_validation_funnel_csv": "3b186139bac93a5cd22ad340ad87644511c50b7d46ce00504c7177fad62e1114",
     "ecpor_candidate_propagation_funnel_csv": "e86ae2826d788e131e263b21ae17d842f6171a1b7f1cc56f2e2a29c2b016992e",
     "ecpor_certified_pruning_summary_csv": "0d224f46fdf7e53810a5acc16e13c6942bd9d45bf596f763f8bc6ea9d25e8b2d",
-    "ecpor_objective_layer_summary_csv": "93dc57e5a60e86f8efc63cd20e2114d15dee766219e2a0761896776495b64684"
+    "ecpor_objective_layer_summary_csv": "93dc57e5a60e86f8efc63cd20e2114d15dee766219e2a0761896776495b64684",
+    "ecpor_attribution_summary_csv": "5af8e99744406154e1f6dee3a84c46e5fa5ad09da8829a24ad02bf3c92661605"
   },
   "tools": {},
   "summary": {
-    "SmallerUnderBothCount": 4,
+    "SmallerOnlyUnderLlcCount": 0,
+    "AttributionCases": 1,
     "DirectionAgreementRate": "68.42%",
-    "DirectionDisagreementCount": 12,
-    "DirectionComparisonCandidates": 38,
     "SmallerOnlyUnderClangCount": 5,
-    "SmallerOnlyUnderLlcCount": 0
+    "SmallerUnderBothCount": 4,
+    "AttributionObservedButNotCausalProof": true,
+    "DirectionComparisonCandidates": 38,
+    "DirectionDisagreementCount": 12
   },
   "scope_limits": {
     "runtime_benchmarks": false,

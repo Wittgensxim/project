@@ -28,9 +28,10 @@ data/certs/bounded_two_swap_p7a/
 data/certs/bounded_two_swap_p7b/
 ```
 
-`data/outputs/core_evidence_report/` 当前只保留 P8a.6 必要文件：
+`data/outputs/core_evidence_report/` 当前只保留 P8c.2 必要文件：
 
 ```text
+ecpor_attribution_summary.csv
 ecpor_candidate_propagation_funnel.csv
 ecpor_certified_pruning_summary.csv
 ecpor_core_evidence_report.md
