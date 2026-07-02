@@ -100,21 +100,30 @@ def run_benchmark_ingest(
         if len(accepted_rows) >= accepted_limit and len(rows) >= min_scanned:
             break
         program = _program_id(source, used_ids)
-        row = _ingest_one_source(
-            source=source,
-            program=program,
-            input_root=input_root,
-            ir_root=ir_root,
-            scalar_root=scalar_root,
-            object_root=object_root,
-            clang_path=clang_path,
-            opt_path=opt_path,
-            llc_path=llc_path,
-            llvm_size_path=llvm_size_path,
-            scalar_pipeline=scalar_pipeline,
-            instruction_limit=instruction_limit,
-            timeout_sec=timeout_sec,
-        )
+        if len(accepted_rows) >= accepted_limit:
+            row = _row(
+                program=program,
+                source=source,
+                status="rejected",
+                failure_stage="selection",
+                failure_kind="accepted_limit_reached",
+            )
+        else:
+            row = _ingest_one_source(
+                source=source,
+                program=program,
+                input_root=input_root,
+                ir_root=ir_root,
+                scalar_root=scalar_root,
+                object_root=object_root,
+                clang_path=clang_path,
+                opt_path=opt_path,
+                llc_path=llc_path,
+                llvm_size_path=llvm_size_path,
+                scalar_pipeline=scalar_pipeline,
+                instruction_limit=instruction_limit,
+                timeout_sec=timeout_sec,
+            )
         rows.append(row)
         if row["status"] == "accepted":
             accepted_rows.append(row)

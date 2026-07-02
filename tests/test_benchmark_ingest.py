@@ -34,7 +34,7 @@ class BenchmarkIngestTests(unittest.TestCase):
                 opt_path=[sys.executable, str(tools / "fake_opt.py")],
                 llc_path=[sys.executable, str(tools / "fake_llc.py")],
                 llvm_size_path=[sys.executable, str(tools / "fake_size.py")],
-                accepted_limit=1,
+                accepted_limit=2,
                 min_scanned=2,
                 instruction_limit=5000,
                 timeout_sec=5.0,
@@ -66,6 +66,42 @@ class BenchmarkIngestTests(unittest.TestCase):
         self.assertIn("RejectedPrograms: 1", report)
         self.assertIn("testsuite_misc_good", config)
         self.assertIn("data/inputs/testsuite_misc_good.ll", config)
+
+    def test_accepted_limit_is_hard_cap_while_min_scanned_continues(self):
+        from ecpor.benchmark_ingest import run_benchmark_ingest
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_root = root / "suite"
+            source_root.mkdir()
+            for name in ["A.c", "B.c", "C.c"]:
+                (source_root / name).write_text(
+                    "int main(void) { return 0; }\n", encoding="utf-8"
+                )
+            tools = _write_fake_tools(root)
+
+            result = run_benchmark_ingest(
+                source_roots=[source_root],
+                input_dir=root / "inputs",
+                output_dir=root / "outputs",
+                config_path=root / "benchmarks_p8b.yaml",
+                clang_path=[sys.executable, str(tools / "fake_clang.py")],
+                opt_path=[sys.executable, str(tools / "fake_opt.py")],
+                llc_path=[sys.executable, str(tools / "fake_llc.py")],
+                llvm_size_path=[sys.executable, str(tools / "fake_size.py")],
+                accepted_limit=1,
+                min_scanned=3,
+                instruction_limit=5000,
+                timeout_sec=5.0,
+            )
+
+        self.assertEqual(result.summary["CandidateSourceFilesScanned"], 3)
+        self.assertEqual(result.summary["AcceptedPrograms"], 1)
+        self.assertEqual(result.summary["RejectedPrograms"], 2)
+        self.assertEqual(
+            [row["failure_kind"] for row in result.rejected_rows],
+            ["accepted_limit_reached", "accepted_limit_reached"],
+        )
 
 
 def _write_fake_tools(root: Path) -> Path:
