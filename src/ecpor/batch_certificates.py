@@ -10,6 +10,8 @@ from itertools import combinations
 from pathlib import Path
 from typing import Any, Sequence
 
+import yaml
+
 from .environment import DEFAULT_EXECUTION_MODEL
 from .feature_scan import diff_features, features_to_json, scan_ir_file
 from .normalizer import NORMALIZER_VERSION
@@ -211,6 +213,27 @@ def run_certificate_matrix(
     return rows
 
 
+def load_benchmark_config_programs(path: str | Path) -> list[Program]:
+    config_path = Path(path)
+    data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"benchmark config must contain a mapping: {path}")
+    programs = data.get("programs", [])
+    if not isinstance(programs, list):
+        raise ValueError(f"benchmark config must contain a list 'programs': {path}")
+
+    loaded: list[Program] = []
+    for entry in programs:
+        if not isinstance(entry, dict):
+            raise ValueError(f"benchmark program entry must be a mapping: {path}")
+        program_id = entry.get("id")
+        ir_path = entry.get("ir")
+        if not isinstance(program_id, str) or not isinstance(ir_path, str):
+            raise ValueError(f"benchmark program entry needs string id and ir: {path}")
+        loaded.append((program_id, Path(ir_path)))
+    return loaded
+
+
 def write_summary_csv(path: str | Path, rows: Sequence[dict[str, str]]) -> None:
     summary_path = Path(path)
     summary_path.parent.mkdir(parents=True, exist_ok=True)
@@ -258,6 +281,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument("--opt", default="opt", help="opt executable or command prefix.")
     parser.add_argument(
+        "--benchmark-config",
+        help="Benchmark YAML with a programs list. Overrides --preset programs.",
+    )
+    parser.add_argument(
+        "--pass-preset",
+        choices=["default-8", "full-scalar-28"],
+        help="Pass-pair preset used with --benchmark-config.",
+    )
+    parser.add_argument(
         "--opt-arg",
         action="append",
         default=[],
@@ -277,8 +309,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         opt_path = args.opt
 
-    pass_pairs = _preset_pass_pairs(args.preset)
-    programs = _preset_programs(args.preset)
+    pass_pairs = (
+        _pass_preset_pass_pairs(args.pass_preset)
+        if args.pass_preset
+        else _preset_pass_pairs(args.preset)
+    )
+    programs = (
+        load_benchmark_config_programs(args.benchmark_config)
+        if args.benchmark_config
+        else _preset_programs(args.preset)
+    )
     rows = run_certificate_matrix(
         programs=programs,
         pass_pairs=pass_pairs,
@@ -317,6 +357,14 @@ def _preset_pass_pairs(preset: str) -> list[PassPair]:
     if preset in {"stanford-3x28", "stanford-8x28", "p8b-misc8x28"}:
         return FULL_SCALAR_PASS_PAIRS
     return DEFAULT_PASS_PAIRS
+
+
+def _pass_preset_pass_pairs(preset: str) -> list[PassPair]:
+    if preset == "full-scalar-28":
+        return FULL_SCALAR_PASS_PAIRS
+    if preset == "default-8":
+        return DEFAULT_PASS_PAIRS
+    raise ValueError(f"unknown pass preset: {preset}")
 
 
 def _preset_programs(preset: str) -> list[Program]:

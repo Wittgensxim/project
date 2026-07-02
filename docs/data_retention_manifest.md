@@ -21,10 +21,15 @@ data/outputs/effect_attribution_queens/
 data/outputs/benchmark_ingest_p8b/
 data/outputs/benchmark_ingest_diverse8/
 data/outputs/pair_tests_p8b_misc8/
+data/outputs/pair_tests_p9_diverse8/
 data/outputs/cert_summary_p8b_misc8_pre.csv
 data/outputs/cert_summary_report_p8b_misc8_pre.txt
 data/outputs/static_filter_decisions_p8b_misc8_pre.csv
 data/outputs/static_filter_report_p8b_misc8_pre.md
+data/outputs/cert_summary_p9_diverse8_pre.csv
+data/outputs/cert_summary_report_p9_diverse8_pre.txt
+data/outputs/static_filter_decisions_p9_diverse8_pre.csv
+data/outputs/static_filter_report_p9_diverse8_pre.md
 data/outputs/static_filter_decisions_p8b_misc8_post.csv
 data/outputs/static_filter_report_p8b_misc8_post.md
 data/outputs/static_filter_repair_report_p8b_misc8.md
@@ -42,6 +47,7 @@ data/outputs/lazy_validation_p4_e83c409_first.md
 data/outputs/lazy_validation_p4_e83c409_second.md
 data/certs/pair_tests/
 data/certs/pair_tests_p8b_misc8/
+data/certs/pair_tests_p9_diverse8/
 data/certs/lazy_validation_p4_e83c409/
 data/certs/lazy_validation_p8b_misc8/
 data/certs/bounded_two_swap_p7a/
@@ -105,6 +111,19 @@ data/outputs/static_filter_report_p8b_misc8_pre.md
 ```
 
 原因：P8b-1 在 Misc8 × 28 full matrix 上发现 `StaticFalseNegativeObserved = 5`，这些 pre-tuning 输出必须保留，后续 passspec 修正需要与它做 post 对照。`data/outputs/pair_tests_p8b_misc8/repro/` 已删除；它只是 certificate reproduction 的临时输出，可由证书再生成。
+
+P9-4b 当前保留 diverse8 pre-tuning full matrix 必要文件：
+
+```text
+data/outputs/pair_tests_p9_diverse8/
+data/certs/pair_tests_p9_diverse8/
+data/outputs/cert_summary_p9_diverse8_pre.csv
+data/outputs/cert_summary_report_p9_diverse8_pre.txt
+data/outputs/static_filter_decisions_p9_diverse8_pre.csv
+data/outputs/static_filter_report_p9_diverse8_pre.md
+```
+
+原因：P9-4b 是 P9-4a diverse8 输入集上的证书层和 static filter pre 评估证据。结果为 `224/224` reproduced、`HardFalseIndependent = 0`、`RunFailed = 0`、`StaticFalseNegativeObserved = 0`，后续 P9-4c depth1 链路需要引用这一组 pre 证据。`repro/` 子目录属于 certificate reproduction 临时输出，可由证书再生成，阶段清理时可以删除。
 
 P8b-2 当前保留 static filter repair 对照文件：
 

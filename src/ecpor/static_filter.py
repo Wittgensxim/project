@@ -17,6 +17,7 @@ from .batch_certificates import (
     HOLDOUT_STANFORD_PROGRAMS,
     P8B_MISC8_PROGRAMS,
     STANFORD_8_PROGRAMS,
+    load_benchmark_config_programs,
 )
 from .feature_scan import scan_ir_file
 from .summary_report import load_summary_csv
@@ -472,6 +473,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Scan a built-in program set to build program features.",
     )
     parser.add_argument(
+        "--benchmark-config",
+        help="Benchmark YAML with a programs list. Overrides --program-preset.",
+    )
+    parser.add_argument(
         "--mode",
         choices=["aggregate", "per-program"],
         default="aggregate",
@@ -791,6 +796,9 @@ def _load_program_features_for_args(args: argparse.Namespace) -> tuple[dict[str,
             json.loads(Path(args.features_json).read_text(encoding="utf-8")),
             0,
         )
+    if getattr(args, "benchmark_config", None):
+        programs = load_benchmark_config_programs(args.benchmark_config)
+        return aggregate_program_features(programs), len(programs)
     if args.program_preset == "stanford-3":
         return aggregate_program_features(DEFAULT_STANFORD_PROGRAMS), len(
             DEFAULT_STANFORD_PROGRAMS
@@ -819,6 +827,10 @@ def _load_program_feature_map_for_args(
         return {program: dict(loaded) for program in observed_programs}, len(
             observed_programs
         )
+    if getattr(args, "benchmark_config", None):
+        programs = load_benchmark_config_programs(args.benchmark_config)
+        feature_map = scan_program_features(programs)
+        return feature_map, len(feature_map)
     if args.program_preset == "stanford-3":
         feature_map = scan_program_features(DEFAULT_STANFORD_PROGRAMS)
         return feature_map, len(feature_map)
@@ -851,6 +863,9 @@ def _program_groups_for_args(
         return {"Calibration": [name for name, _path in DEFAULT_STANFORD_PROGRAMS]}
     if args.program_preset == "p8b-misc8":
         return {"P8b-Misc8": [name for name, _path in P8B_MISC8_PROGRAMS]}
+    if getattr(args, "benchmark_config", None):
+        programs = load_benchmark_config_programs(args.benchmark_config)
+        return {Path(args.benchmark_config).stem: [name for name, _path in programs]}
     return None
 
 

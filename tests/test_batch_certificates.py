@@ -76,6 +76,85 @@ class BatchCertificateTests(unittest.TestCase):
         self.assertEqual(_preset_programs("p8b-misc8x28"), P8B_MISC8_PROGRAMS)
         self.assertEqual(_preset_pass_pairs("p8b-misc8x28"), FULL_SCALAR_PASS_PAIRS)
 
+    def test_load_benchmark_config_programs_reads_program_ids_and_ir_paths(self):
+        from ecpor.batch_certificates import load_benchmark_config_programs
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            config = tmp_path / "benchmarks.yaml"
+            first = tmp_path / "first.ll"
+            second = tmp_path / "second.ll"
+            first.write_text("define void @f() {\n  ret void\n}\n", encoding="utf-8")
+            second.write_text("define void @g() {\n  ret void\n}\n", encoding="utf-8")
+            config.write_text(
+                textwrap.dedent(
+                    f"""
+                    stage: test
+                    programs:
+                      - id: p1
+                        ir: {first.as_posix()}
+                      - id: p2
+                        ir: {second.as_posix()}
+                    """
+                ).strip()
+                + "\n",
+                encoding="utf-8",
+            )
+
+            programs = load_benchmark_config_programs(config)
+
+        self.assertEqual(programs, [("p1", first), ("p2", second)])
+
+    def test_main_uses_benchmark_config_with_full_scalar_pass_preset(self):
+        from ecpor.batch_certificates import main
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            fake_opt = _write_fake_opt(tmp_path)
+            state = _write_state(tmp_path, "configured")
+            config = tmp_path / "benchmarks.yaml"
+            summary_csv = tmp_path / "cert_summary.csv"
+            config.write_text(
+                textwrap.dedent(
+                    f"""
+                    programs:
+                      - id: configured_program
+                        ir: {state.as_posix()}
+                    """
+                ).strip()
+                + "\n",
+                encoding="utf-8",
+            )
+
+            exit_code = main(
+                [
+                    "--benchmark-config",
+                    str(config),
+                    "--pass-preset",
+                    "full-scalar-28",
+                    "--opt",
+                    sys.executable,
+                    "--opt-arg",
+                    str(fake_opt),
+                    "--out",
+                    str(tmp_path / "outputs"),
+                    "--cert-dir",
+                    str(tmp_path / "certs"),
+                    "--summary",
+                    str(summary_csv),
+                    "--env-id",
+                    "env-1",
+                    "--llvm-version",
+                    "test-llvm",
+                ]
+            )
+
+            rows = _read_csv(summary_csv)
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(len(rows), 28)
+        self.assertTrue(all(row["program"] == "configured_program" for row in rows))
+
     def test_run_certificate_matrix_writes_summary_and_reproduces(self):
         from ecpor.batch_certificates import SUMMARY_FIELDS, run_certificate_matrix
 
@@ -158,6 +237,11 @@ def _write_fake_opt(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
     return fake_opt
+
+
+def _read_csv(path: Path) -> list[dict[str, str]]:
+    with path.open(newline="", encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
 
 
 if __name__ == "__main__":

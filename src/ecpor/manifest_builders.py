@@ -597,6 +597,11 @@ def build_p8b_matrix_manifest(
     opt_path: str | Path,
     repo_root: str | Path = ".",
     result_generated_from_commit: str | None = None,
+    stage: str = "P8b-1",
+    description: str = "P8b Misc8 by 28 unordered pass-pair certificate matrix.",
+    benchmark_set: str = "P8b-Misc8",
+    program_count: int = 8,
+    pass_pair_count: int = 28,
 ) -> dict[str, Any]:
     summary = _certificate_matrix_summary(summary_csv)
     summary.update(
@@ -606,8 +611,8 @@ def build_p8b_matrix_manifest(
         )
     )
     return build_result_manifest(
-        stage="P8b-1",
-        description="P8b Misc8 by 28 unordered pass-pair certificate matrix.",
+        stage=stage,
+        description=description,
         inputs={
             "benchmark_config": benchmark_config_path,
             "pipeline_config": pipeline_config_path,
@@ -629,9 +634,9 @@ def build_p8b_matrix_manifest(
         result_generated_from_commit=result_generated_from_commit,
         extra={
             "scope_limits": {
-                "benchmark_set": "P8b-Misc8",
-                "program_count": 8,
-                "pass_pair_count": 28,
+                "benchmark_set": benchmark_set,
+                "program_count": program_count,
+                "pass_pair_count": pass_pair_count,
                 "passspec_tuning": False,
                 "new_search": False,
                 "runtime_benchmarks": False,

@@ -137,6 +137,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     p8b_matrix.add_argument("--opt", required=True)
     p8b_matrix.add_argument("--repo-root", default=".")
     p8b_matrix.add_argument("--result-generated-from-commit")
+    p8b_matrix.add_argument("--stage-name", default="P8b-1")
+    p8b_matrix.add_argument(
+        "--description",
+        default="P8b Misc8 by 28 unordered pass-pair certificate matrix.",
+    )
+    p8b_matrix.add_argument("--benchmark-set", default="P8b-Misc8")
+    p8b_matrix.add_argument("--program-count", type=int, default=8)
+    p8b_matrix.add_argument("--pass-pair-count", type=int, default=28)
 
     p8b_repair = subparsers.add_parser(
         "p8b-static-repair",
@@ -362,6 +370,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             opt_path=args.opt,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
+            stage=args.stage_name,
+            description=args.description,
+            benchmark_set=args.benchmark_set,
+            program_count=args.program_count,
+            pass_pair_count=args.pass_pair_count,
         )
     elif args.stage == "p8b-static-repair":
         manifest = build_p8b_static_filter_repair_manifest(

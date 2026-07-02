@@ -409,12 +409,19 @@ class ResultManifestTests(unittest.TestCase):
                 opt_path=opt,
                 repo_root=root,
                 result_generated_from_commit="face123",
+                stage="P9-4b",
+                description="Diverse8 full matrix and static filter pre evaluation.",
+                benchmark_set="P9-Diverse8",
             )
             manifest_path = root / "p8b_matrix_manifest.json"
             write_manifest(manifest_path, manifest)
             loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(loaded["stage"], "P8b-1")
+        self.assertEqual(loaded["stage"], "P9-4b")
+        self.assertEqual(
+            loaded["description"],
+            "Diverse8 full matrix and static filter pre evaluation.",
+        )
         self.assertEqual(loaded["result_generated_from_commit"], "face123")
         self.assertIn("summary_csv", loaded["outputs"])
         self.assertIn("static_report", loaded["outputs"])
@@ -427,6 +434,7 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["summary"]["RunFailed"], 0)
         self.assertEqual(loaded["summary"]["NotCertifiedIndependent"], 1)
         self.assertEqual(loaded["summary"]["StaticFalseNegativeObserved"], 0)
+        self.assertEqual(loaded["scope_limits"]["benchmark_set"], "P9-Diverse8")
         self.assertEqual(loaded["scope_limits"]["passspec_tuning"], False)
 
     def test_builds_p8b_static_filter_repair_manifest(self):

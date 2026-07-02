@@ -193,6 +193,44 @@ class StaticFilterTests(unittest.TestCase):
         self.assertIn("testsuite_misc_ffbench", feature_map)
         self.assertGreater(feature_map["testsuite_misc_ffbench"]["num_instructions"], 0)
 
+    def test_benchmark_config_scans_program_feature_map(self):
+        import argparse
+
+        from ecpor.static_filter import _load_program_feature_map_for_args
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            first = tmp_path / "first.ll"
+            second = tmp_path / "second.ll"
+            config = tmp_path / "benchmarks.yaml"
+            first.write_text("define void @f() {\n  ret void\n}\n", encoding="utf-8")
+            second.write_text("define void @g() {\nentry:\n  br label %exit\nexit:\n  ret void\n}\n", encoding="utf-8")
+            config.write_text(
+                f"""
+programs:
+  - id: configured_first
+    ir: {first.as_posix()}
+  - id: configured_second
+    ir: {second.as_posix()}
+""".strip()
+                + "\n",
+                encoding="utf-8",
+            )
+            args = argparse.Namespace(
+                features_json=None,
+                program_preset=None,
+                benchmark_config=config,
+            )
+
+            feature_map, program_count = _load_program_feature_map_for_args(
+                args,
+                observed_rows=[],
+            )
+
+        self.assertEqual(program_count, 2)
+        self.assertEqual(set(feature_map), {"configured_first", "configured_second"})
+        self.assertGreater(feature_map["configured_first"]["num_instructions"], 0)
+
     def test_real_passspec_marks_observed_false_negative_pairs_candidate(self):
         from ecpor.static_filter import classify_pair, load_passspec
 
