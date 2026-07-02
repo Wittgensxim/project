@@ -175,10 +175,12 @@ AttributionCases=2
 | 文件或目录 | 说明 |
 | --- | --- |
 | [README.md](../README.md) | 五分钟项目入口 |
+| [docs/ecpor_stage_report.md](ecpor_stage_report.md) | P9-6 阶段报告 / 论文草稿入口 |
 | `data/outputs/final_mvp_summary/mvp_summary_report.md` | 自动生成的 P9-1 summary；保留在本地 result workspace，不纳入 Git |
 | `data/outputs/combined_depth1_summary/combined_depth1_report.md` | 自动生成的 P9-5 post-MVP depth1 总表；保留在本地 result workspace，不纳入 Git |
 | [docs/results/mvp_summary_manifest.json](results/mvp_summary_manifest.json) | P9-1 result manifest |
 | [docs/results/combined_depth1_summary_manifest.json](results/combined_depth1_summary_manifest.json) | P9-5 post-MVP result manifest |
+| [docs/results/stage_report_manifest.json](results/stage_report_manifest.json) | P9-6 stage report manifest |
 | [docs/results/core_evidence_manifest.json](results/core_evidence_manifest.json) | Stanford core evidence manifest |
 | [docs/results/core_evidence_misc8_manifest.json](results/core_evidence_misc8_manifest.json) | Misc8 evidence supplement manifest |
 | [docs/data_retention_manifest.md](data_retention_manifest.md) | `data/` 保留规则 |
@@ -197,4 +199,4 @@ AttributionCases=2
 
 ## 下一步
 
-P9-5 完成后，优先写阶段报告/论文草稿，或进入 P10 PassSpec provenance v2。当前不建议继续 two-swap、depth=3、beam/searcher、runtime benchmark、Alive2 或 PassInstrumentation。
+P9-6 完成后，优先进入 P10 PassSpec provenance v2。当前不建议继续 two-swap、depth=3、beam/searcher、runtime benchmark、Alive2 或 PassInstrumentation。

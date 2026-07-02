@@ -2,7 +2,7 @@
 
 ECPOR 是一个 evidence-carrying LLVM phase-ordering reduction 原型，不是完整 pass-order searcher。它用 state-indexed 的 AB/BA 相邻 pass 证书证明哪些顺序可以折叠，用静态过滤降低候选量，并把 order-sensitive 的候选保留下来继续做 bounded local validation 与 `.text` 目标层检查。
 
-当前主入口报告见 [docs/ecpor_mvp_report.md](docs/ecpor_mvp_report.md)；阶段进度索引见 [docs/project_progress.md](docs/project_progress.md)。
+当前主入口报告见 [docs/ecpor_mvp_report.md](docs/ecpor_mvp_report.md)；P9-6 阶段报告见 [docs/ecpor_stage_report.md](docs/ecpor_stage_report.md)；阶段进度索引见 [docs/project_progress.md](docs/project_progress.md)。
 
 ## 当前 MVP 范围
 
@@ -154,6 +154,7 @@ AttributionCases=2
 | `data/inputs/` | 保留的 LLVM IR 输入 |
 | `data/outputs/final_mvp_summary/` | P9-1 MVP summary 输出 |
 | `data/outputs/combined_depth1_summary/` | P9-5 post-MVP 24-program depth1 summary 输出 |
+| `docs/ecpor_stage_report.md` | P9-6 阶段报告 / 论文草稿入口 |
 | `docs/results/` | 可提交 manifest |
 | `docs/progress/` | 按顺序拆分的中文进度记录 |
 | `docs/data_retention_manifest.md` | `data/` 保留规则 |
@@ -161,4 +162,4 @@ AttributionCases=2
 
 ## 下一步
 
-P9-5 之后优先进入总结合并阶段：写阶段报告/论文草稿，或做 P10 PassSpec provenance v2。当前不建议继续 two-swap、depth=3、beam/searcher、runtime benchmark 或 Alive2。
+P9-6 之后优先做 P10 PassSpec provenance v2，把 `passspec.yaml` 从手工 hint 表升级为带来源、置信度和 empirical support 的 metadata 表。当前不建议继续 two-swap、depth=3、beam/searcher、runtime benchmark 或 Alive2。
