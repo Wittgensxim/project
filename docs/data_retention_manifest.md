@@ -18,6 +18,7 @@ data/outputs/bounded_two_swap_p7b_analysis/
 data/outputs/codegen_sensitivity_p8a/
 data/outputs/core_evidence_report/
 data/outputs/effect_attribution_queens/
+data/outputs/benchmark_ingest_p8b/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
@@ -54,6 +55,15 @@ object_outputs/
 ```
 
 原因：P8c 是单程序归因证据，`states.csv` / `feature_deltas.csv` / `object_size.csv` 是可读摘要；`state_outputs/` 和 `object_outputs/` 用于人工复查具体 IR 与目标文件大小来源。
+
+`data/outputs/benchmark_ingest_p8b/` 当前只保留 P8b-0 必要文件：
+
+```text
+ingest_summary.csv
+report.md
+```
+
+原因：P8b-0 的 accepted `.ll` 已作为 `data/inputs/testsuite_misc_*.ll` 跟踪；`ingest_summary.csv` 和 `report.md` 记录筛选成功/失败原因。scratch IR、scalar IR 和 object 文件默认不保留。
 
 ## 可删除：临时或重复目录
 

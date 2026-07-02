@@ -239,6 +239,20 @@ $env:PYTHONPATH = "src"
 D:\Miniconda\envs\dlm\python.exe -m ecpor.result_manifest p8c-attribution --out-manifest docs\results\queens_effect_attribution_manifest.json --input-ir data\inputs\testsuite_stanford_queens.ll --output-dir data\outputs\effect_attribution_queens --opt E:\llvm\build\bin\opt.exe --llc E:\llvm\build\bin\llc.exe --clang E:\llvm\build\bin\clang.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --repo-root . --result-generated-from-commit 70fd929761117597d3adaf932e9baad8fccfb9bd
 ```
 
+Run P8b-0 benchmark ingestion:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.benchmark_ingest --suite-root E:\llvm-test-suite --source-dir SingleSource\Benchmarks\Misc --source-dir SingleSource\Regression\C --source-dir SingleSource\UnitTests --input-dir data\inputs --out data\outputs\benchmark_ingest_p8b --config configs\benchmarks_p8b.yaml --clang E:\llvm\build\bin\clang.exe --opt E:\llvm\build\bin\opt.exe --llc E:\llvm\build\bin\llc.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --accepted-limit 8 --min-scanned 20 --instruction-limit 5000 --timeout-sec 30
+```
+
+Generate a tracked P8b-0 benchmark ingestion manifest:
+
+```powershell
+$env:PYTHONPATH = "src"
+D:\Miniconda\envs\dlm\python.exe -m ecpor.result_manifest benchmark-ingest --out-manifest docs\results\benchmark_ingest_p8b_manifest.json --source-root E:\llvm-test-suite --config configs\benchmarks_p8b.yaml --output-dir data\outputs\benchmark_ingest_p8b --clang E:\llvm\build\bin\clang.exe --opt E:\llvm\build\bin\opt.exe --llc E:\llvm\build\bin\llc.exe --llvm-size E:\llvm\build\bin\llvm-size.exe --repo-root . --result-generated-from-commit e342c6dcd0f0ed84e83f30747e2b9df4c74cbe99
+```
+
 Scan soft IR features for one output:
 
 ```powershell

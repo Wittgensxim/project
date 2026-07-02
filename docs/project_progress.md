@@ -17,8 +17,8 @@
 ## 最新状态
 
 - 当前分支：`feature/phase-ordering-footprint`
-- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening、P6.5 result manifest 与 candidate-source invariant、P7a bounded two-swap smoke test、P7a report/manifest/cache 收尾、P7b per-program top-3 seed bounded two-swap controlled experiment、P7b.5 two-swap result interpretation and distribution analysis、P8a clang-c codegen sensitivity、P8a.5 core evidence report、P8a.6 core evidence 语义收尾、P8c Queens effect attribution、P8c.1 opcode-level attribution、P8c.2 attribution summary in core evidence。
-- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `90 passed`。
+- 当前已完成阶段：MVP-0/P0、P1 certificate 闭环、P1.5 failure kind、P2 3x3 最小证书表、P2.5 summary report 和 feature scan、P2.6 not-certified diff report 和 3x8 matrix、P3 high-recall static filter、P3.5 per-program static filter hold-out 验证、P4 minimal lazy validation、P5 bounded local reorder exploration、P6 code size evaluator 最小版、P6.5 code size provenance/invariant hardening、P6.5 result manifest 与 candidate-source invariant、P7a bounded two-swap smoke test、P7a report/manifest/cache 收尾、P7b per-program top-3 seed bounded two-swap controlled experiment、P7b.5 two-swap result interpretation and distribution analysis、P8a clang-c codegen sensitivity、P8a.5 core evidence report、P8a.6 core evidence 语义收尾、P8c Queens effect attribution、P8c.1 opcode-level attribution、P8c.2 attribution summary in core evidence、P8b-0 benchmark ingestion。
+- 当前最新验证：`D:\Miniconda\envs\dlm\python.exe -m pytest -q`，结果 `93 passed`。
 - 最新 P4 真实实验：8 个 Stanford 输入 × 7 个 anchor-adjacent pair，共 `56` 次 lazy validation；第一轮 `48` 个 candidate 动态测试、`8` 个 low_priority skip、`32` 个 certified、`16` 个 not-certified、`run_failed = 0`、`CertificateReproductionRate = 100.00%`。
 - 最新 P4 cache 验证：第二轮同一批输入 `cache_hits = 48`、`dynamic_tests = 0`、`SecondRunCacheHitRate = 100.00%`。
 - 最新 state-indexing safety 验证：input-state certificate 对 input hash 命中，对 `sroa` 后不同 prefix hash 不命中。
@@ -56,9 +56,13 @@
 - 最新 P8c.2 core evidence attribution summary：`src/ecpor/core_evidence_report.py` 新增可选 P8c 输入，输出 `data/outputs/core_evidence_report/ecpor_attribution_summary.csv`，并在主报告加入 `Observed Attribution Summary`；不新增搜索、不新增 certificate、不运行 runtime。
 - 最新 P8c.2 结果：`AttributionCases = 1`，唯一 attribution case 为 `testsuite_stanford_queens` 的 `simplifycfg,instcombine`，`local_feature_delta = num_instructions_delta=-1`，`final_feature_delta = num_instructions_delta=-1`，`opcode_delta = num_icmp_delta=-1;num_select_delta=-1;num_add_delta=1`，`llc_text_delta_pct = -4.401651`，`clang_text_delta_pct = -1.673640`。
 - 最新 P8c.2 manifest：`docs/results/core_evidence_manifest.json` 已更新为 `stage = P8c.2`，记录 P8c attribution 输入 hash、`ecpor_attribution_summary_csv` 输出 hash、`AttributionCases = 1`、`AttributionObservedButNotCausalProof = True`、`ecpor_git_dirty = false`。
+- 最新 P8b-0 benchmark ingestion：新增 `src/ecpor/benchmark_ingest.py` 和 `configs/benchmarks_p8b.yaml`，从 `E:\llvm-test-suite` 的 `SingleSource/Benchmarks/Misc`、`SingleSource/Regression/C`、`SingleSource/UnitTests` 扫描 C 源；只做 benchmark ingestion，不运行 pair matrix、不新增 certificate、不新增搜索。
+- 最新 P8b-0 真实结果：`CandidateSourceFilesScanned = 20`、`AcceptedPrograms = 8`、`RejectedPrograms = 12`、`IRGenerationOk = 18`、`ScalarPipelineOk = 8`、`LlcObjectOk = 8`、`ClangObjectOk = 8`、`SizeParseOk = 8`；失败分布为 `ir_generation:clang_failed = 2` 和 `selection:accepted_limit_reached = 10`。
+- 最新 P8b-0 accepted inputs：`testsuite_misc_aarch64_init_cpu_features`、`testsuite_misc_evalloop`、`testsuite_misc_ffbench`、`testsuite_misc_flops_1`、`testsuite_misc_flops_2`、`testsuite_misc_flops_3`、`testsuite_misc_flops_4`、`testsuite_misc_flops_5`，对应 `.ll` 已保存在 `data/inputs/`。
+- 最新 P8b-0 manifest：`docs/results/benchmark_ingest_p8b_manifest.json`，记录 `configs/benchmarks_p8b.yaml`、8 个 accepted IR、ingest summary/report、LLVM 工具 hash、`ecpor_git_dirty = false` 和 ingestion-only scope。
 - 最新 data 清理：新增 `docs/data_retention_manifest.md`；以后 `data/` 只保留必须保留的文件；删除 `*_work`、旧 P5 commit 输出和重复 P4 final 目录；保留 `data/inputs/`、P4 e83c409、P5/P6 final、pair_tests。清理后 `data/outputs` 约 `21.57 MB`，`data/certs` 约 `0.62 MB`。
 - 重要语义边界：static filter 只做 candidate generation / low priority 排序；lazy validation 只在当前 state 上查询或生成 certificate；input-state certificate 不得复用于 prefix-state。
-- 下一步建议：不要马上 depth=3；进入 P8b benchmark expansion，先用新 8 个小程序验证 pair matrix / static filter / depth1 code-size 现象是否能泛化。
+- 下一步建议：进入 P8b-1，新 8 个程序 × 28 pair full matrix，先验证 static filter recall / HardFalseIndependent / reproduction，再决定是否进入 P4/P5/P6/P8a。
 
 ## 进度文件索引
 
@@ -93,6 +97,7 @@
 | 2026-07-02 | P8c Queens effect attribution | [2026-07-02-27-p8c-queens-effect-attribution.md](progress/2026-07-02-27-p8c-queens-effect-attribution.md) |
 | 2026-07-02 | P8c.1 opcode-level attribution | [2026-07-02-28-p8c1-opcode-attribution.md](progress/2026-07-02-28-p8c1-opcode-attribution.md) |
 | 2026-07-02 | P8c.2 attribution summary 纳入 core evidence | [2026-07-02-29-p8c2-core-evidence-attribution-summary.md](progress/2026-07-02-29-p8c2-core-evidence-attribution-summary.md) |
+| 2026-07-02 | P8b-0 benchmark ingestion | [2026-07-02-30-p8b0-benchmark-ingest.md](progress/2026-07-02-30-p8b0-benchmark-ingest.md) |
 
 ## 旧文档拆分说明
 
