@@ -1,0 +1,56 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P13",
+  "description": "Reduced component and search-space estimate from P12 interaction graph.",
+  "result_generated_from_commit": "f5eaaf17ca68699ca97c91c09edac7e9007205e3",
+  "ecpor_git_commit": "f5eaaf17ca68699ca97c91c09edac7e9007205e3",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "pipeline_config": "configs/pipeline_scalar.yaml",
+    "pass_interaction_nodes_csv": "data/outputs/interaction_graph_v1/pass_interaction_nodes.csv",
+    "pass_interaction_edges_csv": "data/outputs/interaction_graph_v1/pass_interaction_edges.csv",
+    "pass_interaction_graph_json": "data/outputs/interaction_graph_v1/pass_interaction_graph.json",
+    "pass_interaction_graph_report": "data/outputs/interaction_graph_v1/pass_interaction_graph_report.md"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/reduced_components_v1",
+    "reduced_component_nodes_csv": "data/outputs/reduced_components_v1/reduced_component_nodes.csv",
+    "reduced_component_edges_csv": "data/outputs/reduced_components_v1/reduced_component_edges.csv",
+    "reduced_components_json": "data/outputs/reduced_components_v1/reduced_components.json",
+    "search_space_estimate_csv": "data/outputs/reduced_components_v1/search_space_estimate.csv",
+    "reduced_components_report": "data/outputs/reduced_components_v1/reduced_components_report.md"
+  },
+  "sha256": {
+    "pipeline_config": "798fafb5e73bd26036dec30fd6d9592ec4ebf0b51a17bd5d73f81dc3acb8f2cf",
+    "pass_interaction_nodes_csv": "ed381a9f7e0ddaec6373997bb5282597fb2e9e858003c875acf57364d1c0f241",
+    "pass_interaction_edges_csv": "86ca18a63921105a3d63dfdb7bcabc9b27c9894cfe515a27496ad1482db8a91a",
+    "pass_interaction_graph_json": "5e1370089f35b6097cd944d8d738d80b5aa9c284396e71e1af5a0ea7374b4e41",
+    "pass_interaction_graph_report": "981a52066aad56657fe5c5c6e4abba16c0c87f97b0ab7d4ce2045202ab556ef8",
+    "reduced_component_nodes_csv": "71db3d6d825b3af0a65c86736f4e571a67fddb51963deb0e5f87e40ab8332dfb",
+    "reduced_component_edges_csv": "13d2cfd446a281d1a0b35a8d74ef4d842df5e0cb4b152cc8b063301bc935d831",
+    "reduced_components_json": "f9c71b7938ac776e78842496907307c51727aef97957de8c13b915331d47a82e",
+    "search_space_estimate_csv": "11dda3a720e50bee83292906f47264ad541d563105653049deafffaa30907d63",
+    "reduced_components_report": "b7039ec4a5ee26904717ca29581de12debc00178ecb565fa2532ac9522634ed8"
+  },
+  "tools": {},
+  "summary": {
+    "ConservativeGraphComponents": 1,
+    "ObjectiveSensitiveGraphComponents": 7,
+    "ObjectiveWithinComponentPermutations": 2,
+    "ObjectiveReductionRatio": "99.9950%",
+    "ConservativeWithinComponentPermutations": 40320,
+    "ConservativeReductionRatio": "0.0000%",
+    "OriginalPermutations": 40320
+  },
+  "scope_limits": {
+    "stage": "P13",
+    "summary_only": true,
+    "graph_analysis_only": true,
+    "new_experiments": false,
+    "new_certificates": false,
+    "new_search": false,
+    "runtime_benchmarks": false,
+    "passspec_behavior_change": false,
+    "static_filter_behavior_change": false
+  }
+}

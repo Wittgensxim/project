@@ -51,6 +51,7 @@ data/outputs/passspec_audit/
 data/outputs/pass_registry_snapshot/
 data/outputs/passspec_registry_check/
 data/outputs/interaction_graph_v1/
+data/outputs/reduced_components_v1/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
@@ -329,6 +330,30 @@ docs/results/interaction_graph_v1_manifest.json
 ```
 
 这些文件只从已有 certified / not-certified / objective / attribution 证据构建 pass interaction graph；不包含新 certificate、不包含 search 输出、不包含 runtime benchmark，也不改变 PassSpec 或 static filter 行为。
+
+P13 当前保留 reduced components v1：
+
+```text
+data/outputs/reduced_components_v1/
+```
+
+原因：P13 是 summary-only / graph-analysis-only 阶段。目录中保留：
+
+```text
+reduced_component_nodes.csv
+reduced_component_edges.csv
+reduced_components.json
+search_space_estimate.csv
+reduced_components_report.md
+```
+
+对应 tracked manifest：
+
+```text
+docs/results/reduced_components_v1_manifest.json
+```
+
+这些文件只从 P12 interaction graph 生成 conservative graph、objective-sensitive graph、connected components 和 search-space 粗略估计；不包含新 certificate、不包含 search 输出、不包含 runtime benchmark，也不改变 PassSpec 或 static filter 行为。
 
 ## 可删除：临时或重复目录
 
