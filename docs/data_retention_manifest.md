@@ -49,6 +49,7 @@ data/outputs/final_mvp_summary/
 data/outputs/combined_depth1_summary/
 data/outputs/passspec_audit/
 data/outputs/pass_registry_snapshot/
+data/outputs/passspec_registry_check/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
@@ -283,6 +284,27 @@ docs/results/pass_registry_snapshot_manifest.json
 ```
 
 这些文件只记录 `opt --print-passes` 的 raw snapshot、MVP 8 pass presence check 和 hash；不包含 certificate、不包含 search 输出、不包含 runtime benchmark。
+
+P11.5 当前保留 PassSpec registry cross-check：
+
+```text
+data/outputs/passspec_registry_check/
+```
+
+原因：P11.5 是 metadata-only 的 pass identity cross-check 阶段。目录中保留：
+
+```text
+passspec_registry_check.csv
+passspec_registry_check_report.md
+```
+
+对应 tracked manifest：
+
+```text
+docs/results/passspec_registry_check_manifest.json
+```
+
+这些文件只记录 PassSpec、MVP pipeline 与 P11 registry snapshot 的 pass set 一致性；不包含 certificate、不包含 search 输出、不包含 runtime benchmark，也不改变 PassSpec 或 static filter 行为。
 
 ## 可删除：临时或重复目录
 

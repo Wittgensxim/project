@@ -1,0 +1,46 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P11.5",
+  "description": "PassSpec, MVP pipeline, and LLVM registry snapshot cross-check.",
+  "result_generated_from_commit": "3f035f8be0288be21a3e281f38b1a52a460ec3c1",
+  "ecpor_git_commit": "3f035f8be0288be21a3e281f38b1a52a460ec3c1",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "passspec": "configs/passspec.yaml",
+    "pipeline_config": "configs/pipeline_scalar.yaml",
+    "registry_snapshot": "data/outputs/pass_registry_snapshot/pass_registry_snapshot.json"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/passspec_registry_check",
+    "passspec_registry_check_csv": "data/outputs/passspec_registry_check/passspec_registry_check.csv",
+    "passspec_registry_check_report": "data/outputs/passspec_registry_check/passspec_registry_check_report.md"
+  },
+  "sha256": {
+    "passspec": "b72a7f3b7db06f5039725efdda5cb87e8cfeb15914c849b7d1684300a76c9c28",
+    "pipeline_config": "798fafb5e73bd26036dec30fd6d9592ec4ebf0b51a17bd5d73f81dc3acb8f2cf",
+    "registry_snapshot": "5446f945d3cc290771e781a38463c88ccfd4f1d80dad59c9100015d6314399a6",
+    "passspec_registry_check_csv": "961a63c955a7e55ffc5673670ada8624002507b3a0ae96b6321e9a27723c4965",
+    "passspec_registry_check_report": "5df2ffaedb7e50ac39e25cc9b0e9d7afaca0968dbbf970ce3959db8ad759f4d0"
+  },
+  "tools": {},
+  "summary": {
+    "RegistryExpectedPasses": 8,
+    "Status": "pass",
+    "RegistryMissingExpectedPasses": 0,
+    "PassSpecPasses": 8,
+    "PipelinePasses": 8,
+    "RegistryExpectedPassesMissingInPassSpec": 0,
+    "MissingPassSpecPassesInRegistry": 0,
+    "PipelinePassesMissingInPassSpec": 0
+  },
+  "scope_limits": {
+    "metadata_only": true,
+    "registry_cross_check_only": true,
+    "static_filter_behavior_change": false,
+    "passspec_behavior_change": false,
+    "new_experiments": false,
+    "new_certificates": false,
+    "new_search": false,
+    "runtime_benchmarks": false
+  }
+}

@@ -10,6 +10,8 @@ P10.5 已把 provenance audit 整理成 paper-facing methods note：[docs/passsp
 
 P11 已把当前 LLVM 工具链的 pass registry 固化为 metadata-only snapshot：[docs/results/pass_registry_snapshot_manifest.json](docs/results/pass_registry_snapshot_manifest.json)。它调用 `E:\llvm\build\bin\opt.exe --print-passes`，保存 raw output / JSON / report，并确认 MVP 8 个 pass 全部 present：`sroa`、`early-cse`、`instcombine`、`simplifycfg`、`reassociate`、`gvn`、`dce`、`adce`。P11 不推断 pass 语义，也不改变 PassSpec 或 static filter 行为。
 
+P11.5 已把 `configs/passspec.yaml`、`configs/pipeline_scalar.yaml` 和 P11 registry snapshot 做 cross-check：[docs/results/passspec_registry_check_manifest.json](docs/results/passspec_registry_check_manifest.json)。结果为 `PassSpecPasses = 8`、`PipelinePasses = 8`、`RegistryExpectedPasses = 8`、`Status = pass`，8 个 MVP pass 全部同时存在于 PassSpec、pipeline 与 registry snapshot 中。P11.5 不推断 pass 语义、不修改 PassSpec，也不改变 static filter 行为。
+
 ## 当前 MVP 范围
 
 当前 MVP 只覆盖 LLVM IR scalar pass 的相邻顺序约简：
@@ -56,7 +58,7 @@ P9-5 不改变 `v0.1.1` MVP 语义。`v0.1.1` 仍然定义为 Stanford-8 + Misc8
 | depth1 both-smaller programs | 2 |
 | Diverse8 both-smaller programs | 0 |
 
-解释：Diverse8 增加了覆盖面，但没有新增 depth1 both-smaller program。因此当前阶段不建议继续搜索；P10/P10.5 已完成 PassSpec provenance 与 trust report，P11 已完成 pass registry snapshot，后续更合适的是做 P11.5 PassSpec registry cross-check。
+解释：Diverse8 增加了覆盖面，但没有新增 depth1 both-smaller program。因此当前阶段不建议继续搜索；P10/P10.5 已完成 PassSpec provenance 与 trust report，P11/P11.5 已完成工具链 pass identity 绑定与 cross-check，后续更合适的是做 P12 interaction graph v1。
 
 ## Evidence Level
 
@@ -100,7 +102,7 @@ D:\Miniconda\envs\dlm\python.exe -m pytest -q
 期望测试结果：
 
 ```text
-132 passed
+137 passed
 ```
 
 外部 clone 后可以直接阅读这些已跟踪文件来理解冻结结果：
@@ -161,6 +163,7 @@ AttributionCases=2
 | `data/outputs/final_mvp_summary/` | P9-1 MVP summary 输出 |
 | `data/outputs/combined_depth1_summary/` | P9-5 post-MVP 24-program depth1 summary 输出 |
 | `data/outputs/pass_registry_snapshot/` | P11 LLVM pass registry snapshot 输出 |
+| `data/outputs/passspec_registry_check/` | P11.5 PassSpec / pipeline / registry cross-check 输出 |
 | `docs/ecpor_stage_report.md` | P9-6 阶段报告 / 论文草稿入口 |
 | `docs/passspec_trust_report.md` | P10.5 PassSpec trust report / methods note |
 | `docs/results/` | 可提交 manifest |
@@ -170,4 +173,4 @@ AttributionCases=2
 
 ## 下一步
 
-P11 之后优先做 P11.5 PassSpec registry cross-check：只检查 `configs/passspec.yaml`、`configs/pipeline_scalar.yaml` 与 P11 registry snapshot 的 pass set 是否一致。当前不建议自动推断 pass 语义、修改 PassSpec，或继续 two-swap、depth=3、beam/searcher、runtime benchmark、Alive2、PassInstrumentation。
+P11.5 之后优先做 P12 interaction graph v1：只读取已有 `certified / not-certified / objective / attribution` 证据，生成 pass interaction graph 和解释报告。当前不建议新增实验、certificate、benchmark、search、runtime benchmark、Alive2 或 PassInstrumentation。
