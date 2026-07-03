@@ -50,6 +50,7 @@ data/outputs/combined_depth1_summary/
 data/outputs/passspec_audit/
 data/outputs/pass_registry_snapshot/
 data/outputs/passspec_registry_check/
+data/outputs/interaction_graph_v1/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
@@ -305,6 +306,29 @@ docs/results/passspec_registry_check_manifest.json
 ```
 
 这些文件只记录 PassSpec、MVP pipeline 与 P11 registry snapshot 的 pass set 一致性；不包含 certificate、不包含 search 输出、不包含 runtime benchmark，也不改变 PassSpec 或 static filter 行为。
+
+P12 当前保留 interaction graph v1：
+
+```text
+data/outputs/interaction_graph_v1/
+```
+
+原因：P12 是 summary-only / graph-construction-only 阶段。目录中保留：
+
+```text
+pass_interaction_nodes.csv
+pass_interaction_edges.csv
+pass_interaction_graph.json
+pass_interaction_graph_report.md
+```
+
+对应 tracked manifest：
+
+```text
+docs/results/interaction_graph_v1_manifest.json
+```
+
+这些文件只从已有 certified / not-certified / objective / attribution 证据构建 pass interaction graph；不包含新 certificate、不包含 search 输出、不包含 runtime benchmark，也不改变 PassSpec 或 static filter 行为。
 
 ## 可删除：临时或重复目录
 

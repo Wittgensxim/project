@@ -12,6 +12,8 @@ P11 已把当前 LLVM 工具链的 pass registry 固化为 metadata-only snapsho
 
 P11.5 已把 `configs/passspec.yaml`、`configs/pipeline_scalar.yaml` 和 P11 registry snapshot 做 cross-check：[docs/results/passspec_registry_check_manifest.json](docs/results/passspec_registry_check_manifest.json)。结果为 `PassSpecPasses = 8`、`PipelinePasses = 8`、`RegistryExpectedPasses = 8`、`Status = pass`，8 个 MVP pass 全部同时存在于 PassSpec、pipeline 与 registry snapshot 中。P11.5 不推断 pass 语义、不修改 PassSpec，也不改变 static filter 行为。
 
+P12 已把 24-program depth1 证据整理成第一版 pass interaction graph：[docs/results/interaction_graph_v1_manifest.json](docs/results/interaction_graph_v1_manifest.json)。图包含 `8` 个节点、`28` 条 unordered pair 边；其中 `17` 条 order-sensitive、`10` 条 certified-dominant、`1` 条 attribution/objective 重点边。`instcombine,simplifycfg` 同时携带 `both_smaller_count = 2` 和 `attribution_cases = 2`，但这是 observed attribution，不是 causal proof，也不是 hard-prune 证据。
+
 ## 当前 MVP 范围
 
 当前 MVP 只覆盖 LLVM IR scalar pass 的相邻顺序约简：
@@ -58,7 +60,7 @@ P9-5 不改变 `v0.1.1` MVP 语义。`v0.1.1` 仍然定义为 Stanford-8 + Misc8
 | depth1 both-smaller programs | 2 |
 | Diverse8 both-smaller programs | 0 |
 
-解释：Diverse8 增加了覆盖面，但没有新增 depth1 both-smaller program。因此当前阶段不建议继续搜索；P10/P10.5 已完成 PassSpec provenance 与 trust report，P11/P11.5 已完成工具链 pass identity 绑定与 cross-check，后续更合适的是做 P12 interaction graph v1。
+解释：Diverse8 增加了覆盖面，但没有新增 depth1 both-smaller program。因此当前阶段不建议继续搜索；P10/P10.5 已完成 PassSpec provenance 与 trust report，P11/P11.5 已完成工具链 pass identity 绑定与 cross-check，P12 已完成 interaction graph v1。后续更合适的是进入 P13 reduced components / search-space reduction estimate。
 
 ## Evidence Level
 
@@ -102,7 +104,7 @@ D:\Miniconda\envs\dlm\python.exe -m pytest -q
 期望测试结果：
 
 ```text
-137 passed
+146 passed
 ```
 
 外部 clone 后可以直接阅读这些已跟踪文件来理解冻结结果：
@@ -140,6 +142,7 @@ AttributionCases=2
 - 本地 LLVM 工具链：`E:\llvm\build\bin`。
 - benchmark root：`E:\llvm-test-suite`。
 - Stanford-8 与 Misc8 的 certificate matrix、static filter evaluation、lazy validation、bounded one-swap、code-size sensitivity、case attribution。
+- Stanford-8、Misc8、Diverse8 的 combined depth1 summary 与 P12 interaction graph v1。
 - 结果 manifest 与 data retention 规则；`data/` 只保留必须保留的可复查产物。
 
 ## 当前不支持
@@ -164,6 +167,7 @@ AttributionCases=2
 | `data/outputs/combined_depth1_summary/` | P9-5 post-MVP 24-program depth1 summary 输出 |
 | `data/outputs/pass_registry_snapshot/` | P11 LLVM pass registry snapshot 输出 |
 | `data/outputs/passspec_registry_check/` | P11.5 PassSpec / pipeline / registry cross-check 输出 |
+| `data/outputs/interaction_graph_v1/` | P12 pass interaction graph v1 输出 |
 | `docs/ecpor_stage_report.md` | P9-6 阶段报告 / 论文草稿入口 |
 | `docs/passspec_trust_report.md` | P10.5 PassSpec trust report / methods note |
 | `docs/results/` | 可提交 manifest |
@@ -173,4 +177,4 @@ AttributionCases=2
 
 ## 下一步
 
-P11.5 之后优先做 P12 interaction graph v1：只读取已有 `certified / not-certified / objective / attribution` 证据，生成 pass interaction graph 和解释报告。当前不建议新增实验、certificate、benchmark、search、runtime benchmark、Alive2 或 PassInstrumentation。
+P12 已完成。下一步优先做 P13 reduced components / search-space reduction estimate：只基于现有 interaction graph 估计可折叠 pair、order-sensitive component 和 8-pass MVP 搜索空间缩减，不新增实验、certificate、benchmark、runtime benchmark、Alive2 或 PassInstrumentation。
