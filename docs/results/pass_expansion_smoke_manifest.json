@@ -1,0 +1,61 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P15",
+  "description": "Controlled scalar12 pass expansion protocol and single-pass smoke.",
+  "result_generated_from_commit": "dae69145fed1ebea743d3e3603664b6994efe628",
+  "ecpor_git_commit": "dae69145fed1ebea743d3e3603664b6994efe628",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "pass_expansion_candidates": "configs/pass_expansion_candidates.yaml",
+    "pass_registry_snapshot_json": "data/outputs/pass_registry_snapshot/pass_registry_snapshot.json",
+    "baseline_pipeline_scalar": "configs/pipeline_scalar.yaml",
+    "baseline_passspec": "configs/passspec.yaml"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/pass_expansion_smoke",
+    "pass_expansion_smoke_csv": "data/outputs/pass_expansion_smoke/pass_expansion_smoke.csv",
+    "pass_expansion_smoke_report": "data/outputs/pass_expansion_smoke/pass_expansion_smoke_report.md",
+    "pipeline_scalar12": "configs/pipeline_scalar12.yaml",
+    "passspec_scalar12": "configs/passspec_scalar12.yaml"
+  },
+  "sha256": {
+    "pass_expansion_candidates": "4b5a0432437d554a18acca31cf1ad4331d769eaf9a75e318dca1fb1cdef2e905",
+    "pass_registry_snapshot_json": "5446f945d3cc290771e781a38463c88ccfd4f1d80dad59c9100015d6314399a6",
+    "baseline_pipeline_scalar": "798fafb5e73bd26036dec30fd6d9592ec4ebf0b51a17bd5d73f81dc3acb8f2cf",
+    "baseline_passspec": "b72a7f3b7db06f5039725efdda5cb87e8cfeb15914c849b7d1684300a76c9c28",
+    "pass_expansion_smoke_csv": "3ebd63bc062d8285a831777d49779cf1bfd653311e772a7973cd2e7183e0b95d",
+    "pass_expansion_smoke_report": "7a17ca6d23d8e5e5a35c559b1b370c1d6ae1a6b25a80e2616d254105773cd5f7",
+    "pipeline_scalar12": "787b7a93c21fa16822e8fe7128fb60586700f823bfc143f64474fc5d7e70d801",
+    "passspec_scalar12": "5dde5d84c8b04572321eed2c0b39eb7bbd091e2cf123a35648e5e440338064ea"
+  },
+  "tools": {},
+  "summary": {
+    "ChangedIrCandidates": 8,
+    "SelectedNewPasses": 4,
+    "NewCertificates": false,
+    "TimeoutCandidates": 0,
+    "ProgramsAttempted": 192,
+    "CandidatePasses": 8,
+    "Programs": 24,
+    "NewSearch": false,
+    "Scalar12PassCount": 12,
+    "RegistryPresentCandidates": 8,
+    "VerifierFailedCandidates": 0,
+    "RunFailedCandidates": 0,
+    "NewExperiments": true
+  },
+  "scope_limits": {
+    "stage": "P15",
+    "summary_only": true,
+    "pass_expansion_protocol_only": true,
+    "single_pass_smoke_only": true,
+    "new_experiments": true,
+    "new_certificates": false,
+    "new_search": false,
+    "runtime_benchmarks": false,
+    "loop_passes": false,
+    "module_passes": false,
+    "inline_passes": false,
+    "baseline_scalar8_configs_unchanged": true
+  }
+}

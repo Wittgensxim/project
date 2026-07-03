@@ -54,6 +54,7 @@ data/outputs/interaction_graph_v1/
 data/outputs/reduced_components_v1/
 data/outputs/pair_family_instcombine_simplifycfg/
 data/outputs/reduced_components_per_program/
+data/outputs/pass_expansion_smoke/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
@@ -381,6 +382,27 @@ docs/results/pair_family_instcombine_simplifycfg_manifest.json
 ```
 
 这些文件只从 P12/P13 与 24-program depth1 retained evidence 串联 `instcombine,simplifycfg` 的 full-matrix、prefix-state、one-swap、objective-layer 和 attribution 行为；不包含新 certificate、不包含 search 输出、不包含 runtime benchmark，也不改变 PassSpec 或 static filter 行为。
+
+P15 当前保留 pass expansion smoke：
+
+```text
+data/outputs/pass_expansion_smoke/
+```
+
+原因：P15 是 scalar12 expansion protocol / single-pass smoke 阶段。目录中只保留：
+
+```text
+pass_expansion_smoke.csv
+pass_expansion_smoke_report.md
+```
+
+对应 tracked manifest：
+
+```text
+docs/results/pass_expansion_smoke_manifest.json
+```
+
+临时 `pass_outputs/` IR 中间产物不保留；它们只用于计算 smoke hash / changed-IR 判断，可由 P15 命令重新生成。
 
 ## 可删除：临时或重复目录
 

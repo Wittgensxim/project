@@ -57,6 +57,7 @@ class PassExpansionSmokeTests(unittest.TestCase):
                 baseline_passes=["sroa"],
                 max_selected=1,
                 runner=fake_runner,
+                output_dir=root / "smoke_outputs",
             )
 
         rows = {row["pass_name"]: row for row in analysis["smoke_rows"]}

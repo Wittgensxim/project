@@ -20,6 +20,8 @@ P14 已把 `{instcombine, simplifycfg}` 做成 targeted pair-family analysis：[
 
 P14.5 已补上 per-program reduced component analysis：[docs/results/reduced_components_per_program_manifest.json](docs/results/reduced_components_per_program_manifest.json)。它区分 `corpus-union graph` 和 `program-local graph`：在 `input_full_matrix` 模式下 `22/24` 个程序拆成多个 component，说明 P13 的 `0.0000%` conservative reduction 是 corpus-union 诊断，不应外推为每个程序都不可拆；在 `prefix_adjacent` 模式下 `24/24` 个程序拆开，但该模式只覆盖 7 个 adjacent pair；在 `objective_sensitive` 模式下仍只有 Queens 和 ffbench 的 `{instcombine, simplifycfg}` 是非 singleton component。P14.5 仍然不新增实验、不新增 certificate、不启动 search。
 
+P15 已完成受控 `scalar12` expansion protocol：[docs/results/pass_expansion_smoke_manifest.json](docs/results/pass_expansion_smoke_manifest.json)。P15 只从 P11 registry snapshot 选取 function-level scalar/cleanup 候选，运行单 pass smoke，不新增 certificate、不启动 search、不引入 loop/module/inline pass。真实结果为 `CandidatePasses = 8`、`Programs = 24`、`ProgramsAttempted = 192`、`RunFailedCandidates = 0`、`VerifierFailedCandidates = 0`、`ChangedIrCandidates = 8`、`SelectedNewPasses = 4`，生成 `configs/pipeline_scalar12.yaml` 和 `configs/passspec_scalar12.yaml`；选入的新 pass 是 `instsimplify,bdce,sccp,correlated-propagation`。
+
 ## 当前 MVP 范围
 
 当前 MVP 只覆盖 LLVM IR scalar pass 的相邻顺序约简：
@@ -66,7 +68,7 @@ P9-5 不改变 `v0.1.1` MVP 语义。`v0.1.1` 仍然定义为 Stanford-8 + Misc8
 | depth1 both-smaller programs | 2 |
 | Diverse8 both-smaller programs | 0 |
 
-解释：Diverse8 增加了覆盖面，但没有新增 depth1 both-smaller program。因此当前阶段不建议继续搜索；P10/P10.5 已完成 PassSpec provenance 与 trust report，P11/P11.5 已完成工具链 pass identity 绑定与 cross-check，P12 已完成 interaction graph v1，P13 已完成 corpus-union reduced components / search-space estimate，P14 已完成 `instcombine,simplifycfg` targeted pair-family analysis，P14.5 已完成 per-program reduced component diagnostic。后续更合适的是围绕该 pair 做 targeted witness-state collection，或直接进入最终报告收束。
+解释：Diverse8 增加了覆盖面，但没有新增 depth1 both-smaller program。因此当前阶段不建议继续搜索；P10/P10.5 已完成 PassSpec provenance 与 trust report，P11/P11.5 已完成工具链 pass identity 绑定与 cross-check，P12 已完成 interaction graph v1，P13 已完成 corpus-union reduced components / search-space estimate，P14 已完成 `instcombine,simplifycfg` targeted pair-family analysis，P14.5 已完成 per-program reduced component diagnostic。P15 进一步把“是否可以扩 pass”收束成受控 scalar12 expansion protocol：只做 registry-backed single-pass smoke，选出 4 个 function-level scalar/cleanup pass，为 P16 的 scalar12 full matrix 与 depth1-only chain 做准备。
 
 ## Evidence Level
 
@@ -110,7 +112,7 @@ D:\Miniconda\envs\dlm\python.exe -m pytest -q
 期望测试结果：
 
 ```text
-159 passed
+166 passed
 ```
 
 外部 clone 后可以直接阅读这些已跟踪文件来理解冻结结果：
@@ -152,6 +154,7 @@ AttributionCases=2
 - P13 reduced components / search-space reduction estimate。
 - P14 `instcombine,simplifycfg` pair-family analysis。
 - P14.5 per-program reduced component analysis。
+- P15 controlled scalar12 pass expansion smoke；保留 scalar8 配置不变，并新增 `configs/pipeline_scalar12.yaml`、`configs/passspec_scalar12.yaml`。
 - 结果 manifest 与 data retention 规则；`data/` 只保留必须保留的可复查产物。
 
 ## 当前不支持
@@ -180,6 +183,7 @@ AttributionCases=2
 | `data/outputs/reduced_components_v1/` | P13 reduced components 与 search-space estimate 输出 |
 | `data/outputs/pair_family_instcombine_simplifycfg/` | P14 targeted pair-family analysis 输出 |
 | `data/outputs/reduced_components_per_program/` | P14.5 per-program reduced component 输出 |
+| `data/outputs/pass_expansion_smoke/` | P15 scalar12 pass expansion smoke 输出 |
 | `docs/ecpor_stage_report.md` | P9-6 阶段报告 / 论文草稿入口 |
 | `docs/passspec_trust_report.md` | P10.5 PassSpec trust report / methods note |
 | `docs/results/` | 可提交 manifest |
@@ -189,4 +193,4 @@ AttributionCases=2
 
 ## 下一步
 
-P14.5 已完成。下一步不要直接写完整 searcher；更合适的是先进入 P15 决策：要么做 targeted witness-state collection for `instcombine,simplifycfg`，要么进入 final research report / paper draft freeze。当前仍不建议做 two-swap、depth=3、beam search、runtime、Alive2 或 PassInstrumentation。
+P15 已完成。下一步如果继续实验，应进入 P16：`scalar12` full matrix + per-program reduced components + depth1-only chain。当前仍不建议做 two-swap、depth=3、beam search、runtime、Alive2、PassInstrumentation，也不引入 loop/module/inline pass。

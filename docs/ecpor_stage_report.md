@@ -187,3 +187,46 @@ P14.5 program-local graph:
 ```
 
 因此，P13 的 0% conservative reduction 应写成“corpus-union conservative graph 没有搜索空间压缩”，不能写成“所有 program-local graph 都没有搜索空间压缩”。P14.5 的价值是把这个边界补清楚，但它仍然不新增实验、不新增 certificate、不启动 search。
+
+## P15 补充：受控 scalar12 expansion protocol
+
+P15 在 P14.5 之后只做 pass expansion protocol，不改变本文的 hard-prune 语义，也不把项目升级为完整 searcher。它从 P11 registry snapshot 中挑选 function-level scalar / cleanup 候选，对 24 个 retained program 运行 single-pass `function(candidate)` smoke。
+
+真实结果为：
+
+```text
+CandidatePasses = 8
+RegistryPresentCandidates = 8
+Programs = 24
+ProgramsAttempted = 192
+RunFailedCandidates = 0
+TimeoutCandidates = 0
+VerifierFailedCandidates = 0
+ChangedIrCandidates = 8
+SelectedNewPasses = 4
+Scalar12PassCount = 12
+```
+
+进入 scalar12 的新增 pass 是：
+
+```text
+instsimplify
+bdce
+sccp
+correlated-propagation
+```
+
+P15 的边界是：
+
+```text
+new_experiments = true
+new_certificates = false
+new_search = false
+runtime_benchmarks = false
+loop_passes = false
+module_passes = false
+inline_passes = false
+baseline_scalar8_configs_unchanged = true
+```
+
+因此，P15 的意义是证明当前工具链可以受控地从 scalar8 扩展到 scalar12 配置。它不证明 scalar12 的 pair matrix 结果，也不证明 code-size benefit。后续若继续实验，应进入 P16：scalar12 full matrix、per-program reduced components 与 depth1-only chain；仍不应进入 two-swap、depth=3、beam search、runtime benchmark、Alive2 或 loop/module/inline pass。
