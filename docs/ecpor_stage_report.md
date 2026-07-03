@@ -161,3 +161,29 @@ P9-6: 阶段报告 / 论文草稿
 ```
 
 当前不建议继续做 two-swap、depth=3、beam/searcher、runtime benchmark、Alive2 或 PassInstrumentation。更合适的下一步是把现有证据链整理成可展示、可答辩、可引用的研究报告，并把 PassSpec 从手工 hint 表升级为带来源与置信度的 metadata 表。
+
+## P12-P14.5 补充：corpus-union 与 program-local 的边界
+
+P12 之后新增的 interaction graph / reduced component 分析不改变本文的核心结论：ECPOR 仍然不是完整 searcher，也不把 objective observation 当成 hard prune。新增结果只把“哪些顺序不用搜、哪些必须保留为候选”这条证据链解释得更清楚。
+
+需要区分三层图：
+
+```text
+P13  corpus-union graph:
+  把 24 个程序的 retained evidence 合并成一张保守图。
+  ConservativeReductionRatio = 0.0000% 表示 corpus-union conservative graph 是 8-pass 大 component。
+  这不是每个程序本地都不可拆的结论。
+
+P14  objective hotspot pair-family:
+  聚焦 corpus-level graph 里唯一 objective-sensitive hotspot：instcombine/simplifycfg。
+  它解释 Queens 和 ffbench 的 both-smaller attribution case。
+  它不替代 per-program reduced component analysis。
+
+P14.5 program-local graph:
+  对每个程序分别构建 input_full_matrix、prefix_adjacent、objective_sensitive 三种 scoped graph。
+  input_full_matrix 下 22/24 个程序有多个 component。
+  prefix_adjacent 下 24/24 个程序有多个 component，但只覆盖 7 个 adjacent pair。
+  objective_sensitive 下只有 Queens 和 ffbench 的 instcombine/simplifycfg 是非 singleton component。
+```
+
+因此，P13 的 0% conservative reduction 应写成“corpus-union conservative graph 没有搜索空间压缩”，不能写成“所有 program-local graph 都没有搜索空间压缩”。P14.5 的价值是把这个边界补清楚，但它仍然不新增实验、不新增 certificate、不启动 search。

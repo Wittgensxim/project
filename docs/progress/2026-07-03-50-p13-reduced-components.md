@@ -1,5 +1,7 @@
 # P13 reduced components / search-space reduction report
 
+> P14.5 后的边界更正：本文中的 conservative graph 是 P12 retained evidence 的 corpus-union conservative graph。因此 `ConservativeReductionRatio = 0.0000%` 应解释为“corpus-union conservative graph 没有搜索空间压缩”，不能外推为每个 program-local graph 都没有 component split。
+
 ## 当前目标
 
 P13 的目标是基于 P12 interaction graph v1，生成 reduced components 和搜索空间缩减估计。

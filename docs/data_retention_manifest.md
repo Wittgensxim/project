@@ -53,6 +53,7 @@ data/outputs/passspec_registry_check/
 data/outputs/interaction_graph_v1/
 data/outputs/reduced_components_v1/
 data/outputs/pair_family_instcombine_simplifycfg/
+data/outputs/reduced_components_per_program/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md

@@ -1,5 +1,7 @@
 # P14 instcombine/simplifycfg pair-family analysis
 
+> P14.5 后的边界更正：P14 是针对 corpus-level graph 中唯一 objective-sensitive hotspot `instcombine/simplifycfg` 的 pair-family analysis。它不替代 per-program reduced component analysis，也不能直接推出 program-local search-space reduction。
+
 ## 当前目标
 
 P14 的目标是只读取已有 retained evidence，聚焦 P13 objective-sensitive graph 中唯一非 singleton 热点：

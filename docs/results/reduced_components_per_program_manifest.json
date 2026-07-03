@@ -1,0 +1,71 @@
+{
+  "manifest_schema_version": 1,
+  "stage": "P14.5",
+  "description": "Per-program reduced component analysis from retained P4-P14 evidence.",
+  "result_generated_from_commit": "343266dc86963dc3052703793eeac2220662aa3f",
+  "ecpor_git_commit": "343266dc86963dc3052703793eeac2220662aa3f",
+  "ecpor_git_dirty": false,
+  "inputs": {
+    "pipeline_config": "configs/pipeline_scalar.yaml",
+    "stanford_full_matrix_csv": "data/outputs/cert_summary.csv",
+    "misc8_full_matrix_csv": "data/outputs/cert_summary_p8b_misc8_pre.csv",
+    "diverse8_full_matrix_csv": "data/outputs/cert_summary_p9_diverse8_pre.csv",
+    "stanford_prefix_attempts_csv": "data/outputs/lazy_validation_p4_e83c409_first.csv",
+    "misc8_prefix_attempts_csv": "data/outputs/lazy_validation_p8b_misc8/attempts.csv",
+    "diverse8_prefix_attempts_csv": "data/outputs/lazy_validation_p9_diverse8/attempts.csv",
+    "stanford_codegen_compare_csv": "data/outputs/codegen_sensitivity_p8a/p8a_codegen_direction_compare.csv",
+    "misc8_codegen_compare_csv": "data/outputs/codegen_sensitivity_p8b_misc8/p8a_codegen_direction_compare.csv",
+    "diverse8_codegen_compare_csv": "data/outputs/codegen_sensitivity_p9_diverse8/p8a_codegen_direction_compare.csv",
+    "stanford_attribution_summary_csv": "data/outputs/core_evidence_report/ecpor_attribution_summary.csv",
+    "misc8_attribution_summary_csv": "data/outputs/core_evidence_report_misc8/misc8_attribution_summary.csv"
+  },
+  "outputs": {
+    "output_dir": "data/outputs/reduced_components_per_program",
+    "per_program_components_csv": "data/outputs/reduced_components_per_program/per_program_components.csv",
+    "per_program_search_space_estimate_csv": "data/outputs/reduced_components_per_program/per_program_search_space_estimate.csv",
+    "per_benchmark_search_space_summary_csv": "data/outputs/reduced_components_per_program/per_benchmark_search_space_summary.csv",
+    "reduced_components_per_program_report": "data/outputs/reduced_components_per_program/reduced_components_per_program_report.md"
+  },
+  "sha256": {
+    "pipeline_config": "798fafb5e73bd26036dec30fd6d9592ec4ebf0b51a17bd5d73f81dc3acb8f2cf",
+    "stanford_full_matrix_csv": "2e79d756c7b1cd198520d906f11513dcbc8638188d26ae57403eae672e373308",
+    "misc8_full_matrix_csv": "a55372e29c1f53d4769592b68396c3421a3fc378d4fdbb236f2ffc7540e69f0e",
+    "diverse8_full_matrix_csv": "25d8d3f6ff4cc348b20cae199793e608c77c2ff5aff8afb736fffce95235f061",
+    "stanford_prefix_attempts_csv": "ceada53bcb557dfd9a4d9c8217f652b7995f158154d4df5827a1a340acffb777",
+    "misc8_prefix_attempts_csv": "a9b86ce5e329532cd8817ecf0d66f84c04adf0b321ddd7979948fb80c7b4d2e7",
+    "diverse8_prefix_attempts_csv": "6ab025d0f83e1da8d23a46a3450d93bbca2d5366c84f9051f6fd15b8d1ff82ca",
+    "stanford_codegen_compare_csv": "f252aab4b7f440888f41b1d9445e80c2d4ce888dc5146fa64cd5ddd63c68a7df",
+    "misc8_codegen_compare_csv": "b8e642320a607d6d1a6c422ccfcb95c422c0ecac4bd937ddd61b0be347ffc2e7",
+    "diverse8_codegen_compare_csv": "82e543eb40939f2130382c4af74833f241907dd9ef28169b037cccadc2407fb8",
+    "stanford_attribution_summary_csv": "5af8e99744406154e1f6dee3a84c46e5fa5ad09da8829a24ad02bf3c92661605",
+    "misc8_attribution_summary_csv": "b4d1ad06ce93ca6ee5282b5d3caaec1681c270b147d980eb2eb744fe803e58f9",
+    "per_program_components_csv": "55681fac6c1e1f249177dd8b9a82cc4940756623b54106606b6567e6a67358aa",
+    "per_program_search_space_estimate_csv": "4eb8409ba5015d3a2bb1369bc61174ddc18aa50685026d11c986079748743c9d",
+    "per_benchmark_search_space_summary_csv": "5483458d8522919888d560f961a67a04cc74e4e44be529bec1dd40c8797cf3da",
+    "reduced_components_per_program_report": "3b1813720476244d3ce07b302698da88bc83f23794f3ba40a3bbd5efb20dd3e7"
+  },
+  "tools": {},
+  "summary": {
+    "PrefixAdjacentProgramsWithSingleComponent8": 0,
+    "NewExperiments": false,
+    "NewSearch": false,
+    "GraphModes": 3,
+    "InputFullMatrixProgramsWithMultipleComponents": 22,
+    "Programs": 24,
+    "PrefixAdjacentProgramsWithMultipleComponents": 24,
+    "InputFullMatrixProgramsWithSingleComponent8": 2,
+    "NewCertificates": false,
+    "ObjectiveSensitiveProgramsWithNonSingletonComponent": 2
+  },
+  "scope_limits": {
+    "stage": "P14.5",
+    "summary_only": true,
+    "per_program_graph_analysis_only": true,
+    "new_experiments": false,
+    "new_certificates": false,
+    "new_search": false,
+    "runtime_benchmarks": false,
+    "passspec_behavior_change": false,
+    "static_filter_behavior_change": false
+  }
+}
