@@ -1,0 +1,17 @@
+name: scalar12_function_scalar
+pipeline: function(sroa,early-cse,instcombine,simplifycfg,reassociate,gvn,dce,adce,instsimplify,bdce,sccp,correlated-propagation)
+passes:
+- sroa
+- early-cse
+- instcombine
+- simplifycfg
+- reassociate
+- gvn
+- dce
+- adce
+- instsimplify
+- bdce
+- sccp
+- correlated-propagation
+source_pipeline: configs/pipeline_scalar.yaml
+created_in_stage: P15
