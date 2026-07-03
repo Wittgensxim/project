@@ -13,6 +13,7 @@ from .manifest_builders import (
     build_effect_attribution_manifest,
     build_passspec_audit_manifest,
     build_pass_registry_snapshot_manifest,
+    build_passspec_registry_check_manifest,
     build_passspec_trust_report_manifest,
     build_p6_5_manifest,
     build_p7a_manifest,
@@ -334,6 +335,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     pass_registry.add_argument("--repo-root", default=".")
     pass_registry.add_argument("--result-generated-from-commit")
 
+    passspec_registry = subparsers.add_parser(
+        "passspec-registry-check",
+        help="Build a P11.5 PassSpec registry cross-check manifest.",
+    )
+    passspec_registry.add_argument("--out-manifest", required=True)
+    passspec_registry.add_argument("--passspec", required=True)
+    passspec_registry.add_argument("--pipeline-config", required=True)
+    passspec_registry.add_argument("--registry-snapshot", required=True)
+    passspec_registry.add_argument("--output-dir", required=True)
+    passspec_registry.add_argument("--repo-root", default=".")
+    passspec_registry.add_argument("--result-generated-from-commit")
+
     p8c = subparsers.add_parser(
         "p8c-attribution", help="Build a P8c Queens attribution manifest."
     )
@@ -578,6 +591,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         manifest = build_pass_registry_snapshot_manifest(
             opt_path=args.opt,
             pipeline_config_path=args.pipeline_config,
+            output_dir=args.output_dir,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "passspec-registry-check":
+        manifest = build_passspec_registry_check_manifest(
+            passspec_path=args.passspec,
+            pipeline_config_path=args.pipeline_config,
+            registry_snapshot_path=args.registry_snapshot,
             output_dir=args.output_dir,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,

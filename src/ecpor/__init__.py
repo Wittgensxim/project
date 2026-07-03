@@ -19,6 +19,7 @@ __all__ = [
     "pipeline_dedup",
     "passspec_audit",
     "pass_registry_snapshot",
+    "passspec_registry_check",
     "passspec_schema",
     "passspec_trust_report",
     "code_size_evaluator",

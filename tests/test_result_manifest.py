@@ -44,6 +44,10 @@ class ResultManifestTests(unittest.TestCase):
             result_manifest.build_pass_registry_snapshot_manifest,
             manifest_builders.build_pass_registry_snapshot_manifest,
         )
+        self.assertIs(
+            result_manifest.build_passspec_registry_check_manifest,
+            manifest_builders.build_passspec_registry_check_manifest,
+        )
         self.assertIs(result_manifest.main, manifest_cli.main)
 
     def test_builds_pass_registry_snapshot_manifest(self):
@@ -82,6 +86,53 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["summary"]["MissingExpectedPasses"], 0)
         self.assertEqual(loaded["scope_limits"]["metadata_only"], True)
         self.assertEqual(loaded["scope_limits"]["registry_snapshot_only"], True)
+        self.assertEqual(loaded["scope_limits"]["static_filter_behavior_change"], False)
+        self.assertEqual(loaded["scope_limits"]["passspec_behavior_change"], False)
+        self.assertEqual(loaded["scope_limits"]["new_experiments"], False)
+        self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
+        self.assertEqual(loaded["scope_limits"]["new_search"], False)
+        self.assertEqual(loaded["scope_limits"]["runtime_benchmarks"], False)
+
+    def test_builds_passspec_registry_check_manifest(self):
+        from ecpor.result_manifest import (
+            build_passspec_registry_check_manifest,
+            write_manifest,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            passspec = root / "passspec.yaml"
+            pipeline = root / "pipeline_scalar.yaml"
+            registry_snapshot = root / "pass_registry_snapshot.json"
+            out_dir = root / "passspec_registry_check"
+            out_dir.mkdir()
+            _write_text(passspec, "passes:\n  sroa:\n    level: function\n")
+            _write_text(pipeline, "passes:\n  - sroa\n")
+            _write_text(registry_snapshot, '{"expected_passes": ["sroa"]}\n')
+            _write_passspec_registry_check_outputs(out_dir)
+
+            manifest = build_passspec_registry_check_manifest(
+                passspec_path=passspec,
+                pipeline_config_path=pipeline,
+                registry_snapshot_path=registry_snapshot,
+                output_dir=out_dir,
+                repo_root=root,
+                result_generated_from_commit="c0ffee",
+            )
+            manifest_path = root / "passspec_registry_check_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P11.5")
+        self.assertEqual(loaded["result_generated_from_commit"], "c0ffee")
+        self.assertIn("passspec", loaded["inputs"])
+        self.assertIn("registry_snapshot", loaded["inputs"])
+        self.assertIn("passspec_registry_check_csv", loaded["outputs"])
+        self.assertIn("passspec_registry_check_report", loaded["sha256"])
+        self.assertEqual(loaded["summary"]["Status"], "pass")
+        self.assertEqual(loaded["summary"]["PassSpecPasses"], 1)
+        self.assertEqual(loaded["scope_limits"]["metadata_only"], True)
+        self.assertEqual(loaded["scope_limits"]["registry_cross_check_only"], True)
         self.assertEqual(loaded["scope_limits"]["static_filter_behavior_change"], False)
         self.assertEqual(loaded["scope_limits"]["passspec_behavior_change"], False)
         self.assertEqual(loaded["scope_limits"]["new_experiments"], False)
@@ -1628,6 +1679,34 @@ def _write_pass_registry_outputs(out_dir: Path) -> None:
             PresentExpectedPasses: 2
             MissingExpectedPasses: 0
             ParseConfidence: raw_snapshot_with_presence_check
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_passspec_registry_check_outputs(out_dir: Path) -> None:
+    _write_text(
+        out_dir / "passspec_registry_check.csv",
+        (
+            "pass_name,in_passspec,in_pipeline,in_registry,registry_presence,"
+            "level_in_passspec,status,notes\n"
+            "sroa,True,True,True,present,function,ok,\n"
+        ),
+    )
+    _write_text(
+        out_dir / "passspec_registry_check_report.md",
+        textwrap.dedent(
+            """
+            # PassSpec Registry Cross-Check
+
+            PassSpecPasses: 1
+            PipelinePasses: 1
+            RegistryExpectedPasses: 1
+            MissingPassSpecPassesInRegistry: 0
+            PipelinePassesMissingInPassSpec: 0
+            RegistryMissingExpectedPasses: 0
+            Status: pass
             """
         ).strip()
         + "\n",

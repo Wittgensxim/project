@@ -252,6 +252,17 @@ PASS_REGISTRY_SNAPSHOT_SUMMARY_KEYS = {
     "ParseConfidence",
 }
 
+PASSSPEC_REGISTRY_CHECK_SUMMARY_KEYS = {
+    "PassSpecPasses",
+    "PipelinePasses",
+    "RegistryExpectedPasses",
+    "MissingPassSpecPassesInRegistry",
+    "PipelinePassesMissingInPassSpec",
+    "RegistryExpectedPassesMissingInPassSpec",
+    "RegistryMissingExpectedPasses",
+    "Status",
+}
+
 
 
 def build_p7a_manifest(
@@ -857,6 +868,52 @@ def build_pass_registry_snapshot_manifest(
             "scope_limits": {
                 "metadata_only": True,
                 "registry_snapshot_only": True,
+                "static_filter_behavior_change": False,
+                "passspec_behavior_change": False,
+                "new_experiments": False,
+                "new_certificates": False,
+                "new_search": False,
+                "runtime_benchmarks": False,
+            }
+        },
+    )
+
+
+def build_passspec_registry_check_manifest(
+    *,
+    passspec_path: str | Path,
+    pipeline_config_path: str | Path,
+    registry_snapshot_path: str | Path,
+    output_dir: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    out = Path(output_dir)
+    report = out / "passspec_registry_check_report.md"
+    return build_result_manifest(
+        stage="P11.5",
+        description="PassSpec, MVP pipeline, and LLVM registry snapshot cross-check.",
+        inputs={
+            "passspec": passspec_path,
+            "pipeline_config": pipeline_config_path,
+            "registry_snapshot": registry_snapshot_path,
+        },
+        outputs={
+            "output_dir": out,
+            "passspec_registry_check_csv": out / "passspec_registry_check.csv",
+            "passspec_registry_check_report": report,
+        },
+        tools={},
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            PASSSPEC_REGISTRY_CHECK_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "metadata_only": True,
+                "registry_cross_check_only": True,
                 "static_filter_behavior_change": False,
                 "passspec_behavior_change": False,
                 "new_experiments": False,
