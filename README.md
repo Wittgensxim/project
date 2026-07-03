@@ -16,6 +16,8 @@ P12 已把 24-program depth1 证据整理成第一版 pass interaction graph：[
 
 P13 已基于 P12 graph 生成 reduced components 和 search-space reduction estimate：[docs/results/reduced_components_v1_manifest.json](docs/results/reduced_components_v1_manifest.json)。保守图仍是一个 `8` pass 大 component，`ConservativeReductionRatio = 0.0000%`；objective-sensitive graph 只剩 `{instcombine, simplifycfg}` 一个 2-pass 热点，粗略局部上界为 `2`，`ObjectiveReductionRatio = 99.9950%`。该数字只解释目标层热点，不是全局 hard-prune 证明。
 
+P14 已把 `{instcombine, simplifycfg}` 做成 targeted pair-family analysis：[docs/results/pair_family_instcombine_simplifycfg_manifest.json](docs/results/pair_family_instcombine_simplifycfg_manifest.json)。24-program depth1 retained evidence 中该 pair 为 `FullMatrixNotCertified = 13`、`PrefixNotCertified = 10`、`OneSwapCandidates = 10`、`FinalIrDifferent = 10`、`BothSmallerPrograms = 2`、`AttributionCases = 2`；两个 both-smaller case 是 Queens 和 ffbench，并且都包含 select-related opcode delta。P14 仍然不新增实验、不新增 certificate、不启动 search。
+
 ## 当前 MVP 范围
 
 当前 MVP 只覆盖 LLVM IR scalar pass 的相邻顺序约简：
@@ -62,7 +64,7 @@ P9-5 不改变 `v0.1.1` MVP 语义。`v0.1.1` 仍然定义为 Stanford-8 + Misc8
 | depth1 both-smaller programs | 2 |
 | Diverse8 both-smaller programs | 0 |
 
-解释：Diverse8 增加了覆盖面，但没有新增 depth1 both-smaller program。因此当前阶段不建议继续搜索；P10/P10.5 已完成 PassSpec provenance 与 trust report，P11/P11.5 已完成工具链 pass identity 绑定与 cross-check，P12 已完成 interaction graph v1，P13 已完成 reduced components / search-space estimate。后续更合适的是围绕 `instcombine,simplifycfg` 做 targeted pair-family analysis。
+解释：Diverse8 增加了覆盖面，但没有新增 depth1 both-smaller program。因此当前阶段不建议继续搜索；P10/P10.5 已完成 PassSpec provenance 与 trust report，P11/P11.5 已完成工具链 pass identity 绑定与 cross-check，P12 已完成 interaction graph v1，P13 已完成 reduced components / search-space estimate，P14 已完成 `instcombine,simplifycfg` targeted pair-family analysis。后续更合适的是围绕该 pair 做 targeted witness-state collection，或直接进入最终报告收束。
 
 ## Evidence Level
 
@@ -106,7 +108,7 @@ D:\Miniconda\envs\dlm\python.exe -m pytest -q
 期望测试结果：
 
 ```text
-154 passed
+159 passed
 ```
 
 外部 clone 后可以直接阅读这些已跟踪文件来理解冻结结果：
@@ -146,6 +148,7 @@ AttributionCases=2
 - Stanford-8 与 Misc8 的 certificate matrix、static filter evaluation、lazy validation、bounded one-swap、code-size sensitivity、case attribution。
 - Stanford-8、Misc8、Diverse8 的 combined depth1 summary 与 P12 interaction graph v1。
 - P13 reduced components / search-space reduction estimate。
+- P14 `instcombine,simplifycfg` pair-family analysis。
 - 结果 manifest 与 data retention 规则；`data/` 只保留必须保留的可复查产物。
 
 ## 当前不支持
@@ -172,6 +175,7 @@ AttributionCases=2
 | `data/outputs/passspec_registry_check/` | P11.5 PassSpec / pipeline / registry cross-check 输出 |
 | `data/outputs/interaction_graph_v1/` | P12 pass interaction graph v1 输出 |
 | `data/outputs/reduced_components_v1/` | P13 reduced components 与 search-space estimate 输出 |
+| `data/outputs/pair_family_instcombine_simplifycfg/` | P14 targeted pair-family analysis 输出 |
 | `docs/ecpor_stage_report.md` | P9-6 阶段报告 / 论文草稿入口 |
 | `docs/passspec_trust_report.md` | P10.5 PassSpec trust report / methods note |
 | `docs/results/` | 可提交 manifest |
@@ -181,4 +185,4 @@ AttributionCases=2
 
 ## 下一步
 
-P13 已完成。下一步优先做 P14 targeted pair-family analysis for `instcombine,simplifycfg`：解释这个 objective-sensitive hotspot 在 24 programs 中何时 not-certified、何时影响 final IR、何时传导到 `llc` / `clang -c` both-smaller，以及 Queens 和 ffbench attribution 是否存在共同模式。当前仍不建议直接写完整 searcher。
+P14 已完成。下一步不要直接写完整 searcher；更合适的是 P15 targeted witness-state collection for `instcombine,simplifycfg`，或者进入 final research report / paper draft freeze。当前仍不建议做 two-swap、depth=3、beam search、runtime、Alive2 或 PassInstrumentation。

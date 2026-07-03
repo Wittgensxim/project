@@ -52,6 +52,7 @@ data/outputs/pass_registry_snapshot/
 data/outputs/passspec_registry_check/
 data/outputs/interaction_graph_v1/
 data/outputs/reduced_components_v1/
+data/outputs/pair_family_instcombine_simplifycfg/
 data/outputs/lazy_validation_p4_e83c409_first.csv
 data/outputs/lazy_validation_p4_e83c409_second.csv
 data/outputs/lazy_validation_p4_e83c409_first.md
@@ -354,6 +355,31 @@ docs/results/reduced_components_v1_manifest.json
 ```
 
 这些文件只从 P12 interaction graph 生成 conservative graph、objective-sensitive graph、connected components 和 search-space 粗略估计；不包含新 certificate、不包含 search 输出、不包含 runtime benchmark，也不改变 PassSpec 或 static filter 行为。
+
+P14 当前保留 instcombine/simplifycfg pair-family analysis：
+
+```text
+data/outputs/pair_family_instcombine_simplifycfg/
+```
+
+原因：P14 是 summary-only / pair-family-analysis-only 阶段。目录中保留：
+
+```text
+pair_family_events.csv
+pair_family_program_summary.csv
+pair_family_objective_summary.csv
+pair_family_attribution_compare.csv
+pair_family_analysis.json
+pair_family_analysis_report.md
+```
+
+对应 tracked manifest：
+
+```text
+docs/results/pair_family_instcombine_simplifycfg_manifest.json
+```
+
+这些文件只从 P12/P13 与 24-program depth1 retained evidence 串联 `instcombine,simplifycfg` 的 full-matrix、prefix-state、one-swap、objective-layer 和 attribution 行为；不包含新 certificate、不包含 search 输出、不包含 runtime benchmark，也不改变 PassSpec 或 static filter 行为。
 
 ## 可删除：临时或重复目录
 
