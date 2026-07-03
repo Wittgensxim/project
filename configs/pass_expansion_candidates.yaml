@@ -1,0 +1,51 @@
+stage: P15
+source_registry_snapshot: data/outputs/pass_registry_snapshot/pass_registry_snapshot.json
+selection_goal: scalar12
+constraints:
+  - function_level_only
+  - no_loop_passes
+  - no_module_passes
+  - no_inline_passes
+  - no_vectorization_passes
+  - no_backend_passes
+candidates:
+  - name: instsimplify
+    expected_level: function
+    reason: scalar_simplification_candidate
+    source: pass_registry_snapshot
+    manual_note: Cheap instruction simplification candidate for scalar cleanup.
+  - name: bdce
+    expected_level: function
+    reason: scalar_cleanup_candidate
+    source: pass_registry_snapshot
+    manual_note: Bit-tracking dead code elimination candidate.
+  - name: sccp
+    expected_level: function
+    reason: scalar_constant_propagation_candidate
+    source: pass_registry_snapshot
+    manual_note: Sparse conditional constant propagation candidate.
+  - name: correlated-propagation
+    expected_level: function
+    reason: scalar_branch_value_candidate
+    source: pass_registry_snapshot
+    manual_note: Scalar propagation candidate that may expose CFG simplification.
+  - name: jump-threading
+    expected_level: function
+    reason: scalar_cfg_candidate
+    source: pass_registry_snapshot
+    manual_note: CFG/value based jump threading candidate.
+  - name: dse
+    expected_level: function
+    reason: memory_cleanup_candidate
+    source: pass_registry_snapshot
+    manual_note: Dead store elimination candidate.
+  - name: sink
+    expected_level: function
+    reason: scalar_motion_candidate
+    source: pass_registry_snapshot
+    manual_note: Instruction sinking candidate.
+  - name: memcpyopt
+    expected_level: function
+    reason: memory_cleanup_candidate
+    source: pass_registry_snapshot
+    manual_note: Memcpy optimization candidate.

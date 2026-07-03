@@ -322,6 +322,22 @@ REDUCED_COMPONENTS_PER_PROGRAM_SUMMARY_KEYS = {
     "NewSearch",
 }
 
+PASS_EXPANSION_SMOKE_SUMMARY_KEYS = {
+    "CandidatePasses",
+    "RegistryPresentCandidates",
+    "Programs",
+    "ProgramsAttempted",
+    "SelectedNewPasses",
+    "RunFailedCandidates",
+    "TimeoutCandidates",
+    "VerifierFailedCandidates",
+    "ChangedIrCandidates",
+    "Scalar12PassCount",
+    "NewExperiments",
+    "NewCertificates",
+    "NewSearch",
+}
+
 
 
 def build_p7a_manifest(
@@ -1231,6 +1247,62 @@ def build_reduced_components_per_program_manifest(
                 "runtime_benchmarks": False,
                 "passspec_behavior_change": False,
                 "static_filter_behavior_change": False,
+            }
+        },
+    )
+
+
+def build_pass_expansion_smoke_manifest(
+    *,
+    candidate_config_path: str | Path,
+    registry_snapshot_path: str | Path,
+    baseline_pipeline_path: str | Path,
+    baseline_passspec_path: str | Path,
+    scalar12_pipeline_path: str | Path,
+    scalar12_passspec_path: str | Path,
+    output_dir: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    out = Path(output_dir)
+    report = out / "pass_expansion_smoke_report.md"
+    return build_result_manifest(
+        stage="P15",
+        description="Controlled scalar12 pass expansion protocol and single-pass smoke.",
+        inputs={
+            "pass_expansion_candidates": candidate_config_path,
+            "pass_registry_snapshot_json": registry_snapshot_path,
+            "baseline_pipeline_scalar": baseline_pipeline_path,
+            "baseline_passspec": baseline_passspec_path,
+        },
+        outputs={
+            "output_dir": out,
+            "pass_expansion_smoke_csv": out / "pass_expansion_smoke.csv",
+            "pass_expansion_smoke_report": report,
+            "pipeline_scalar12": scalar12_pipeline_path,
+            "passspec_scalar12": scalar12_passspec_path,
+        },
+        tools={},
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            PASS_EXPANSION_SMOKE_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "stage": "P15",
+                "summary_only": True,
+                "pass_expansion_protocol_only": True,
+                "single_pass_smoke_only": True,
+                "new_experiments": True,
+                "new_certificates": False,
+                "new_search": False,
+                "runtime_benchmarks": False,
+                "loop_passes": False,
+                "module_passes": False,
+                "inline_passes": False,
+                "baseline_scalar8_configs_unchanged": True,
             }
         },
     )

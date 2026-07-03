@@ -64,6 +64,10 @@ class ResultManifestTests(unittest.TestCase):
             result_manifest.build_reduced_components_per_program_manifest,
             manifest_builders.build_reduced_components_per_program_manifest,
         )
+        self.assertIs(
+            result_manifest.build_pass_expansion_smoke_manifest,
+            manifest_builders.build_pass_expansion_smoke_manifest,
+        )
         self.assertIs(result_manifest.main, manifest_cli.main)
 
     def test_builds_pass_registry_snapshot_manifest(self):
@@ -347,6 +351,61 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["scope_limits"]["runtime_benchmarks"], False)
         self.assertEqual(loaded["scope_limits"]["passspec_behavior_change"], False)
         self.assertEqual(loaded["scope_limits"]["static_filter_behavior_change"], False)
+
+    def test_builds_pass_expansion_smoke_manifest(self):
+        from ecpor.result_manifest import (
+            build_pass_expansion_smoke_manifest,
+            write_manifest,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            candidates = root / "pass_expansion_candidates.yaml"
+            registry = root / "pass_registry_snapshot.json"
+            pipeline8 = root / "pipeline_scalar.yaml"
+            passspec8 = root / "passspec.yaml"
+            pipeline12 = root / "pipeline_scalar12.yaml"
+            passspec12 = root / "passspec_scalar12.yaml"
+            out_dir = root / "pass_expansion_smoke"
+            out_dir.mkdir()
+            _write_text(candidates, "candidates:\n  - name: instsimplify\n")
+            _write_text(registry, '{"all_pass_like_names": ["instsimplify"]}\n')
+            _write_text(pipeline8, "passes:\n  - sroa\n")
+            _write_text(passspec8, "passes:\n  sroa:\n    level: function\n")
+            _write_text(pipeline12, "passes:\n  - sroa\n  - instsimplify\n")
+            _write_text(passspec12, "passes:\n  instsimplify:\n    level: function\n")
+            _write_pass_expansion_smoke_outputs(out_dir)
+
+            manifest = build_pass_expansion_smoke_manifest(
+                candidate_config_path=candidates,
+                registry_snapshot_path=registry,
+                baseline_pipeline_path=pipeline8,
+                baseline_passspec_path=passspec8,
+                scalar12_pipeline_path=pipeline12,
+                scalar12_passspec_path=passspec12,
+                output_dir=out_dir,
+                repo_root=root,
+                result_generated_from_commit="p15abc",
+            )
+            manifest_path = root / "pass_expansion_smoke_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P15")
+        self.assertEqual(loaded["result_generated_from_commit"], "p15abc")
+        self.assertEqual(loaded["summary"]["CandidatePasses"], 1)
+        self.assertEqual(loaded["summary"]["SelectedNewPasses"], 1)
+        self.assertIn("pass_expansion_smoke_csv", loaded["outputs"])
+        self.assertIn("pipeline_scalar12", loaded["outputs"])
+        self.assertIn("pass_expansion_smoke_report", loaded["sha256"])
+        self.assertEqual(loaded["scope_limits"]["summary_only"], True)
+        self.assertEqual(loaded["scope_limits"]["pass_expansion_protocol_only"], True)
+        self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
+        self.assertEqual(loaded["scope_limits"]["new_search"], False)
+        self.assertEqual(loaded["scope_limits"]["runtime_benchmarks"], False)
+        self.assertEqual(loaded["scope_limits"]["loop_passes"], False)
+        self.assertEqual(loaded["scope_limits"]["module_passes"], False)
+        self.assertEqual(loaded["scope_limits"]["inline_passes"], False)
 
     def test_builds_p7a_manifest_from_outputs_and_hashes_files(self):
         from ecpor.result_manifest import build_p7a_manifest, write_manifest
@@ -2136,6 +2195,42 @@ def _write_reduced_components_per_program_outputs(out_dir: Path) -> None:
             PrefixAdjacentProgramsWithMultipleComponents: 0
             ObjectiveSensitiveProgramsWithNonSingletonComponent: 0
             NewExperiments: False
+            NewCertificates: False
+            NewSearch: False
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_pass_expansion_smoke_outputs(out_dir: Path) -> None:
+    _write_text(
+        out_dir / "pass_expansion_smoke.csv",
+        (
+            "pass_name,candidate_source,expected_level,registry_present,"
+            "already_in_baseline,programs_attempted,run_failed,timeout,"
+            "verifier_failed,output_missing,changed_ir_count,noop_count,"
+            "mean_elapsed_ms,selected_for_scalar12,rejection_reason\n"
+            "instsimplify,pass_registry_snapshot,function,True,False,1,0,0,0,0,1,0,1.0000,True,\n"
+        ),
+    )
+    _write_text(
+        out_dir / "pass_expansion_smoke_report.md",
+        textwrap.dedent(
+            """
+            # P15 Pass Expansion Smoke
+
+            CandidatePasses: 1
+            RegistryPresentCandidates: 1
+            Programs: 1
+            ProgramsAttempted: 1
+            SelectedNewPasses: 1
+            RunFailedCandidates: 0
+            TimeoutCandidates: 0
+            VerifierFailedCandidates: 0
+            ChangedIrCandidates: 1
+            Scalar12PassCount: 2
+            NewExperiments: True
             NewCertificates: False
             NewSearch: False
             """

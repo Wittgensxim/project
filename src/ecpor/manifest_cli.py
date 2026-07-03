@@ -14,6 +14,7 @@ from .manifest_builders import (
     build_interaction_graph_manifest,
     build_passspec_audit_manifest,
     build_pass_registry_snapshot_manifest,
+    build_pass_expansion_smoke_manifest,
     build_passspec_registry_check_manifest,
     build_passspec_trust_report_manifest,
     build_pair_family_analysis_manifest,
@@ -402,6 +403,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     reduced_components_per_program.add_argument("--repo-root", default=".")
     reduced_components_per_program.add_argument("--result-generated-from-commit")
 
+    pass_expansion_smoke = subparsers.add_parser(
+        "pass-expansion-smoke",
+        help="Build a P15 scalar12 pass-expansion smoke manifest.",
+    )
+    pass_expansion_smoke.add_argument("--out-manifest", required=True)
+    pass_expansion_smoke.add_argument("--candidate-config", required=True)
+    pass_expansion_smoke.add_argument("--registry-snapshot", required=True)
+    pass_expansion_smoke.add_argument("--baseline-pipeline", required=True)
+    pass_expansion_smoke.add_argument("--baseline-passspec", required=True)
+    pass_expansion_smoke.add_argument("--scalar12-pipeline", required=True)
+    pass_expansion_smoke.add_argument("--scalar12-passspec", required=True)
+    pass_expansion_smoke.add_argument("--output-dir", required=True)
+    pass_expansion_smoke.add_argument("--repo-root", default=".")
+    pass_expansion_smoke.add_argument("--result-generated-from-commit")
+
     p8c = subparsers.add_parser(
         "p8c-attribution", help="Build a P8c Queens attribution manifest."
     )
@@ -694,6 +710,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     elif args.stage == "reduced-components-per-program":
         manifest = build_reduced_components_per_program_manifest(
             pipeline_config_path=args.pipeline_config,
+            output_dir=args.output_dir,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "pass-expansion-smoke":
+        manifest = build_pass_expansion_smoke_manifest(
+            candidate_config_path=args.candidate_config,
+            registry_snapshot_path=args.registry_snapshot,
+            baseline_pipeline_path=args.baseline_pipeline,
+            baseline_passspec_path=args.baseline_passspec,
+            scalar12_pipeline_path=args.scalar12_pipeline,
+            scalar12_passspec_path=args.scalar12_passspec,
             output_dir=args.output_dir,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
