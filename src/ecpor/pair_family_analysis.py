@@ -223,6 +223,7 @@ def render_report(analysis: Mapping[str, Any]) -> str:
         "# P14 Pair-Family Analysis",
         "",
         "P14 is a summary-only targeted analysis. It reads retained evidence and does not run LLVM, create certificates, or start search.",
+        "P14 is a pair-family analysis for the only objective-sensitive hotspot found by the corpus-level graph. It does not replace per-program reduced-component analysis.",
         "The target pair-family is useful as an observed interaction hotspot, not a global ordering rule and not a hard-prune proof.",
         "",
     ]

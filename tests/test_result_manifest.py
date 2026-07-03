@@ -60,6 +60,10 @@ class ResultManifestTests(unittest.TestCase):
             result_manifest.build_pair_family_analysis_manifest,
             manifest_builders.build_pair_family_analysis_manifest,
         )
+        self.assertIs(
+            result_manifest.build_reduced_components_per_program_manifest,
+            manifest_builders.build_reduced_components_per_program_manifest,
+        )
         self.assertIs(result_manifest.main, manifest_cli.main)
 
     def test_builds_pass_registry_snapshot_manifest(self):
@@ -298,6 +302,45 @@ class ResultManifestTests(unittest.TestCase):
         self.assertIn("pair_family_analysis_json", loaded["sha256"])
         self.assertEqual(loaded["scope_limits"]["summary_only"], True)
         self.assertEqual(loaded["scope_limits"]["pair_family_analysis_only"], True)
+        self.assertEqual(loaded["scope_limits"]["new_experiments"], False)
+        self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
+        self.assertEqual(loaded["scope_limits"]["new_search"], False)
+        self.assertEqual(loaded["scope_limits"]["runtime_benchmarks"], False)
+        self.assertEqual(loaded["scope_limits"]["passspec_behavior_change"], False)
+        self.assertEqual(loaded["scope_limits"]["static_filter_behavior_change"], False)
+
+    def test_builds_reduced_components_per_program_manifest(self):
+        from ecpor.result_manifest import (
+            build_reduced_components_per_program_manifest,
+            write_manifest,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pipeline = root / "pipeline_scalar.yaml"
+            out_dir = root / "reduced_components_per_program"
+            out_dir.mkdir()
+            _write_text(pipeline, "passes:\n  - a\n  - b\n")
+            _write_reduced_components_per_program_outputs(out_dir)
+
+            manifest = build_reduced_components_per_program_manifest(
+                pipeline_config_path=pipeline,
+                output_dir=out_dir,
+                repo_root=root,
+                result_generated_from_commit="b14c5",
+            )
+            manifest_path = root / "reduced_components_per_program_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P14.5")
+        self.assertEqual(loaded["result_generated_from_commit"], "b14c5")
+        self.assertEqual(loaded["summary"]["Programs"], 1)
+        self.assertEqual(loaded["summary"]["GraphModes"], 3)
+        self.assertIn("per_program_components_csv", loaded["outputs"])
+        self.assertIn("reduced_components_per_program_report", loaded["sha256"])
+        self.assertEqual(loaded["scope_limits"]["summary_only"], True)
+        self.assertEqual(loaded["scope_limits"]["per_program_graph_analysis_only"], True)
         self.assertEqual(loaded["scope_limits"]["new_experiments"], False)
         self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
         self.assertEqual(loaded["scope_limits"]["new_search"], False)
@@ -2040,6 +2083,58 @@ def _write_pair_family_outputs(out_dir: Path) -> None:
             BothSmallerPrograms: 1
             AttributionCases: 1
             SelectRelatedAttributionCases: 1
+            NewExperiments: False
+            NewCertificates: False
+            NewSearch: False
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_reduced_components_per_program_outputs(out_dir: Path) -> None:
+    _write_text(
+        out_dir / "per_program_components.csv",
+        (
+            "benchmark_set,program,graph_mode,component_id,pass_name,"
+            "component_size,component_kind\n"
+            "SetA,prog,input_full_matrix,input_full_matrix_c1,a,2,"
+            "input_full_matrix_component\n"
+        ),
+    )
+    _write_text(
+        out_dir / "per_program_search_space_estimate.csv",
+        (
+            "benchmark_set,program,graph_mode,pass_count,edge_count,"
+            "component_sizes,original_factorial,"
+            "within_component_factorial_product,reduction_ratio,scope_warning\n"
+            "SetA,prog,input_full_matrix,2,1,2,2,2,0.0000%,"
+            "input_full_matrix_only_not_prefix_safe\n"
+        ),
+    )
+    _write_text(
+        out_dir / "per_benchmark_search_space_summary.csv",
+        (
+            "benchmark_set,graph_mode,programs,median_reduction_ratio,"
+            "mean_reduction_ratio,programs_with_single_component_8,"
+            "programs_with_multiple_components,median_component_count,"
+            "max_component_size_median\n"
+            "SetA,input_full_matrix,1,0.0000%,0.0000%,1,0,1,2\n"
+        ),
+    )
+    _write_text(
+        out_dir / "reduced_components_per_program_report.md",
+        textwrap.dedent(
+            """
+            # P14.5 Per-Program Reduced Components
+
+            Programs: 1
+            GraphModes: 3
+            InputFullMatrixProgramsWithSingleComponent8: 1
+            InputFullMatrixProgramsWithMultipleComponents: 0
+            PrefixAdjacentProgramsWithSingleComponent8: 0
+            PrefixAdjacentProgramsWithMultipleComponents: 0
+            ObjectiveSensitiveProgramsWithNonSingletonComponent: 0
             NewExperiments: False
             NewCertificates: False
             NewSearch: False

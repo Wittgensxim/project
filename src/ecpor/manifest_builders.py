@@ -309,6 +309,19 @@ PAIR_FAMILY_ANALYSIS_SUMMARY_KEYS = {
     "NewSearch",
 }
 
+REDUCED_COMPONENTS_PER_PROGRAM_SUMMARY_KEYS = {
+    "Programs",
+    "GraphModes",
+    "InputFullMatrixProgramsWithSingleComponent8",
+    "InputFullMatrixProgramsWithMultipleComponents",
+    "PrefixAdjacentProgramsWithSingleComponent8",
+    "PrefixAdjacentProgramsWithMultipleComponents",
+    "ObjectiveSensitiveProgramsWithNonSingletonComponent",
+    "NewExperiments",
+    "NewCertificates",
+    "NewSearch",
+}
+
 
 
 def build_p7a_manifest(
@@ -1154,6 +1167,64 @@ def build_pair_family_analysis_manifest(
                 "summary_only": True,
                 "pair_family_analysis_only": True,
                 "target_pair": pair,
+                "new_experiments": False,
+                "new_certificates": False,
+                "new_search": False,
+                "runtime_benchmarks": False,
+                "passspec_behavior_change": False,
+                "static_filter_behavior_change": False,
+            }
+        },
+    )
+
+
+def build_reduced_components_per_program_manifest(
+    *,
+    pipeline_config_path: str | Path,
+    output_dir: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    out = Path(output_dir)
+    report = out / "reduced_components_per_program_report.md"
+    return build_result_manifest(
+        stage="P14.5",
+        description="Per-program reduced component analysis from retained P4-P14 evidence.",
+        inputs={
+            "pipeline_config": pipeline_config_path,
+            "stanford_full_matrix_csv": "data/outputs/cert_summary.csv",
+            "misc8_full_matrix_csv": "data/outputs/cert_summary_p8b_misc8_pre.csv",
+            "diverse8_full_matrix_csv": "data/outputs/cert_summary_p9_diverse8_pre.csv",
+            "stanford_prefix_attempts_csv": "data/outputs/lazy_validation_p4_e83c409_first.csv",
+            "misc8_prefix_attempts_csv": "data/outputs/lazy_validation_p8b_misc8/attempts.csv",
+            "diverse8_prefix_attempts_csv": "data/outputs/lazy_validation_p9_diverse8/attempts.csv",
+            "stanford_codegen_compare_csv": "data/outputs/codegen_sensitivity_p8a/p8a_codegen_direction_compare.csv",
+            "misc8_codegen_compare_csv": "data/outputs/codegen_sensitivity_p8b_misc8/p8a_codegen_direction_compare.csv",
+            "diverse8_codegen_compare_csv": "data/outputs/codegen_sensitivity_p9_diverse8/p8a_codegen_direction_compare.csv",
+            "stanford_attribution_summary_csv": "data/outputs/core_evidence_report/ecpor_attribution_summary.csv",
+            "misc8_attribution_summary_csv": "data/outputs/core_evidence_report_misc8/misc8_attribution_summary.csv",
+        },
+        outputs={
+            "output_dir": out,
+            "per_program_components_csv": out / "per_program_components.csv",
+            "per_program_search_space_estimate_csv": out
+            / "per_program_search_space_estimate.csv",
+            "per_benchmark_search_space_summary_csv": out
+            / "per_benchmark_search_space_summary.csv",
+            "reduced_components_per_program_report": report,
+        },
+        tools={},
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            REDUCED_COMPONENTS_PER_PROGRAM_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "stage": "P14.5",
+                "summary_only": True,
+                "per_program_graph_analysis_only": True,
                 "new_experiments": False,
                 "new_certificates": False,
                 "new_search": False,

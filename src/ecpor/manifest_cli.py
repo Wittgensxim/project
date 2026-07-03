@@ -29,6 +29,7 @@ from .manifest_builders import (
     build_p8b_static_filter_repair_manifest,
     build_queens_effect_attribution_manifest,
     build_reduced_components_manifest,
+    build_reduced_components_per_program_manifest,
 )
 from .manifest_common import write_manifest
 
@@ -391,6 +392,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     pair_family.add_argument("--result-generated-from-commit")
     pair_family.add_argument("--pair", default="instcombine,simplifycfg")
 
+    reduced_components_per_program = subparsers.add_parser(
+        "reduced-components-per-program",
+        help="Build a P14.5 per-program reduced-components manifest.",
+    )
+    reduced_components_per_program.add_argument("--out-manifest", required=True)
+    reduced_components_per_program.add_argument("--pipeline-config", required=True)
+    reduced_components_per_program.add_argument("--output-dir", required=True)
+    reduced_components_per_program.add_argument("--repo-root", default=".")
+    reduced_components_per_program.add_argument("--result-generated-from-commit")
+
     p8c = subparsers.add_parser(
         "p8c-attribution", help="Build a P8c Queens attribution manifest."
     )
@@ -679,6 +690,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
             pair=args.pair,
+        )
+    elif args.stage == "reduced-components-per-program":
+        manifest = build_reduced_components_per_program_manifest(
+            pipeline_config_path=args.pipeline_config,
+            output_dir=args.output_dir,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
         )
     elif args.stage == "p8c-attribution":
         manifest = build_queens_effect_attribution_manifest(
