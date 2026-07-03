@@ -56,6 +56,10 @@ class ResultManifestTests(unittest.TestCase):
             result_manifest.build_reduced_components_manifest,
             manifest_builders.build_reduced_components_manifest,
         )
+        self.assertIs(
+            result_manifest.build_pair_family_analysis_manifest,
+            manifest_builders.build_pair_family_analysis_manifest,
+        )
         self.assertIs(result_manifest.main, manifest_cli.main)
 
     def test_builds_pass_registry_snapshot_manifest(self):
@@ -250,6 +254,50 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["summary"]["OriginalPermutations"], 1)
         self.assertEqual(loaded["scope_limits"]["summary_only"], True)
         self.assertEqual(loaded["scope_limits"]["graph_analysis_only"], True)
+        self.assertEqual(loaded["scope_limits"]["new_experiments"], False)
+        self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
+        self.assertEqual(loaded["scope_limits"]["new_search"], False)
+        self.assertEqual(loaded["scope_limits"]["runtime_benchmarks"], False)
+        self.assertEqual(loaded["scope_limits"]["passspec_behavior_change"], False)
+        self.assertEqual(loaded["scope_limits"]["static_filter_behavior_change"], False)
+
+    def test_builds_pair_family_analysis_manifest(self):
+        from ecpor.result_manifest import (
+            build_pair_family_analysis_manifest,
+            write_manifest,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph_dir = root / "interaction_graph_v1"
+            reduced_dir = root / "reduced_components_v1"
+            out_dir = root / "pair_family_instcombine_simplifycfg"
+            graph_dir.mkdir()
+            reduced_dir.mkdir()
+            out_dir.mkdir()
+            _write_interaction_graph_outputs(graph_dir)
+            _write_reduced_components_outputs(reduced_dir)
+            _write_pair_family_outputs(out_dir)
+
+            manifest = build_pair_family_analysis_manifest(
+                interaction_graph_dir=graph_dir,
+                reduced_components_dir=reduced_dir,
+                output_dir=out_dir,
+                repo_root=root,
+                result_generated_from_commit="cafe",
+            )
+            manifest_path = root / "pair_family_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P14")
+        self.assertEqual(loaded["result_generated_from_commit"], "cafe")
+        self.assertEqual(loaded["summary"]["PairFamily"], "instcombine,simplifycfg")
+        self.assertEqual(loaded["summary"]["Programs"], 2)
+        self.assertIn("pair_family_events_csv", loaded["outputs"])
+        self.assertIn("pair_family_analysis_json", loaded["sha256"])
+        self.assertEqual(loaded["scope_limits"]["summary_only"], True)
+        self.assertEqual(loaded["scope_limits"]["pair_family_analysis_only"], True)
         self.assertEqual(loaded["scope_limits"]["new_experiments"], False)
         self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
         self.assertEqual(loaded["scope_limits"]["new_search"], False)
@@ -1917,6 +1965,84 @@ def _write_reduced_components_outputs(out_dir: Path) -> None:
             ObjectiveWithinComponentPermutations: 1
             ConservativeReductionRatio: 0.0000%
             ObjectiveReductionRatio: 0.0000%
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_pair_family_outputs(out_dir: Path) -> None:
+    _write_text(
+        out_dir / "pair_family_events.csv",
+        (
+            "benchmark_set,program,state_scope,source_stage,pair,label,hard_equal,"
+            "prefix_state_hash,feature_delta,cert_id\n"
+            "SetA,prog,input_state,full_matrix,\"instcombine,simplifycfg\","
+            "not_certified_independent,False,,{},cert\n"
+        ),
+    )
+    _write_text(
+        out_dir / "pair_family_program_summary.csv",
+        (
+            "program,benchmark_set,full_matrix_label,prefix_label,"
+            "generated_one_swap,final_ir_different,llc_direction,clang_direction,"
+            "both_smaller,has_attribution\n"
+            "prog,SetA,not_certified_independent,none,False,False,,,False,False\n"
+        ),
+    )
+    _write_text(
+        out_dir / "pair_family_objective_summary.csv",
+        (
+            "benchmark_set,programs,one_swap_candidates,llc_smaller,llc_equal,"
+            "llc_larger,clang_smaller,clang_equal,clang_larger,both_smaller,"
+            "direction_disagreement\n"
+            "SetA,2,1,1,0,0,1,0,0,1,0\n"
+        ),
+    )
+    _write_text(
+        out_dir / "pair_family_attribution_compare.csv",
+        (
+            "benchmark_set,program,pair,opcode_delta,removed_opcodes,added_opcodes,"
+            "net_instruction_delta,llc_text_delta_pct,clang_text_delta_pct,"
+            "evidence_level\n"
+            "SetA,prog,\"instcombine,simplifycfg\",num_select_delta=-1,"
+            "select,,0,-1.000000,-1.000000,observed attribution\n"
+        ),
+    )
+    _write_text(
+        out_dir / "pair_family_analysis.json",
+        json.dumps(
+            {
+                "stage": "P14",
+                "summary": {
+                    "PairFamily": "instcombine,simplifycfg",
+                    "Programs": 2,
+                },
+            },
+            indent=2,
+        )
+        + "\n",
+    )
+    _write_text(
+        out_dir / "pair_family_analysis_report.md",
+        textwrap.dedent(
+            """
+            # P14 Pair-Family Analysis
+
+            PairFamily: instcombine,simplifycfg
+            Programs: 2
+            FullMatrixCertified: 1
+            FullMatrixNotCertified: 1
+            PrefixCertified: 1
+            PrefixNotCertified: 1
+            OneSwapCandidates: 1
+            FinalIrDifferent: 1
+            BothSmallerPrograms: 1
+            AttributionCases: 1
+            SelectRelatedAttributionCases: 1
+            NewExperiments: False
+            NewCertificates: False
+            NewSearch: False
             """
         ).strip()
         + "\n",

@@ -292,6 +292,23 @@ REDUCED_COMPONENTS_SUMMARY_KEYS = {
     "ObjectiveReductionRatio",
 }
 
+PAIR_FAMILY_ANALYSIS_SUMMARY_KEYS = {
+    "PairFamily",
+    "Programs",
+    "FullMatrixCertified",
+    "FullMatrixNotCertified",
+    "PrefixCertified",
+    "PrefixNotCertified",
+    "OneSwapCandidates",
+    "FinalIrDifferent",
+    "BothSmallerPrograms",
+    "AttributionCases",
+    "SelectRelatedAttributionCases",
+    "NewExperiments",
+    "NewCertificates",
+    "NewSearch",
+}
+
 
 
 def build_p7a_manifest(
@@ -1061,6 +1078,82 @@ def build_reduced_components_manifest(
                 "stage": "P13",
                 "summary_only": True,
                 "graph_analysis_only": True,
+                "new_experiments": False,
+                "new_certificates": False,
+                "new_search": False,
+                "runtime_benchmarks": False,
+                "passspec_behavior_change": False,
+                "static_filter_behavior_change": False,
+            }
+        },
+    )
+
+
+def build_pair_family_analysis_manifest(
+    *,
+    interaction_graph_dir: str | Path,
+    reduced_components_dir: str | Path,
+    output_dir: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+    pair: str = "instcombine,simplifycfg",
+) -> dict[str, Any]:
+    graph_dir = Path(interaction_graph_dir)
+    reduced_dir = Path(reduced_components_dir)
+    out = Path(output_dir)
+    report = out / "pair_family_analysis_report.md"
+    return build_result_manifest(
+        stage="P14",
+        description="Targeted instcombine/simplifycfg pair-family analysis from retained evidence.",
+        inputs={
+            "pass_interaction_edges_csv": graph_dir / "pass_interaction_edges.csv",
+            "pass_interaction_graph_json": graph_dir / "pass_interaction_graph.json",
+            "reduced_component_edges_csv": reduced_dir / "reduced_component_edges.csv",
+            "reduced_components_json": reduced_dir / "reduced_components.json",
+            "search_space_estimate_csv": reduced_dir / "search_space_estimate.csv",
+            "stanford_full_matrix_csv": "data/outputs/cert_summary.csv",
+            "misc8_full_matrix_csv": "data/outputs/cert_summary_p8b_misc8_pre.csv",
+            "diverse8_full_matrix_csv": "data/outputs/cert_summary_p9_diverse8_pre.csv",
+            "stanford_prefix_attempts_csv": "data/outputs/lazy_validation_p4_e83c409_first.csv",
+            "misc8_prefix_attempts_csv": "data/outputs/lazy_validation_p8b_misc8/attempts.csv",
+            "diverse8_prefix_attempts_csv": "data/outputs/lazy_validation_p9_diverse8/attempts.csv",
+            "stanford_candidates_csv": "data/outputs/bounded_local_p5_p6_final/candidates.csv",
+            "misc8_candidates_csv": "data/outputs/bounded_local_p8b_misc8/candidates.csv",
+            "diverse8_candidates_csv": "data/outputs/bounded_local_p9_diverse8/candidates.csv",
+            "stanford_object_size_csv": "data/outputs/code_size_p6_final/object_size.csv",
+            "misc8_object_size_csv": "data/outputs/code_size_p8b_misc8/object_size.csv",
+            "diverse8_object_size_csv": "data/outputs/code_size_p9_diverse8/object_size.csv",
+            "stanford_codegen_compare_csv": "data/outputs/codegen_sensitivity_p8a/p8a_codegen_direction_compare.csv",
+            "misc8_codegen_compare_csv": "data/outputs/codegen_sensitivity_p8b_misc8/p8a_codegen_direction_compare.csv",
+            "diverse8_codegen_compare_csv": "data/outputs/codegen_sensitivity_p9_diverse8/p8a_codegen_direction_compare.csv",
+            "stanford_attribution_summary_csv": "data/outputs/core_evidence_report/ecpor_attribution_summary.csv",
+            "misc8_attribution_summary_csv": "data/outputs/core_evidence_report_misc8/misc8_attribution_summary.csv",
+        },
+        outputs={
+            "output_dir": out,
+            "pair_family_events_csv": out / "pair_family_events.csv",
+            "pair_family_program_summary_csv": out
+            / "pair_family_program_summary.csv",
+            "pair_family_objective_summary_csv": out
+            / "pair_family_objective_summary.csv",
+            "pair_family_attribution_compare_csv": out
+            / "pair_family_attribution_compare.csv",
+            "pair_family_analysis_json": out / "pair_family_analysis.json",
+            "pair_family_analysis_report": report,
+        },
+        tools={},
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            PAIR_FAMILY_ANALYSIS_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "stage": "P14",
+                "summary_only": True,
+                "pair_family_analysis_only": True,
+                "target_pair": pair,
                 "new_experiments": False,
                 "new_certificates": False,
                 "new_search": False,

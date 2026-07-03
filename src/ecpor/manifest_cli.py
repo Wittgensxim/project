@@ -16,6 +16,7 @@ from .manifest_builders import (
     build_pass_registry_snapshot_manifest,
     build_passspec_registry_check_manifest,
     build_passspec_trust_report_manifest,
+    build_pair_family_analysis_manifest,
     build_p6_5_manifest,
     build_p7a_manifest,
     build_p7b_analysis_manifest,
@@ -378,6 +379,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     reduced_components.add_argument("--repo-root", default=".")
     reduced_components.add_argument("--result-generated-from-commit")
 
+    pair_family = subparsers.add_parser(
+        "pair-family-analysis",
+        help="Build a P14 pair-family analysis manifest.",
+    )
+    pair_family.add_argument("--out-manifest", required=True)
+    pair_family.add_argument("--interaction-graph-dir", required=True)
+    pair_family.add_argument("--reduced-components-dir", required=True)
+    pair_family.add_argument("--output-dir", required=True)
+    pair_family.add_argument("--repo-root", default=".")
+    pair_family.add_argument("--result-generated-from-commit")
+    pair_family.add_argument("--pair", default="instcombine,simplifycfg")
+
     p8c = subparsers.add_parser(
         "p8c-attribution", help="Build a P8c Queens attribution manifest."
     )
@@ -657,6 +670,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             output_dir=args.output_dir,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "pair-family-analysis":
+        manifest = build_pair_family_analysis_manifest(
+            interaction_graph_dir=args.interaction_graph_dir,
+            reduced_components_dir=args.reduced_components_dir,
+            output_dir=args.output_dir,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+            pair=args.pair,
         )
     elif args.stage == "p8c-attribution":
         manifest = build_queens_effect_attribution_manifest(
