@@ -282,6 +282,16 @@ INTERACTION_GRAPH_SUMMARY_KEYS = {
     "AttributionCases",
 }
 
+REDUCED_COMPONENTS_SUMMARY_KEYS = {
+    "OriginalPermutations",
+    "ConservativeGraphComponents",
+    "ObjectiveSensitiveGraphComponents",
+    "ConservativeWithinComponentPermutations",
+    "ObjectiveWithinComponentPermutations",
+    "ConservativeReductionRatio",
+    "ObjectiveReductionRatio",
+}
+
 
 
 def build_p7a_manifest(
@@ -998,6 +1008,59 @@ def build_interaction_graph_manifest(
                 "stage": "P12",
                 "summary_only": True,
                 "graph_construction_only": True,
+                "new_experiments": False,
+                "new_certificates": False,
+                "new_search": False,
+                "runtime_benchmarks": False,
+                "passspec_behavior_change": False,
+                "static_filter_behavior_change": False,
+            }
+        },
+    )
+
+
+def build_reduced_components_manifest(
+    *,
+    pipeline_config_path: str | Path,
+    interaction_graph_dir: str | Path,
+    output_dir: str | Path,
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    graph_dir = Path(interaction_graph_dir)
+    out = Path(output_dir)
+    report = out / "reduced_components_report.md"
+    return build_result_manifest(
+        stage="P13",
+        description="Reduced component and search-space estimate from P12 interaction graph.",
+        inputs={
+            "pipeline_config": pipeline_config_path,
+            "pass_interaction_nodes_csv": graph_dir / "pass_interaction_nodes.csv",
+            "pass_interaction_edges_csv": graph_dir / "pass_interaction_edges.csv",
+            "pass_interaction_graph_json": graph_dir / "pass_interaction_graph.json",
+            "pass_interaction_graph_report": graph_dir
+            / "pass_interaction_graph_report.md",
+        },
+        outputs={
+            "output_dir": out,
+            "reduced_component_nodes_csv": out / "reduced_component_nodes.csv",
+            "reduced_component_edges_csv": out / "reduced_component_edges.csv",
+            "reduced_components_json": out / "reduced_components.json",
+            "search_space_estimate_csv": out / "search_space_estimate.csv",
+            "reduced_components_report": report,
+        },
+        tools={},
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            REDUCED_COMPONENTS_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "stage": "P13",
+                "summary_only": True,
+                "graph_analysis_only": True,
                 "new_experiments": False,
                 "new_certificates": False,
                 "new_search": False,

@@ -27,6 +27,7 @@ from .manifest_builders import (
     build_p8b_matrix_manifest,
     build_p8b_static_filter_repair_manifest,
     build_queens_effect_attribution_manifest,
+    build_reduced_components_manifest,
 )
 from .manifest_common import write_manifest
 
@@ -366,6 +367,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     interaction_graph.add_argument("--repo-root", default=".")
     interaction_graph.add_argument("--result-generated-from-commit")
 
+    reduced_components = subparsers.add_parser(
+        "reduced-components",
+        help="Build a P13 reduced-components manifest.",
+    )
+    reduced_components.add_argument("--out-manifest", required=True)
+    reduced_components.add_argument("--pipeline-config", required=True)
+    reduced_components.add_argument("--interaction-graph-dir", required=True)
+    reduced_components.add_argument("--output-dir", required=True)
+    reduced_components.add_argument("--repo-root", default=".")
+    reduced_components.add_argument("--result-generated-from-commit")
+
     p8c = subparsers.add_parser(
         "p8c-attribution", help="Build a P8c Queens attribution manifest."
     )
@@ -635,6 +647,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             candidate_csvs=args.candidate_csv,
             both_smaller_csvs=args.both_smaller_csv,
             attribution_csvs=args.attribution_csv,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "reduced-components":
+        manifest = build_reduced_components_manifest(
+            pipeline_config_path=args.pipeline_config,
+            interaction_graph_dir=args.interaction_graph_dir,
+            output_dir=args.output_dir,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )

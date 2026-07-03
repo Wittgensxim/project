@@ -52,6 +52,10 @@ class ResultManifestTests(unittest.TestCase):
             result_manifest.build_interaction_graph_manifest,
             manifest_builders.build_interaction_graph_manifest,
         )
+        self.assertIs(
+            result_manifest.build_reduced_components_manifest,
+            manifest_builders.build_reduced_components_manifest,
+        )
         self.assertIs(result_manifest.main, manifest_cli.main)
 
     def test_builds_pass_registry_snapshot_manifest(self):
@@ -193,6 +197,59 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["summary"]["Edges"], 0)
         self.assertEqual(loaded["scope_limits"]["summary_only"], True)
         self.assertEqual(loaded["scope_limits"]["graph_construction_only"], True)
+        self.assertEqual(loaded["scope_limits"]["new_experiments"], False)
+        self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
+        self.assertEqual(loaded["scope_limits"]["new_search"], False)
+        self.assertEqual(loaded["scope_limits"]["runtime_benchmarks"], False)
+        self.assertEqual(loaded["scope_limits"]["passspec_behavior_change"], False)
+        self.assertEqual(loaded["scope_limits"]["static_filter_behavior_change"], False)
+
+    def test_builds_reduced_components_manifest(self):
+        from ecpor.result_manifest import (
+            build_reduced_components_manifest,
+            write_manifest,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pipeline = root / "pipeline_scalar.yaml"
+            interaction_graph_dir = root / "interaction_graph_v1"
+            out_dir = root / "reduced_components_v1"
+            interaction_graph_dir.mkdir()
+            out_dir.mkdir()
+            _write_text(pipeline, "passes:\n  - sroa\n")
+            _write_text(
+                interaction_graph_dir / "pass_interaction_nodes.csv",
+                "pass_name\nsroa\n",
+            )
+            _write_text(
+                interaction_graph_dir / "pass_interaction_edges.csv",
+                "pair_a,pair_b,edge_kind\n",
+            )
+            _write_text(
+                interaction_graph_dir / "pass_interaction_graph.json",
+                '{"stage": "P12"}\n',
+            )
+            _write_reduced_components_outputs(out_dir)
+
+            manifest = build_reduced_components_manifest(
+                pipeline_config_path=pipeline,
+                interaction_graph_dir=interaction_graph_dir,
+                output_dir=out_dir,
+                repo_root=root,
+                result_generated_from_commit="face",
+            )
+            manifest_path = root / "reduced_components_v1_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P13")
+        self.assertEqual(loaded["result_generated_from_commit"], "face")
+        self.assertIn("reduced_component_nodes_csv", loaded["outputs"])
+        self.assertIn("reduced_components_json", loaded["sha256"])
+        self.assertEqual(loaded["summary"]["OriginalPermutations"], 1)
+        self.assertEqual(loaded["scope_limits"]["summary_only"], True)
+        self.assertEqual(loaded["scope_limits"]["graph_analysis_only"], True)
         self.assertEqual(loaded["scope_limits"]["new_experiments"], False)
         self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
         self.assertEqual(loaded["scope_limits"]["new_search"], False)
@@ -1812,6 +1869,54 @@ def _write_interaction_graph_outputs(out_dir: Path) -> None:
             Nodes: 1
             Edges: 0
             ObjectiveSensitivePairs: 0
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_reduced_components_outputs(out_dir: Path) -> None:
+    _write_text(
+        out_dir / "reduced_component_nodes.csv",
+        (
+            "graph_mode,component_id,pass_name,component_size,component_kind\n"
+            "conservative,conservative_c1,sroa,1,singleton\n"
+        ),
+    )
+    _write_text(
+        out_dir / "reduced_component_edges.csv",
+        (
+            "graph_mode,component_id,pair_a,pair_b,edge_kind,"
+            "prefix_not_certified_events,full_matrix_not_certified,"
+            "both_smaller_count,attribution_cases,evidence_level\n"
+        ),
+    )
+    _write_text(
+        out_dir / "search_space_estimate.csv",
+        (
+            "graph_mode,pass_count,original_factorial,component_sizes,"
+            "within_component_factorial_product,reduction_ratio,interpretation\n"
+            "conservative,1,1,1,1,0.0000%,coarse upper-bound estimate\n"
+        ),
+    )
+    _write_text(
+        out_dir / "reduced_components.json",
+        json.dumps({"stage": "P13", "components": [], "search_space": []}, indent=2)
+        + "\n",
+    )
+    _write_text(
+        out_dir / "reduced_components_report.md",
+        textwrap.dedent(
+            """
+            # Reduced Components v1
+
+            OriginalPermutations: 1
+            ConservativeGraphComponents: 1
+            ObjectiveSensitiveGraphComponents: 1
+            ConservativeWithinComponentPermutations: 1
+            ObjectiveWithinComponentPermutations: 1
+            ConservativeReductionRatio: 0.0000%
+            ObjectiveReductionRatio: 0.0000%
             """
         ).strip()
         + "\n",
