@@ -11,6 +11,7 @@ from .manifest_builders import (
     build_core_evidence_misc8_manifest,
     build_depth1_analysis_manifest,
     build_effect_attribution_manifest,
+    build_interaction_graph_manifest,
     build_passspec_audit_manifest,
     build_pass_registry_snapshot_manifest,
     build_passspec_registry_check_manifest,
@@ -347,6 +348,24 @@ def main(argv: Sequence[str] | None = None) -> int:
     passspec_registry.add_argument("--repo-root", default=".")
     passspec_registry.add_argument("--result-generated-from-commit")
 
+    interaction_graph = subparsers.add_parser(
+        "interaction-graph",
+        help="Build a P12 interaction graph v1 manifest.",
+    )
+    interaction_graph.add_argument("--out-manifest", required=True)
+    interaction_graph.add_argument("--passspec", required=True)
+    interaction_graph.add_argument("--pipeline-config", required=True)
+    interaction_graph.add_argument("--passspec-registry-check-csv", required=True)
+    interaction_graph.add_argument("--combined-summary-dir", required=True)
+    interaction_graph.add_argument("--output-dir", required=True)
+    interaction_graph.add_argument("--full-matrix-csv", action="append", default=[])
+    interaction_graph.add_argument("--prefix-attempt-csv", action="append", default=[])
+    interaction_graph.add_argument("--candidate-csv", action="append", default=[])
+    interaction_graph.add_argument("--both-smaller-csv", action="append", default=[])
+    interaction_graph.add_argument("--attribution-csv", action="append", default=[])
+    interaction_graph.add_argument("--repo-root", default=".")
+    interaction_graph.add_argument("--result-generated-from-commit")
+
     p8c = subparsers.add_parser(
         "p8c-attribution", help="Build a P8c Queens attribution manifest."
     )
@@ -601,6 +620,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             pipeline_config_path=args.pipeline_config,
             registry_snapshot_path=args.registry_snapshot,
             output_dir=args.output_dir,
+            repo_root=args.repo_root,
+            result_generated_from_commit=args.result_generated_from_commit,
+        )
+    elif args.stage == "interaction-graph":
+        manifest = build_interaction_graph_manifest(
+            passspec_path=args.passspec,
+            pipeline_config_path=args.pipeline_config,
+            passspec_registry_check_csv=args.passspec_registry_check_csv,
+            combined_summary_dir=args.combined_summary_dir,
+            output_dir=args.output_dir,
+            full_matrix_csvs=args.full_matrix_csv,
+            prefix_attempt_csvs=args.prefix_attempt_csv,
+            candidate_csvs=args.candidate_csv,
+            both_smaller_csvs=args.both_smaller_csv,
+            attribution_csvs=args.attribution_csv,
             repo_root=args.repo_root,
             result_generated_from_commit=args.result_generated_from_commit,
         )

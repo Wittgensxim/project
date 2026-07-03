@@ -263,6 +263,25 @@ PASSSPEC_REGISTRY_CHECK_SUMMARY_KEYS = {
     "Status",
 }
 
+INTERACTION_GRAPH_SUMMARY_KEYS = {
+    "Nodes",
+    "Edges",
+    "ObservedPairEdges",
+    "CertifiedDominantPairs",
+    "OrderSensitivePairs",
+    "ObjectiveSensitivePairs",
+    "AttributionHypothesisPairs",
+    "InsufficientObservedEvidencePairs",
+    "FullMatrixCertifiedEvents",
+    "FullMatrixNotCertifiedEvents",
+    "PrefixCertifiedEvents",
+    "PrefixNotCertifiedEvents",
+    "LowPriorityEvents",
+    "OneSwapCandidates",
+    "BothSmallerCases",
+    "AttributionCases",
+}
+
 
 
 def build_p7a_manifest(
@@ -925,6 +944,71 @@ def build_passspec_registry_check_manifest(
     )
 
 
+def build_interaction_graph_manifest(
+    *,
+    passspec_path: str | Path,
+    pipeline_config_path: str | Path,
+    passspec_registry_check_csv: str | Path,
+    combined_summary_dir: str | Path,
+    output_dir: str | Path,
+    full_matrix_csvs: Sequence[str | Path] = (),
+    prefix_attempt_csvs: Sequence[str | Path] = (),
+    candidate_csvs: Sequence[str | Path] = (),
+    both_smaller_csvs: Sequence[str | Path] = (),
+    attribution_csvs: Sequence[str | Path] = (),
+    repo_root: str | Path = ".",
+    result_generated_from_commit: str | None = None,
+) -> dict[str, Any]:
+    combined = Path(combined_summary_dir)
+    out = Path(output_dir)
+    report = out / "pass_interaction_graph_report.md"
+    return build_result_manifest(
+        stage="P12",
+        description="Summary-only interaction graph v1 built from retained depth1 evidence.",
+        inputs={
+            "passspec": passspec_path,
+            "pipeline_config": pipeline_config_path,
+            "passspec_registry_check_csv": passspec_registry_check_csv,
+            "benchmark_set_summary_csv": combined / "benchmark_set_summary.csv",
+            "depth1_reduction_summary_csv": combined / "depth1_reduction_summary.csv",
+            "depth1_objective_summary_csv": combined / "depth1_objective_summary.csv",
+            "depth1_codegen_summary_csv": combined / "depth1_codegen_summary.csv",
+            **_numbered_paths("full_matrix_csv", full_matrix_csvs),
+            **_numbered_paths("prefix_attempt_csv", prefix_attempt_csvs),
+            **_numbered_paths("candidate_csv", candidate_csvs),
+            **_numbered_paths("both_smaller_csv", both_smaller_csvs),
+            **_numbered_paths("attribution_csv", attribution_csvs),
+        },
+        outputs={
+            "output_dir": out,
+            "pass_interaction_nodes_csv": out / "pass_interaction_nodes.csv",
+            "pass_interaction_edges_csv": out / "pass_interaction_edges.csv",
+            "pass_interaction_graph_json": out / "pass_interaction_graph.json",
+            "pass_interaction_graph_report": report,
+        },
+        tools={},
+        summary=_filter_keys(
+            _parse_key_value_report(report),
+            INTERACTION_GRAPH_SUMMARY_KEYS,
+        ),
+        repo_root=repo_root,
+        result_generated_from_commit=result_generated_from_commit,
+        extra={
+            "scope_limits": {
+                "stage": "P12",
+                "summary_only": True,
+                "graph_construction_only": True,
+                "new_experiments": False,
+                "new_certificates": False,
+                "new_search": False,
+                "runtime_benchmarks": False,
+                "passspec_behavior_change": False,
+                "static_filter_behavior_change": False,
+            }
+        },
+    )
+
+
 def build_p8b_lazy_validation_manifest(
     *,
     pipeline_config_path: str | Path,
@@ -1342,6 +1426,13 @@ def build_queens_effect_attribution_manifest(
 
 def _optional_paths(**paths: str | Path | None) -> dict[str, str | Path]:
     return {key: path for key, path in paths.items() if path not in {None, ""}}
+
+
+def _numbered_paths(
+    prefix: str,
+    paths: Sequence[str | Path],
+) -> dict[str, str | Path]:
+    return {f"{prefix}_{index}": path for index, path in enumerate(paths, start=1)}
 
 
 def _parse_key_value_report(path: str | Path) -> dict[str, Any]:

@@ -48,6 +48,10 @@ class ResultManifestTests(unittest.TestCase):
             result_manifest.build_passspec_registry_check_manifest,
             manifest_builders.build_passspec_registry_check_manifest,
         )
+        self.assertIs(
+            result_manifest.build_interaction_graph_manifest,
+            manifest_builders.build_interaction_graph_manifest,
+        )
         self.assertIs(result_manifest.main, manifest_cli.main)
 
     def test_builds_pass_registry_snapshot_manifest(self):
@@ -139,6 +143,62 @@ class ResultManifestTests(unittest.TestCase):
         self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
         self.assertEqual(loaded["scope_limits"]["new_search"], False)
         self.assertEqual(loaded["scope_limits"]["runtime_benchmarks"], False)
+
+    def test_builds_interaction_graph_manifest(self):
+        from ecpor.result_manifest import (
+            build_interaction_graph_manifest,
+            write_manifest,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            passspec = root / "passspec.yaml"
+            pipeline = root / "pipeline_scalar.yaml"
+            registry_check = root / "passspec_registry_check.csv"
+            combined_dir = root / "combined_depth1_summary"
+            out_dir = root / "interaction_graph_v1"
+            combined_dir.mkdir()
+            out_dir.mkdir()
+            _write_text(passspec, "passes:\n  sroa:\n    level: function\n")
+            _write_text(pipeline, "passes:\n  - sroa\n")
+            _write_text(
+                registry_check,
+                "pass_name,in_passspec,in_pipeline,in_registry,level_in_passspec,status\n"
+                "sroa,True,True,True,function,ok\n",
+            )
+            _write_text(combined_dir / "benchmark_set_summary.csv", "name\nrow\n")
+            _write_text(combined_dir / "depth1_reduction_summary.csv", "name\nrow\n")
+            _write_text(combined_dir / "depth1_objective_summary.csv", "name\nrow\n")
+            _write_text(combined_dir / "depth1_codegen_summary.csv", "name\nrow\n")
+            _write_interaction_graph_outputs(out_dir)
+
+            manifest = build_interaction_graph_manifest(
+                passspec_path=passspec,
+                pipeline_config_path=pipeline,
+                passspec_registry_check_csv=registry_check,
+                combined_summary_dir=combined_dir,
+                output_dir=out_dir,
+                repo_root=root,
+                result_generated_from_commit="f00d",
+            )
+            manifest_path = root / "interaction_graph_v1_manifest.json"
+            write_manifest(manifest_path, manifest)
+            loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(loaded["stage"], "P12")
+        self.assertEqual(loaded["result_generated_from_commit"], "f00d")
+        self.assertIn("pass_interaction_edges_csv", loaded["outputs"])
+        self.assertIn("pass_interaction_graph_json", loaded["sha256"])
+        self.assertEqual(loaded["summary"]["Nodes"], 1)
+        self.assertEqual(loaded["summary"]["Edges"], 0)
+        self.assertEqual(loaded["scope_limits"]["summary_only"], True)
+        self.assertEqual(loaded["scope_limits"]["graph_construction_only"], True)
+        self.assertEqual(loaded["scope_limits"]["new_experiments"], False)
+        self.assertEqual(loaded["scope_limits"]["new_certificates"], False)
+        self.assertEqual(loaded["scope_limits"]["new_search"], False)
+        self.assertEqual(loaded["scope_limits"]["runtime_benchmarks"], False)
+        self.assertEqual(loaded["scope_limits"]["passspec_behavior_change"], False)
+        self.assertEqual(loaded["scope_limits"]["static_filter_behavior_change"], False)
 
     def test_builds_p7a_manifest_from_outputs_and_hashes_files(self):
         from ecpor.result_manifest import build_p7a_manifest, write_manifest
@@ -1707,6 +1767,51 @@ def _write_passspec_registry_check_outputs(out_dir: Path) -> None:
             PipelinePassesMissingInPassSpec: 0
             RegistryMissingExpectedPasses: 0
             Status: pass
+            """
+        ).strip()
+        + "\n",
+    )
+
+
+def _write_interaction_graph_outputs(out_dir: Path) -> None:
+    _write_text(
+        out_dir / "pass_interaction_nodes.csv",
+        "pass_name,in_pipeline,in_passspec,in_registry,level,tags,status\n"
+        "sroa,True,True,True,function,scalar,ok\n",
+    )
+    _write_text(
+        out_dir / "pass_interaction_edges.csv",
+        (
+            "pair_a,pair_b,edge_kind,full_matrix_certified,"
+            "full_matrix_not_certified,prefix_certified_events,"
+            "prefix_not_certified_events,low_priority_events,one_swap_candidates,"
+            "both_smaller_count,attribution_cases,evidence_level,"
+            "hard_prune_scope,notes\n"
+        ),
+    )
+    _write_text(
+        out_dir / "pass_interaction_graph.json",
+        json.dumps(
+            {
+                "stage": "P12",
+                "summary": {"Nodes": 1, "Edges": 0},
+                "evidence_boundary": {
+                    "certified_independent_events_are_state_indexed": True
+                },
+            },
+            indent=2,
+        )
+        + "\n",
+    )
+    _write_text(
+        out_dir / "pass_interaction_graph_report.md",
+        textwrap.dedent(
+            """
+            # Pass Interaction Graph v1
+
+            Nodes: 1
+            Edges: 0
+            ObjectiveSensitivePairs: 0
             """
         ).strip()
         + "\n",
